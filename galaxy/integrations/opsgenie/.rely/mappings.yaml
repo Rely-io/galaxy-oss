@@ -1,0 +1,83 @@
+resources:
+- kind: team
+  mappings:
+    id: .id
+    title: .name
+    blueprintId: '"opsgenie.v1.team"'
+    description: .description
+    properties:
+      webUrl: .links.web
+      apiUrl: .links.api
+      onCallSchedules: '[.schedules[] | select(.enabled == true) | .name]'
+
+- kind: service
+  mappings:
+    id: .id
+    title: .name
+    blueprintId: '"opsgenie.v1.service"'
+    description: .description
+    properties:
+      webUrl: '.context.baseUrl + "/service/"  + .id'
+      isExternal: .isExternal
+    relations:
+      team:
+        value: .teamId
+
+- kind: user
+  mappings:
+    id: .id
+    title: .fullName
+    blueprintId: '"opsgenie.v1.user"'
+    description: '""'
+    properties:
+      username: .username
+      role: .role.name
+      timeZone: .timeZone
+      locale: .locale
+      blocked: .blocked
+      verified: .verified
+      createdAt: .createdAt
+      webUrl: '.context.baseUrl + "/settings/users/" + .id + "/detail"'
+      onCallDashboard: '.context.baseUrl + "/settings/users/" + .id + "/onCallSchedule"'
+      currentlyOnCall: '(.teamsOnCall | length > 0)'
+      nextOnCallStart: .nextOnCallShift.startDate
+      nextOnCallEnd: .nextOnCallShift.endDate
+    relations:
+      teams:
+        value: '[.teams[].id]'
+      currentlyOnCallFor:
+        value: .teamsOnCall
+      nextOnCallFor:
+        value: .nextOnCallShift.teamId
+
+- kind: escalation
+  mappings:
+    id: .id
+    title: .name
+    blueprintId: '"opsgenie.v1.escalation"'
+    description: .description
+    properties:
+      rules: .rules | tostring
+      repeat: .repeat
+    relations:
+      team:
+        value: .ownerTeam.id
+
+- kind: incident
+  mappings:
+    id: .id
+    title: .message
+    blueprintId: '"opsgenie.v1.incident"'
+    description: .description
+    properties:
+      tinyId: .tinyId
+      status: .status
+      createdAt: .createdAt
+      updatedAt: .updatedAt
+      priority: .priority
+      webUrl: '.context.baseUrl + "/incident/detail/"  + .id'
+    relations:
+       impactedServices:
+         value: .impactedServices
+       responders:
+         value: '[.responders[] | select(.type == "team") | .id]'

@@ -1,0 +1,27 @@
+# Top-level EditorConfig file
+root = true
+
+# General settings for all files
+[*]
+charset = utf-8                       # Use UTF-8 encoding for all files
+end_of_line = lf                      # Use LF (Unix-style) line endings
+indent_size = 2                       # Default indentation size of 2 spaces
+indent_style = space                  # Use spaces instead of tabs
+insert_final_newline = true           # Ensure a newline at the end of each file
+trim_trailing_whitespace = true       # Remove trailing whitespace on save
+
+# Specific settings for YAML, JSON, and TOML files
+[*.{yml,json,toml}]
+indent_size = 2                       # Enforce 2-space indentation for YAML, JSON, and TOML files
+
+# Specific settings for Python files
+[*.py]
+indent_size = 4                       # Enforce 4-space indentation
+
+# Specific settings for Markdown files
+[*.md]
+trim_trailing_whitespace = false      # Do not trim trailing whitespace in Markdown files to preserve intentional line breaks
+
+# Specific settings for Makefiles
+[Makefile]
+indent_style = tab                    # Use tabs for indentation in Makefiles, as required by `make`

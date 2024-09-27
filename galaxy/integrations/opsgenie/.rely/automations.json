@@ -1,0 +1,302 @@
+[
+  {
+    "id": "rely.opsgenie.v1.service-to-service",
+    "title": "OpsGenieIncident Service to Service",
+    "description": "This automation creates a service from an Opsgenie Service",
+    "isActive": true,
+    "type": "automation",
+    "arguments": {
+      "sourceBlueprintId": "opsgenie.v1.service",
+      "targetBlueprintId": "service"
+    },
+    "triggers": [
+      {
+        "type": "onEvent",
+        "event": {
+          "resource": "entity",
+          "action": ["create", "update"]
+        },
+        "conditions": [
+          {
+            "field": "data.blueprintId",
+            "operator": "eq",
+            "value": "{{ arguments.sourceBlueprintId }}"
+          }
+        ]
+      }
+    ],
+    "actions": [
+      {
+        "type": "fetchFieldsFromResources",
+        "args": {
+          "resourceType": "entity",
+          "fields": ["title"],
+          "conditions": [
+            {
+              "field": "blueprintId",
+              "operator": "eq",
+              "value": "opsgenie.v1.user"
+            },
+            {
+              "field": "properties/currentlyOnCall",
+              "operator": "eq",
+              "value": true
+            },
+            {
+              "field": "relations/currentlyOnCallFor/value",
+              "operator": "contains",
+              "value": "{{ data.relations.team.value }}"
+            }
+          ],
+          "stopFlowIfNotFound": false
+        },
+        "conditions": [
+            {
+              "field": "data.relations.team.value",
+              "operator": "neq",
+              "value": null
+            }
+        ],
+        "id": "fetch_oncall"
+      },
+      {
+        "type": "fetchResource",
+        "args": {
+          "conditions": [
+            {
+              "field": "blueprintId",
+              "value": "opsgenie.v1.team",
+              "operator": "eq"
+            },
+            {
+              "field": "id",
+              "value": "{{ data.relations.team.value }}",
+              "operator": "eq"
+            }
+          ],
+          "resourceType": "entity",
+          "stopFlowIfNotFound": false
+        },
+        "id": "fetch_opsgenie_team"
+      },
+      {
+        "type": "upsertResource",
+        "args": {
+          "resourceType": "entity",
+          "createSuggestion": true,
+          "data": {
+            "id": "{{ data.id | string }}.{{ arguments.targetBlueprintId }}",
+            "title": "{{ data.title }}",
+            "description": "{{ data.description }}",
+            "blueprintId": "{{ arguments.targetBlueprintId }}",
+            "properties": {
+              "incidentManagementLink": "{{ data.properties.webUrl if data.properties.webUrl else none }}",
+              "currentOnCalls": "{{ (actions.fetch_oncall.output.title | tojson) if actions.fetch_oncall else [] }}",
+              "onCallScheduleLink": "{{ actions.fetch_opsgenie_team.output.properties.webUrl if actions.fetch_opsgenie_team else none }}",
+              "activeOnCallSchedules": "{{ (actions.fetch_opsgenie_team.output.properties.onCallSchedules | tojson) if actions.fetch_opsgenie_team else [] }}"
+            },
+            "relations": {
+              "OpsGenieService": {
+                "value": "{{ data.id | string }}"
+              }
+            }
+          }
+        }
+      }
+    ],
+    "tags": [
+      {
+        "key": "default",
+        "value": "true"
+      },
+      {
+        "key": "owner",
+        "value": "rely"
+      }
+    ]
+  },
+  {
+    "id": "rely.opsgenie.v1.team-to-team",
+    "title": "OpsGenieIncident Team to a Generic Team",
+    "description": "This automation creates a generic team from an Opsgenie team",
+    "isActive": true,
+    "order": 0,
+    "type": "automation",
+    "arguments": {
+      "sourceBlueprintId": "opsgenie.v1.team",
+      "targetBlueprintId": "team"
+    },
+    "secrets": {},
+    "triggers": [
+      {
+        "type": "onEvent",
+        "event": {
+          "resource": "entity",
+          "action": ["create", "update"]
+        },
+        "conditions": [
+          {
+            "field": "data.blueprintId",
+            "operator": "eq",
+            "value": "{{ arguments.sourceBlueprintId }}"
+          }
+        ]
+      }
+    ],
+    "actions": [
+      {
+        "type": "fetchFieldsFromResources",
+        "args": {
+          "resourceType": "entity",
+          "fields": ["title"],
+          "conditions": [
+            {
+              "field": "blueprintId",
+              "operator": "eq",
+              "value": "opsgenie.v1.user"
+            },
+            {
+              "field": "properties/currentlyOnCall",
+              "operator": "eq",
+              "value": true
+            },
+            {
+              "field": "relations/currentlyOnCallFor/value",
+              "operator": "contains",
+              "value": "{{ data.id }}"
+            }
+          ],
+          "stopFlowIfNotFound": false
+        },
+        "id": "fetch_oncall"
+      },
+      {
+        "type": "upsertResource",
+        "args": {
+          "resourceType": "entity",
+          "createSuggestion": true,
+          "data": {
+            "id": "{{ data.id | string }}.{{ arguments.targetBlueprintId }}",
+            "title": "{{ data.title }}",
+            "description": "{{ data.description }}",
+            "blueprintId": "{{ arguments.targetBlueprintId }}",
+            "properties": {
+              "incidentManagementLink": "{{ data.properties.webUrl if data.properties.webUrl else none }}",
+              "currentOnCalls": "{{ (actions.fetch_oncall.output.title | tojson) if actions.fetch_oncall else [] }}",
+              "activeOnCallSchedules": "{{ (actions.fetch_opsgenie_team.output.properties.onCallSchedules | tojson) if actions.fetch_opsgenie_team else [] }}"
+            },
+            "relations": {
+              "OpsGenieTeam": {
+                "value": "{{ data.id | string }}"
+              }
+            }
+          }
+        }
+      }
+    ],
+    "tags": [
+      {
+        "key": "default",
+        "value": "true"
+      },
+      {
+        "key": "owner",
+        "value": "rely"
+      }
+    ]
+  },
+  {
+    "id": "rely.opsgenie.v1.incident-to-incident",
+    "title": "OpsGenieIncident Incident to a Generic Incident",
+    "description": "This automation creates a generic incident from an Opsgenie incident",
+    "isActive": true,
+    "order": 0,
+    "type": "automation",
+    "arguments": {
+      "sourceBlueprintId": "opsgenie.v1.incident",
+      "targetBlueprintId": "incident"
+    },
+    "secrets": {},
+    "triggers": [
+      {
+        "type": "onEvent",
+        "event": {
+          "resource": "entity",
+          "action": ["create", "update"]
+        },
+        "conditions": [
+          {
+            "field": "data.blueprintId",
+            "operator": "eq",
+            "value": "{{ arguments.sourceBlueprintId }}"
+          }
+        ]
+      }
+    ],
+    "actions": [
+      {
+        "type": "fetchEntitiesBySource",
+        "args": {
+          "targetBlueprintId": "service",
+          "sourceBlueprintId": "opsgenie.v1.service",
+          "entityIds": "{{ data.relations.impactedServices.value | tojson }}",
+          "stopFlowIfNotFound": false
+        },
+        "id": "fetch_services"
+      },
+      {
+        "type": "fetchEntitiesBySource",
+        "args": {
+          "targetBlueprintId": "team",
+          "sourceBlueprintId": "opsgenie.v1.team",
+          "entityIds": "{{ data.relations.responders.value | tojson }}",
+          "stopFlowIfNotFound": false
+        },
+        "id": "fetch_teams"
+      },
+      {
+        "type": "upsertResource",
+        "args": {
+          "resourceType": "entity",
+          "createSuggestion": false,
+          "data": {
+            "id": "{{ data.id | string }}.{{ arguments.targetBlueprintId }}",
+            "title": "{{ data.title }}",
+            "description": "{{ data.description }}",
+            "blueprintId": "{{ arguments.targetBlueprintId }}",
+            "properties": {
+                "source": "OpsGenie",
+                "link": "{{ data.properties.webUrl if data.properties.webUrl else none }}",
+                "status": "{{ data.properties.status if data.properties.status else none }}",
+                "severity": "{{ data.properties.priority if data.properties.priority else none }}",
+                "createdAt": "{{ data.properties.createdAt if data.properties.createdAt else none }}",
+                "updatedAt": "{{ data.properties.updatedAt if data.properties.updatedAt else none }}"
+
+            },
+            "relations": {
+              "OpsGenieIncident": {
+                "value": "{{ data.id | string }}"
+              },
+              "impactedServices": {
+                "value": "{{ actions.fetch_services.output.ids | tojson }}"
+              },
+              "responders": {
+                "value": "{{ actions.fetch_teams.output.ids | tojson }}"
+              }
+             }
+          }
+        }
+      }
+    ],
+    "tags": [
+      {
+        "key": "default",
+        "value": "true"
+      },
+      {
+        "key": "owner",
+        "value": "rely"
+      }
+    ]
+  }
+]

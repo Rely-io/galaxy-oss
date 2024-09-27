@@ -1,0 +1,23 @@
+rely:
+  token: "{{ env('RELY_API_TOKEN') }}"
+  url: "{{ env('RELY_API_URL') }}"
+integration:
+  # The identifier of this integration instance.
+  id: "{{ env('RELY_INTEGRATION_ID') }}"
+  # The type of the integration.
+  type: "aws"
+# The execution type of the integration.
+  executionType: "{{ env('RELY_INTEGRATION_EXECUTION_TYPE') | default('cronjob', true)  }}"
+  scheduledInterval: 60
+  defaultModelMappings:
+    aws.v1.organizations_account: "cloud_provider_account"
+    aws.v1.ec2_instance: "cloud_resource"
+    aws.v1.eks_cluster: "cloud_resource"
+    aws.v1.lambda_function: "cloud_resource"
+    aws.v1.rds_db_instance: "cloud_resource"
+    aws.v1.s3_bucket: "cloud_resource"
+  properties:
+    accountId: "{{ env('RELY_AWS_ACCOUNT_ID') }}"
+    accessKey:
+      AccessKeyId: "{{ env('RELY_AWS_ACCESS_KEY_ID') }}"
+      SecretAccessKey: "{{ env('RELY_AWS_ACCESS_KEY_SECRET') }}"

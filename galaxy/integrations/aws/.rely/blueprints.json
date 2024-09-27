@@ -1,0 +1,580 @@
+[
+   {
+      "id": "aws.v1.region",
+      "title": "AWS Region",
+      "description": "Blueprint defining an AWS Region",
+      "icon": "aws",
+      "schemaProperties": {
+         "type": "object",
+         "properties": {
+            "optInStatus": {
+               "type": "string",
+               "title": "Opt In Status",
+               "description": "Indicates whether the AWS region is opted in."
+            },
+            "servicePage": {
+               "type": "string",
+               "format": "url",
+               "title": "Service Page",
+               "description": "URL to the AWS region's service page."
+            }
+         }
+      }
+   },
+   {
+      "id": "aws.v1.organizations_account",
+      "title": "AWS Account",
+      "description": "Blueprint defining an AWS Account",
+      "icon": "aws",
+      "schemaProperties": {
+         "type": "object",
+         "properties": {
+            "status": {
+               "type": "string",
+               "title": "Status",
+               "description": "Current status of the AWS account."
+            },
+            "joinedAt": {
+               "type": "string",
+               "title": "Joined At",
+               "format": "date-time",
+               "description": "Timestamp when the AWS account was created."
+            },
+            "email": {
+               "type": "string",
+               "title": "Account Email",
+               "description": "Email address of the AWS account root user."
+            },
+            "tags": {
+               "type": "object",
+               "title": "Tags",
+               "additionalProperties": true,
+               "description": "Custom tags associated with the AWS account."
+            },
+            "arn": {
+               "type": "string",
+               "title": "ARN",
+               "description": "Amazon Resource Name (ARN) of the AWS account."
+            }
+         }
+      }
+   },
+   {
+      "id": "aws.v1.eks_cluster",
+      "title": "AWS EKS Cluster",
+      "description": "Blueprint defining an Amazon EKS cluster",
+      "icon": "aws",
+      "schemaProperties": {
+         "type": "object",
+         "properties": {
+            "arn": {
+               "type": "string",
+               "title": "ARN",
+               "description": "Amazon Resource Name (ARN) of the EKS cluster."
+            },
+            "tags": {
+               "type": "object",
+               "title": "Tags",
+               "additionalProperties": true,
+               "description": "Custom tags associated with the EKS cluster."
+            },
+            "managementPageUrl": {
+               "type": "string",
+               "format": "url",
+               "title": "Management Page URL",
+               "description": "URL to the management page of the EKS cluster."
+            },
+            "dashboardPageUrl": {
+               "type": "string",
+               "format": "url",
+               "title": "Dashboard Page URL",
+               "description": "URL to the EKS cluster dashboard."
+            },
+            "version": {
+               "type": "string",
+               "title": "Version",
+               "description": "Kubernetes version running on the EKS cluster."
+            },
+            "roleArn": {
+               "type": "string",
+               "title": "Role ARN",
+               "description": "ARN of the IAM role associated with the EKS cluster."
+            },
+            "clusterSecurityGroupId": {
+               "type": "string",
+               "title": "Security Group ID",
+               "description": "ID of the security group associated with the EKS cluster."
+            }
+         }
+      },
+      "relations": {
+         "account": {
+            "value": "aws.v1.organizations_account",
+            "title": "Account",
+            "description": "The AWS account this EKS cluster belongs to."
+         },
+         "region": {
+            "value": "aws.v1.region",
+            "title": "Region",
+            "description": "Geographical region where the EKS cluster is hosted."
+         }
+      }
+   },
+   {
+      "id": "aws.v1.lambda_function",
+      "title": "AWS Lambda Function",
+      "description": "Blueprint defining an AWS Lambda function",
+      "icon": "aws",
+      "schemaProperties": {
+         "type": "object",
+         "properties": {
+            "arn": {
+               "type": "string",
+               "title": "ARN",
+               "description": "Amazon Resource Name (ARN) of the Lambda function."
+            },
+            "tags": {
+               "type": "object",
+               "title": "Tags",
+               "additionalProperties": true,
+               "description": "Custom tags associated with the Lambda function."
+            },
+            "managementPageUrl": {
+               "type": "string",
+               "format": "url",
+               "title": "Management Page URL",
+               "description": "URL to the management page of the Lambda function."
+            },
+            "dashboardPageUrl": {
+               "type": "string",
+               "format": "url",
+               "title": "Dashboard Page URL",
+               "description": "URL to the Lambda function dashboard."
+            },
+            "memorySize": {
+               "type": "number",
+               "title": "Memory Size",
+               "description": "Amount of memory allocated to the Lambda function (in MB)."
+            },
+            "ephemeralStorageSize": {
+               "type": "number",
+               "title": "Ephemeral Storage Size",
+               "description": "Size of the ephemeral storage allocated to the Lambda function (in GB)."
+            },
+            "timeout": {
+               "type": "number",
+               "title": "Timeout",
+               "description": "Maximum duration the Lambda function can run before being terminated (in seconds)."
+            },
+            "runtime": {
+               "type": "string",
+               "title": "Runtime",
+               "description": "Runtime environment for the Lambda function."
+            },
+            "packageType": {
+               "type": "string",
+               "enum": [
+                  "Image",
+                  "Zip"
+               ],
+               "title": "Package Type",
+               "description": "Type of deployment package for the Lambda function."
+            },
+            "architectures": {
+               "type": "array",
+               "items": {
+                  "type": "string",
+                  "enum": [
+                     "x86_64",
+                     "arm64"
+                  ]
+               },
+               "title": "Architectures",
+               "description": "Supported architectures for the Lambda function."
+            },
+            "iamRole": {
+               "type": "string",
+               "format": "url",
+               "title": "IAM Role",
+               "description": "IAM role associated with the Lambda function."
+            }
+         }
+      },
+      "relations": {
+         "account": {
+            "value": "aws.v1.organizations_account",
+            "title": "Account",
+            "description": "The AWS account this Lambda function belongs to."
+         },
+         "region": {
+            "value": "aws.v1.region",
+            "title": "Region",
+            "description": "Geographical region where the Lambda function is hosted."
+         }
+      }
+   },
+   {
+      "id": "aws.v1.ec2_instance",
+      "title": "AWS EC2 Instance",
+      "description": "Blueprint defining an Amazon EC2 instance",
+      "icon": "aws",
+      "schemaProperties": {
+         "type": "object",
+         "properties": {
+            "tags": {
+               "type": "object",
+               "title": "Tags",
+               "additionalProperties": true,
+               "description": "Custom tags associated with the EC2 instance."
+            },
+            "managementPageUrl": {
+               "type": "string",
+               "format": "url",
+               "title": "Management Page URL",
+               "description": "URL to the management page of the EC2 instance."
+            },
+            "dashboardPageUrl": {
+               "type": "string",
+               "format": "url",
+               "title": "Dashboard Page URL",
+               "description": "URL to the EC2 instance dashboard."
+            },
+            "state": {
+               "type": "string",
+               "title": "State",
+               "description": "Current state of the EC2 instance.",
+               "enum": [
+                  "pending",
+                  "running",
+                  "shutting-down",
+                  "terminated",
+                  "stopping",
+                  "stopped"
+               ]
+            },
+            "instanceId": {
+               "type": "string",
+               "title": "Instance ID",
+               "description": "Unique identifier for the EC2 instance."
+            },
+            "instanceType": {
+               "type": "string",
+               "title": "Instance Type",
+               "description": "Type of the EC2 instance machine."
+            },
+            "imageId": {
+               "type": "string",
+               "title": "Image ID",
+               "description": "ID of the AMI used to launch the EC2 instance."
+            },
+            "monitoringEnabled": {
+               "type": "boolean",
+               "title": "Monitoring Enabled?",
+               "description": "Indicates whether monitoring is enabled for the EC2 instance."
+            },
+            "architecture": {
+               "type": "string",
+               "title": "Architecture",
+               "description": "Architecture of the EC2 instance.",
+               "enum": [
+                  "i386",
+                  "x86_64",
+                  "arm64",
+                  "x86_64_mac",
+                  "arm64_mac"
+               ]
+            },
+            "availabilityZone": {
+               "type": "string",
+               "title": "Availability Zone",
+               "description": "Availability zone where the EC2 instance is located."
+            },
+            "launchedAt": {
+               "type": "string",
+               "title": "Launched At",
+               "description": "Timestamp when the EC2 instance was launched."
+            },
+            "clientToken": {
+               "type": "string",
+               "title": "Client Token",
+               "description": "Token used to ensure idempotency of requests."
+            },
+            "platformDetails": {
+               "type": "string",
+               "title": "Platform Type",
+               "description": "Details about the platform or OS running on the EC2 instance."
+            }
+         }
+      },
+      "relations": {
+         "account": {
+            "value": "aws.v1.organizations_account",
+            "title": "Account",
+            "description": "The AWS account this EC2 instance belongs to."
+         },
+         "region": {
+            "value": "aws.v1.region",
+            "title": "Region",
+            "description": "Geographical region where the EC2 instance is hosted."
+         }
+      }
+   },
+   {
+      "id": "aws.v1.s3_bucket",
+      "title": "AWS S3 Bucket",
+      "description": "Blueprint defining an S3 bucket",
+      "icon": "aws",
+      "schemaProperties": {
+         "type": "object",
+         "properties": {
+            "arn": {
+               "type": "string",
+               "title": "ARN",
+               "description": "Amazon Resource Name (ARN) of the S3 bucket."
+            },
+            "tags": {
+               "type": "object",
+               "title": "Tags",
+               "additionalProperties": true,
+               "description": "Custom tags associated with the S3 bucket."
+            },
+            "dashboardPageUrl": {
+               "type": "string",
+               "format": "url",
+               "title": "Dashboard Page URL",
+               "description": "URL to the S3 bucket dashboard."
+            },
+            "managementPageUrl": {
+               "type": "string",
+               "format": "url",
+               "title": "Management Page URL",
+               "description": "URL to the management page of the S3 bucket."
+            },
+            "versioningEnabled": {
+               "type": "boolean",
+               "title": "Versioning Enabled?",
+               "description": "Indicates whether versioning is enabled for the S3 bucket."
+            },
+            "publicAccessConfig": {
+               "type": "object",
+               "title": "Public Access",
+               "description": "Public access configuration for the S3 bucket.",
+               "additionalProperties": true
+            },
+            "regionalDomainName": {
+               "type": "string",
+               "format": "url",
+               "title": "Regional Domain Name",
+               "description": "Regional domain name for the S3 bucket."
+            },
+            "domainName": {
+               "type": "string",
+               "format": "url",
+               "title": "Domain Name",
+               "description": "Domain name for the S3 bucket."
+            },
+            "websiteUrl": {
+               "type": "string",
+               "format": "url",
+               "title": "Website URL",
+               "description": "Website URL associated with the S3 bucket."
+            }
+         }
+      },
+      "relations": {
+         "account": {
+            "value": "aws.v1.organizations_account",
+            "title": "Account",
+            "description": "The AWS account this S3 bucket belongs to."
+         },
+         "region": {
+            "value": "aws.v1.region",
+            "title": "Region",
+            "description": "Geographical region where the S3 bucket is hosted."
+         }
+      }
+   },
+   {
+      "id": "aws.v1.rds_db_instance",
+      "title": "AWS RDS Instance",
+      "description": "Blueprint defining an Amazon RDS instance",
+      "icon": "aws",
+      "schemaProperties": {
+         "type": "object",
+         "properties": {
+            "engine": {
+               "type": "string",
+               "title": "Engine",
+               "description": "Database engine used by the RDS instance."
+            },
+            "engineVersion": {
+               "type": "string",
+               "title": "Engine Version",
+               "description": "Version of the database engine used by the RDS instance."
+            },
+            "storageType": {
+               "type": "string",
+               "title": "Storage Type",
+               "description": "Type of storage associated with the RDS instance.",
+               "enum": [
+                  "gp2",
+                  "gp3",
+                  "io1",
+                  "standard",
+                  "aurora"
+               ]
+            },
+            "dbInstanceClass": {
+               "type": "string",
+               "title": "DB Instance Class",
+               "description": "Instance class for the RDS database."
+            },
+            "availabilityZone": {
+               "type": "string",
+               "title": "Availability Zone",
+               "description": "Availability zone where the RDS instance is located."
+            },
+            "dbParameterGroup": {
+               "type": "string",
+               "title": "DB Parameter Group",
+               "description": "Name of the parameter group associated with the RDS instance."
+            },
+            "optionGroup": {
+               "type": "string",
+               "title": "Option Group",
+               "description": "Name of the option group associated with the RDS instance."
+            },
+            "dbSubnetGroup": {
+               "type": "string",
+               "title": "DB Subnet Group",
+               "description": "Name of the subnet group where the RDS instance is deployed."
+            },
+            "masterUsername": {
+               "type": "string",
+               "title": "Master Username",
+               "description": "Master username for the RDS instance."
+            },
+            "allocatedStorage": {
+               "type": "string",
+               "title": "Allocated Storage",
+               "description": "Size of the allocated storage for the RDS instance."
+            },
+            "maxAllocatedStorage": {
+               "type": "number",
+               "title": "Max Allocated Storage",
+               "description": "Maximum size of storage that can be allocated for the RDS instance."
+            },
+            "backupRetentionPeriod": {
+               "type": "number",
+               "title": "Backup Retention Period",
+               "description": "Number of days backups are retained for the RDS instance."
+            },
+            "monitoringInterval": {
+               "type": "number",
+               "title": "Monitoring Interval",
+               "enum": [
+                  0,
+                  1,
+                  5,
+                  10,
+                  15,
+                  30,
+                  60
+               ],
+               "description": "Interval in seconds between monitoring data points."
+            },
+            "multiAZ": {
+               "type": "boolean",
+               "title": "Multi AZ",
+               "description": "Indicates if the RDS instance is part of a Multi-AZ deployment."
+            },
+            "storageEncrypted": {
+               "type": "boolean",
+               "title": "Storage Encrypted",
+               "description": "Indicates if the RDS instance storage is encrypted."
+            },
+            "enablePerformanceInsights": {
+               "type": "boolean",
+               "title": "Enable Performance Insights",
+               "description": "Indicates if Performance Insights is enabled for the RDS instance."
+            },
+            "autoMinorVersionUpgrade": {
+               "type": "boolean",
+               "title": "Auto Minor Version Upgrade",
+               "description": "Indicates if the RDS instance automatically upgrades to new minor database engine versions."
+            },
+            "deletionProtection": {
+               "type": "boolean",
+               "title": "Deletion Protection",
+               "description": "Indicates if deletion protection is enabled for the RDS instance."
+            },
+            "publiclyAccessible": {
+               "type": "boolean",
+               "title": "Publicly Accessible",
+               "description": "Indicates if the RDS instance is publicly accessible."
+            },
+            "certificateValidTill": {
+               "type": "string",
+               "title": "Certificate Valid Till",
+               "description": "Date until which the RDS instance certificate is valid.",
+               "format": "date-time"
+            },
+            "certificateCA": {
+               "type": "string",
+               "title": "Certificate CA",
+               "description": "Certificate Authority of the RDS instance certificate."
+            },
+            "preferredBackupWindow": {
+               "type": "string",
+               "title": "Preferred Backup Window",
+               "description": "Time window during which backups are preferred for the RDS instance."
+            },
+            "preferredMaintenanceWindow": {
+               "type": "string",
+               "title": "Preferred Maintenance Window",
+               "description": "Time window during which maintenance is preferred for the RDS instance."
+            },
+            "endpoint": {
+               "type": "string",
+               "title": "Endpoint",
+               "description": "Endpoint address of the RDS instance."
+            },
+            "tags": {
+               "type": "object",
+               "title": "Tags",
+               "additionalProperties": true,
+               "description": "Custom tags associated with the RDS instance."
+            },
+            "arn": {
+               "type": "string",
+               "title": "ARN",
+               "description": "Amazon Resource Name (ARN) of the RDS instance."
+            },
+            "managementPageUrl": {
+               "type": "string",
+               "format": "url",
+               "title": "Management Page URL",
+               "description": "URL to the management page of the RDS instance."
+            },
+            "dashboardPageUrl": {
+               "type": "string",
+               "format": "url",
+               "title": "Dashboard Page URL",
+               "description": "URL to the RDS instance dashboard."
+            }
+         }
+      },
+      "relations": {
+         "account": {
+            "value": "aws.v1.organizations_account",
+            "title": "Account",
+            "description": "The AWS account this RDS instance belongs to."
+         },
+         "region": {
+            "value": "aws.v1.region",
+            "title": "Region",
+            "description": "Geographical region where the RDS instance is hosted."
+         }
+      }
+   }
+]

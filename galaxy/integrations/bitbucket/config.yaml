@@ -1,0 +1,21 @@
+rely:
+  token: "{{ env('RELY_API_TOKEN') }}"
+  url: "{{ env('RELY_API_URL') }}"
+integration:
+  # The identifier of this integration instance.
+  id: "{{ env('RELY_INTEGRATION_ID') }}"
+  # The type of the integration.
+  type: "bitbucket"
+# The execution type of the integration.
+  executionType: "{{ env('RELY_INTEGRATION_EXECUTION_TYPE') | default('cronjob', true)  }}"
+  scheduledInterval: 60
+  defaultModelMappings:
+    bitbucket.v1.repository: "service"
+    bitbucket.v1.pullrequest: "pull_request"
+    bitbucket.v1.environment: "running_service_instance"
+    bitbucket.v1.deployment: "deployment"
+    bitbucket.v1.pipeline: "deployment"
+  properties:
+    daysOfHistory: "{{ env('DAYS_OF_HISTORY') | default(30, true) | int }}"
+    clientId: "{{ env('RELY_BITBUCKET_APP_CLIENT_ID')  }}"
+    clientSecret: "{{ env('RELY_BITBUCKET_APP_CLIENT_SECRET')  }}"

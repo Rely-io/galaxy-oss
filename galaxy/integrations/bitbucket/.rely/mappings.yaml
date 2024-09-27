@@ -1,0 +1,171 @@
+resources:
+- kind: workspace
+  mappings:
+    id: .uuid
+    title: .name
+    blueprintId: '"bitbucket.v1.workspace"'
+    properties:
+      slug: .slug
+      is_private: .is_private
+      is_privacy_enforced: .is_privacy_enforced
+      created_on: .created_on
+      updated_on: .updated_on
+      links: '[.links[].href | select(. | test("^https://(?!api).+") and (contains("avatar") | not))]'
+      apiLinks: '[.links[].href | select(. | test("^https://api\\.bitbucket\\.org/.+"))]'
+
+- kind: user
+  mappings:
+    id: .user.uuid
+    title: .user.display_name
+    blueprintId: '"bitbucket.v1.user"'
+    properties:
+      account_id: .user.account_id
+      nickname: .user.nickname
+      workspace_permission: .permission
+      apiLinks: '[.links[].href | select(. | test("^https://api\\.bitbucket\\.org/.+"))]'
+    relations:
+      workspace:
+          value: .workspace.uuid
+
+- kind: project
+  mappings:
+    id: .uuid
+    title: .name
+    blueprintId: '"bitbucket.v1.project"'
+    description: .description
+    properties:
+      key: .key
+      is_private: .is_private
+      has_publicly_visible_repos: .has_publicly_visible_repos
+      created_on: .created_on
+      updated_on: .updated_on
+      links: '[.links[].href | select(. | test("^https://(?!api).+") and (contains("avatar") | not))]'
+      apiLinks: '[.links[].href | select(. | test("^https://api\\.bitbucket\\.org/.+"))]'
+    relations:
+      workspace:
+          value: .workspace.uuid
+
+- kind: repository
+  mappings:
+    id: .uuid
+    title: .name
+    blueprintId: '"bitbucket.v1.repository"'
+    description: .description
+    properties:
+      slug: .slug
+      full_name: .full_name
+      is_private: .is_private
+      created_on: .created_on
+      updated_on: .updated_on
+      webUrl: .links.html.href
+      apiLinks: |
+        [
+          (.links | .. | objects | select(has("href") and (.href | test("^https://api\\.bitbucket\\.org/.+"))) | .href)
+        ]
+      fork_policy: .fork_policy
+      size: .size
+      language: .language
+      mainbranch: .mainbranch.name
+      default_merge_strategy: .override_settings.default_merge_strategy
+      readme: .readme_content
+    relations:
+      workspace:
+          value: .workspace.uuid
+      project:
+          value: .project.uuid
+
+- kind: pull_request
+  mappings:
+    id: .id
+    title: .title
+    blueprintId: '"bitbucket.v1.pullrequest"'
+    description: .description
+    properties:
+      state: .state
+      summary: .summary.html
+      merge_commit: .merge_commit.hash
+      task_count: .task_count
+      comment_count: .comment_count
+      close_source_branch: .close_source_branch
+      reason: .reason
+      created_on: .created_on
+      updated_on: .updated_on
+      sourceBranch: .source.branch.name
+      sourceCommit: .source.commit.hash
+      destinationBranch: .destination.branch.name
+      destinationCommit: .destination.commit.hash
+      webUrl: '.context.repositoryUrl + "/pull-requests/"  + (.id | tostring)'
+      apiLinks: '[.links[].href | select(. | test("^https://api\\.bitbucket\\.org/.+"))]'
+    relations:
+      author:
+        value: .author.uuid
+      closedBy:
+        value: .closed_by.uuid
+      repository:
+        value: .context.repositoryId
+
+- kind: pipeline
+  mappings:
+    id: .uuid
+    title: '(.repository.name + " - " + .target.ref_name + " - " + .trigger.name + " - Build #" + (.build_number | tostring))'
+    blueprintId: '"bitbucket.v1.pipeline"'
+    properties:
+      state: .state.name
+      status: .state.result.name
+      build_number: .build_number
+      commit: .target.commit.hash
+      branch: 'if .target.ref_type == "branch" then .target.ref_name else null end'
+      trigger_type: .trigger.name
+      duration_in_seconds: .duration_in_seconds
+      build_seconds_used: .build_seconds_used
+      first_successful: .first_successful
+      expired: .expired
+      has_variables: .has_variables
+      created_on: .created_on
+      completed_on: .completed_on
+      successful: 'if .state.result.name == "SUCCESSFUL" then true else false end'
+      webUrl: '.context.repositoryUrl + "/pipelines/results/"  + (.build_number | tostring)'
+      apiLinks: '[.links[].href | select(. | test("^https://api\\.bitbucket\\.org/.+"))]'
+    relations:
+        creator:
+          value: .creator.uuid
+        repository:
+          value: .repository.uuid
+
+- kind: environment
+  mappings:
+    id: .uuid
+    title: .name
+    blueprintId: '"bitbucket.v1.environment"'
+    properties:
+      slug: .slug
+      type: .environment_type.name
+      rank: .rank
+      category: .category.name
+      webUrl: '.context.repositoryUrl + "/deployments/environments/"  + (.uuid | @uri)'
+    relations:
+      repository:
+          value: .context.repositoryId
+
+- kind: deployment
+  mappings:
+    id: .uuid
+    title: .deployable.name
+    blueprintId: '"bitbucket.v1.deployment"'
+    properties:
+      state: .state.name
+      status: .state.status.name
+      deployment_type: .state.name
+      created_on: .state.started_on
+      updated_on: .last_update_time
+      closed_on: .state.completed_on
+      commit: .deployable.commit.hash
+      number: .number
+      webUrl: '.context.repositoryUrl + "/deployments/"  + (.uuid | @uri)'
+    relations:
+      pipeline:
+        value: .deployable.pipeline.uuid
+      environment:
+        value: .environment.uuid
+      repository:
+        value: .context.repositoryId

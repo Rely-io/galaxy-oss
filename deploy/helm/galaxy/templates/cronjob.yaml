@@ -1,0 +1,36 @@
+# templates/cronjob.yaml
+
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ .Release.Name }}-cronjob
+spec:
+  schedule: "{{ .Values.schedule }}"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: cronjob
+            image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+            env:
+{{- range .Values.env }}
+{{- if .secret }}
+            - name: {{ .name }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-secret
+                  key: {{ .name }}
+{{- else }}
+            - name: {{ .name }}
+              value: {{ .value | quote }}
+{{- end }}
+{{- end }}
+            volumeMounts:
+            - name: config-volume
+              mountPath: /config
+          volumes:
+          - name: config-volume
+            configMap:
+              name: {{ .Release.Name }}-config
+          restartPolicy: OnFailure

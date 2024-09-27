@@ -1,0 +1,36 @@
+[
+  {
+    "id": "{{cookiecutter.integration_name}}.v1.entity",
+    "title": "{{cookiecutter.integration_name}} example blueprint",
+    "description": "{{cookiecutter.integration_name}}  Blueprint defining a example entity",
+    "icon": "icon",
+    "schemaProperties": {
+      "title": "blueprint properties",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "number",
+          "title": "title",
+          "description": "description"
+        },
+        "name": {
+          "type": "string",
+          "title": "title",
+          "description": "description"
+        },
+        "createAt": {
+          "type": "string",
+          "format": "date-time",
+          "title": "title",
+          "description": "description"
+        },
+        "url": {
+          "type": "string",
+          "title": "tile",
+          "description": "description",
+          "format": "url"
+        }
+      }
+    }
+  }
+]

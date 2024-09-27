@@ -1,0 +1,17 @@
+rely:
+  token: "{{ env('RELY_API_TOKEN') }}"
+  url: "{{ env('RELY_API_URL') }}"
+integration:
+  # The identifier of this integration instance.
+  id: "{{ env('RELY_INTEGRATION_ID') }}"
+  # The type of the integration.
+  type: "opsgenie"
+# The execution type of the integration.
+  executionType: "{{ env('RELY_INTEGRATION_EXECUTION_TYPE') | default('cronjob', true)  }}"
+  scheduledInterval: 60
+  defaultModelMappings:
+    opsgenie.v1.team: "team"
+    opsgenie.v1.service: "service"
+    opsgenie.v1.incident: "incident"
+  properties:
+    daysOfHistory: "{{ env('DAYS_OF_HISTORY') | default(30, true) | int }}"

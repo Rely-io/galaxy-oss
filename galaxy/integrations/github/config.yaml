@@ -1,0 +1,23 @@
+rely:
+  token: "{{ env('RELY_API_TOKEN') }}"
+  url: "{{ env('RELY_API_URL') }}"
+integration:
+  # The identifier of this integration instance.
+  id: "{{ env('RELY_INTEGRATION_ID') }}"
+  # The type of the integration.
+  type: "github"
+# The execution type of the integration.
+  executionType: "{{ env('RELY_INTEGRATION_EXECUTION_TYPE') | default('cronjob', true)  }}"
+  scheduledInterval: 60
+  defaultModelMappings:
+    "github.v1.repository": "service"
+    "github.v1.team": "team"
+    "github.v1.pullrequest": "pull_request"
+    "github.v1.issue": "issue"
+    "github.v1.workflowrun": "deployment"
+  properties:
+    appId: "{{ env('RELY_INTEGRATION_GITHUB_APP_ID') }}"
+    appPrivateKey: "{{ env('RELY_INTEGRATION_GITHUB_APP_PRIVATE_KEY') }}"
+    installationId: "{{ env('RELY_INTEGRATION_GITHUB_INSTALLATION_ID') }}"
+    url: "{{ env('RELY_INTEGRATION_GITHUB_URL') | default('https://api.github.com', true)  }}"
+    daysOfHistory: 90

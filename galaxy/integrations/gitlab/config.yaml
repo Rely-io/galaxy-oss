@@ -1,0 +1,24 @@
+rely:
+  token: "{{ env('RELY_API_TOKEN') }}"
+  url: "{{ env('RELY_API_URL') }}"
+integration:
+  # The identifier of this integration instance.
+  id: "{{ env('RELY_INTEGRATION_ID') }}"
+  # The type of the integration.
+  type: "gitlab"
+# The execution type of the integration.
+  executionType: "{{ env('RELY_INTEGRATION_EXECUTION_TYPE') | default('cronjob', true)  }}"
+  scheduledInterval: 60
+  defaultModelMappings:
+    gitlab.v1.group: "team"
+    gitlab.v1.repository: "service"
+    gitlab.v1.mergerequest: "pull_request"
+    gitlab.v1.environment: "running_service_instance"
+    gitlab.v1.deployment: "deployment"
+    gitlab.v1.pipeline: "deployment"
+    gitlab.v1.issue: "issue"
+  properties:
+    daysOfHistory: "{{ env('DAYS_OF_HISTORY') | default(30, true) | int }}"
+    organization: "{{ env('RELY_INTEGRATION_GITLAB_ORGANIZATION') }}"
+    secretToken: "{{ env('RELY_INTEGRATION_GITLAB_SECRET_TOKEN') }}"
+    url: "{{ env('RELY_INTEGRATION_GITLAB_URL') | default('https://gitlab.com/api', true)  }}"

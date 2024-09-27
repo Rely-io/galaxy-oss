@@ -1,0 +1,454 @@
+[
+  {
+    "id": "rely.github.v1.repository-to-service",
+    "title": "GitHub Repository to Service",
+    "description": "This automation creates a service from a GitHub repository",
+    "isActive": true,
+    "type": "automation",
+    "arguments": {
+      "sourceBlueprintId": "github.v1.repository",
+      "targetBlueprintId": "service"
+    },
+    "triggers": [
+      {
+        "type": "onEvent",
+        "event": {
+          "resource": "entity",
+          "action": ["create", "update", "addedAsSource"]
+        },
+        "conditions": [
+          {
+            "field": "data.blueprintId",
+            "operator": "eq",
+            "value": "{{ arguments.sourceBlueprintId }}"
+          }
+        ]
+      }
+    ],
+    "actions": [
+      {
+        "type": "upsertResource",
+        "args": {
+          "resourceType": "entity",
+          "createSuggestion": true,
+          "data": {
+            "id": "{{ data.id |  string }}.{{ arguments.targetBlueprintId }}",
+            "title": "{{ data.title }}",
+            "description": "{{ data.description }}",
+            "blueprintId": "{{ arguments.targetBlueprintId }}",
+            "properties": {
+              "readme": "{{ data.properties.readme if data.properties.readme else none }}",
+              "repoLink": "{{ data.properties.link if data.properties.link else none }}",
+              "language": "{{ data.properties.primaryLanguage if data.properties.primaryLanguage else none }}",
+              "languages": "{{ (data.properties.languages | tojson) if data.properties.languages else none }}",
+              "mainBranch": "{{ data.properties.defaultBranch if data.properties.defaultBranch else none }}"
+            },
+            "relations": {
+              "GithubRepository": {
+                "value": "{{ data.id | string }}"
+              }
+            }
+          }
+        },
+        "conditions": [
+            {
+                "field": "event.action",
+                "operator": "neq",
+                "value": "addedAsSource"
+            }
+        ]
+      },
+      {
+                "id": "trigger_github_service_chain_automation",
+                "type": "triggerAutomations",
+                "title": "Trigger Automations for Github Post Service Import",
+                "args": {
+                    "automationIds": ["rely.github.v1.pull-request-to-pull-request", "rely.github.v1.workflow-run-to-deployment-in-prod-based-on-branch", "rely.github.v1.workflow-run-to-deployment-in-dev-based-on-branch"],
+                    "entities": {
+                        "conditions": [
+                            {
+                                "field": "blueprintId",
+                                "operator": "in",
+                                "value": "github.v1.pullrequest,github.v1.workflowrun"
+                            },
+                            {
+                                "field": "relations/repository/value",
+                                "operator": "eq",
+                                "value": "{{ data.id }}"
+                            }
+                        ]
+                    }
+                },
+                "conditions": [
+                    {
+                        "field": "event.action",
+                        "operator": "eq",
+                        "value": "addedAsSource"
+                    }
+                ]
+            }
+    ],
+    "tags": [
+        {
+          "key": "default",
+          "value": "true"
+        },
+        {
+          "key": "owner",
+          "value": "rely"
+        }
+      ]
+  },
+  {
+  "id": "rely.github.v1.team-to-team",
+  "title": "Github Team to Team",
+  "description": "This automation creates a generic team from a Github team",
+  "isActive": true,
+  "order": 0,
+  "type": "automation",
+  "arguments": {
+    "sourceBlueprintId": "github.v1.team",
+    "targetBlueprintId": "team"
+  },
+  "secrets": {},
+  "triggers": [
+    {
+      "type": "onEvent",
+      "conditions": [
+        {
+          "field": "data.blueprintId",
+          "operator": "eq",
+          "value": "{{ arguments.sourceBlueprintId }}"
+        }
+      ],
+      "event": {
+        "resource": "entity",
+        "action": ["create", "update"]
+      }
+    }
+  ],
+  "actions": [
+    {
+      "type": "upsertResource",
+      "args": {
+        "resourceType": "entity",
+        "createSuggestion": true,
+        "data": {
+          "id": "{{ data.id |  string }}.{{ arguments.targetBlueprintId }}",
+          "title": "{{ data.title }}",
+          "description": "{{ data.description }}",
+          "blueprintId": "{{ arguments.targetBlueprintId }}",
+          "properties": {
+              "links": "{{ [data.properties.url] | tojson }}"
+          },
+          "relations": {
+            "GithubTeam": {
+              "value": "{{ data.id | string }}"
+            }
+          }
+        }
+      }
+    }
+  ],
+  "tags": [
+      {
+        "key": "default",
+        "value": "true"
+      },
+      {
+        "key": "owner",
+        "value": "rely"
+      }
+    ]
+  },
+  {
+    "id": "rely.github.v1.pull-request-to-pull-request",
+    "title": "Github Pull Request to Generic Pull Request",
+    "description": "This automation creates a Generic Pull Request from a Github PR",
+    "isActive": true,
+    "order": 0,
+    "type": "automation",
+    "arguments": {
+      "sourceBlueprintId": "github.v1.pullrequest",
+      "targetBlueprintId": "pull_request"
+    },
+    "secrets": {},
+    "triggers": [
+      {
+        "type": "onEvent",
+        "conditions": [
+          {
+            "field": "data.blueprintId",
+            "operator": "eq",
+            "value": "{{ arguments.sourceBlueprintId }}"
+          }
+        ],
+        "event": {
+          "resource": "entity",
+          "action": ["create", "update"]
+        }
+      }
+    ],
+    "actions": [
+      {
+        "type": "fetchResource",
+        "args": {
+          "conditions": [
+            {
+              "field": "blueprintId",
+              "value": "service",
+              "operator": "eq"
+            },
+            {
+              "field": "sources",
+              "value": "github.v1.repository.{{ data.relations.repository.value }}",
+              "operator": "contains"
+            }
+          ],
+          "resourceType": "entity",
+          "stopFlowIfNotFound": true
+        },
+        "id": "fetch_service"
+      },
+      {
+        "type": "upsertResource",
+        "args": {
+          "data": {
+            "id": "{{ data.id }}.{{ arguments.targetBlueprintId }}",
+            "title": "{{ data.title }}",
+            "description": "{{ data.description }}",
+            "blueprintId": "{{ arguments.targetBlueprintId }}",
+            "relations": {
+              "service": {
+                "value": "{{ actions.fetch_service.output.id  | string }}"
+              },
+              "GithubPullRequest": {
+                "value": "{{ data.id | string }}"
+              }
+            },
+            "properties": {
+              "link": "{{ data.properties.link if data.properties.link else none }}",
+              "status": "{{ data.properties.status if data.properties.status else none }}",
+              "summary": "{{ data.properties.summary if data.properties.summary else none }}",
+              "createdAt": "{{ data.properties.createdAt if data.properties.createdAt else none }}",
+              "updatedAt": "{{ data.properties.updatedAt if data.properties.updatedAt else none }}",
+              "closedAt": "{{ data.properties.closedAt if data.properties.closedAt else data.properties.mergedAt }}",
+              "createdBy": "{{ data.relations.creator.value }}",
+              "reviewers": "{{ data.relations.reviewers.value if data.relations.reviewers else [] }}"
+            }
+          },
+          "resourceType": "entity",
+          "createSuggestion": false
+        }
+      }
+    ],
+    "tags": [
+      {
+        "key": "default",
+        "value": "true"
+      },
+      {
+        "key": "owner",
+        "value": "rely"
+      }
+    ]
+  },
+  {
+    "id": "rely.github.v1.workflow-run-to-deployment-in-prod-based-on-branch",
+    "title": "Github Workflow Run to Deployment (Prod) based on branch nomenclature",
+    "description": "Create Deployment to Prod from workflow runs in 'release/%' branches",
+    "isActive": true,
+    "order": 0,
+    "type": "automation",
+    "arguments": {
+      "sourceBlueprintId": "github.v1.workflowrun",
+      "targetBlueprintId": "deployment"
+    },
+    "secrets": {},
+    "triggers": [
+      {
+        "type": "onEvent",
+        "conditions": [
+          {
+            "field": "data.blueprintId",
+            "operator": "eq",
+            "value": "{{ arguments.sourceBlueprintId }}"
+          },
+          {
+            "field": "data.properties.branch",
+            "operator": "contains",
+            "value": "release/"
+          }
+        ],
+        "event": {
+          "resource": "entity",
+          "action": ["create", "update"]
+        }
+      }
+    ],
+    "actions": [
+      {
+        "type": "fetchResource",
+        "args": {
+          "conditions": [
+            {
+              "field": "blueprintId",
+              "value": "service",
+              "operator": "eq"
+            },
+            {
+              "field": "sources",
+              "value": "github.v1.repository.{{ data.relations.repository.value }}",
+              "operator": "contains"
+            }
+          ],
+          "resourceType": "entity",
+          "stopFlowIfNotFound": true
+        },
+        "id": "fetch_service"
+      },
+      {
+        "type": "upsertResource",
+        "args": {
+          "data": {
+            "id": "{{ data.id }}.{{ arguments.targetBlueprintId }}",
+            "title": "{{ data.title }}",
+            "description": "{{ data.description }}",
+            "blueprintId": "{{ arguments.targetBlueprintId }}",
+            "relations": {
+              "service": {
+                "value": "{{ actions.fetch_service.output.id  | string }}"
+              },
+              "targetEnvironment": {
+                "value": "prod.environment"
+              },
+              "GithubWorkflowRun": {
+                "value": "{{ data.id | string }}"
+              }
+            },
+            "properties": {
+              "link": "{{ data.properties.link if data.properties.link else none }}",
+              "status": "{{ data.properties.status if data.properties.status else none }}",
+              "createdAt": "{{ data.properties.createdAt if data.properties.createdAt else none }}",
+              "updatedAt": "{{ data.properties.updatedAt if data.properties.updatedAt else none }}",
+              "sourceCommit": "{{ data.properties.commitSHA if data.properties.commitSHA else none }}",
+              "successful": "{{ data.properties.successful }}",
+              "triggeredBy": "{{ data.relations.triggeringActor.value }}"
+            }
+          },
+          "resourceType": "entity",
+          "createSuggestion": false
+        }
+      }
+    ],
+    "tags": [
+      {
+        "key": "default",
+        "value": "true"
+      },
+      {
+        "key": "owner",
+        "value": "rely"
+      }
+    ]
+  },
+  {
+    "id": "rely.github.v1.workflow-run-to-deployment-in-dev-based-on-branch",
+    "title": "Github Workflow Run to Deployment (Dev) based on branch nomenclature",
+    "description": "Create Deployment to Dev from workflow runs in 'main or master' branches",
+    "isActive": true,
+    "order": 0,
+    "type": "automation",
+    "arguments": {
+      "sourceBlueprintId": "github.v1.workflowrun",
+      "targetBlueprintId": "deployment"
+    },
+    "secrets": {},
+    "triggers": [
+      {
+        "type": "onEvent",
+        "conditions": [
+          {
+            "field": "data.blueprintId",
+            "operator": "eq",
+            "value": "{{ arguments.sourceBlueprintId }}"
+          },
+          {
+            "field": "data.properties.branch",
+            "operator": "in",
+            "value": "master,main"
+          }
+        ],
+        "event": {
+          "resource": "entity",
+          "action": ["create", "update"]
+        }
+      }
+    ],
+    "actions": [
+      {
+        "type": "fetchResource",
+        "args": {
+          "conditions": [
+            {
+              "field": "blueprintId",
+              "value": "service",
+              "operator": "eq"
+            },
+            {
+              "field": "sources",
+              "value": "github.v1.repository.{{ data.relations.repository.value }}",
+              "operator": "contains"
+            }
+          ],
+          "resourceType": "entity",
+          "stopFlowIfNotFound": true
+        },
+        "id": "fetch_service"
+      },
+      {
+        "type": "upsertResource",
+        "args": {
+          "data": {
+            "id": "{{ data.id }}.{{ arguments.targetBlueprintId }}",
+            "title": "{{ data.title }}",
+            "description": "{{ data.description }}",
+            "blueprintId": "{{ arguments.targetBlueprintId }}",
+            "relations": {
+              "service": {
+                "value": "{{ actions.fetch_service.output.id  | string }}"
+              },
+              "targetEnvironment": {
+                "value": "dev.environment"
+              },
+              "GithubWorkflowRun": {
+                "value": "{{ data.id | string }}"
+              }
+            },
+            "properties": {
+              "link": "{{ data.properties.link if data.properties.link else none }}",
+              "status": "{{ data.properties.status if data.properties.status else none }}",
+              "createdAt": "{{ data.properties.createdAt if data.properties.createdAt else none }}",
+              "updatedAt": "{{ data.properties.updatedAt if data.properties.updatedAt else none }}",
+              "sourceCommit": "{{ data.properties.commitSHA if data.properties.commitSHA else none }}",
+              "successful": "{{ data.properties.successful }}",
+              "triggeredBy": "{{ data.relations.triggeringActor.value }}"
+            }
+          },
+          "resourceType": "entity",
+          "createSuggestion": false
+        }
+      }
+    ],
+    "tags": [
+      {
+        "key": "default",
+        "value": "true"
+      },
+      {
+        "key": "owner",
+        "value": "rely"
+      }
+    ]
+  }
+]

@@ -1,0 +1,201 @@
+resources:
+- kind: group
+  mappings:
+    id: .id | tostring
+    title: .name
+    blueprintId: '"gitlab.v1.group"'
+    description: .description
+    properties:
+      name: .name
+      description: .description
+      url: .web_url
+      projectCount: .projects_count
+      membersCount: .members_count
+
+- kind: repository
+  mappings:
+    id: '.id | split("/") | last'
+    title: .name
+    blueprintId: '"gitlab.v1.repository"'
+    properties:
+      createdAt: .createdAt
+      lastActivityAt: .lastActivityAt
+      visibility: .visibility
+      url: .webUrl
+      openIssuesCount: .openIssuesCount
+      openMergeRequestsCount: .openMergeRequestsCount
+      languages: '[.languages[].name]'
+      starCount: .starCount
+      defaultBranch: .repository.rootRef
+      updatedAt: .updatedAt
+      readmeUrl: 'if .repository.blobs.nodes | length > 0 then .webUrl + "/-/blob/" + .repository.rootRef + "/" + .repository.blobs.nodes[0].path else "" end'
+      readme: 'if .repository.blobs.nodes | length > 0 then .repository.blobs.nodes[0].rawBlob else "" end'
+    relations:
+      owner:
+        value: .context.ownerGroup | tostring
+
+- kind: user
+  mappings:
+    id: '.id | split("/") | last'
+    title: .name
+    blueprintId: '"gitlab.v1.groupmember"'
+    description: '""'
+    properties:
+      name: .name
+      username: .username
+      email: .publicEmail
+      createdAt: .createdAt
+    relations:
+      groups:
+        value: '[.groupMemberships.edges[] | select(.node.group.id != null) | .node.group.id | split("/") | last]'
+
+- kind: issue
+  mappings:
+    id: '.node.id | split("/") | last'
+    title: .node.title
+    blueprintId: '"gitlab.v1.issue"'
+    description: .node.description
+    properties:
+      summary: .node.descriptionHtml
+      createdAt: .node.createdAt
+      updatedAt: .node.updatedAt
+      closedAt: .node.closedAt
+      url: .node.webUrl
+      state: .node.state
+      labels: '[.node.labels.edges[].node.title]'
+    relations:
+      repository:
+        value:  '.context.repository.id | split("/") | last'
+      owner:
+        value: .context.ownerGroup.id | tostring
+      assignees:
+        value: '[.node.assignees.edges[].node.id | split("/") | last]'
+      createdBy:
+        value: '.node.author.id | split("/") | last'
+
+
+- kind: merge_request
+  mappings:
+    id: '.node.id | split("/") | last'
+    title: .node.title
+    blueprintId: '"gitlab.v1.mergerequest"'
+    properties:
+      url: .node.webUrl
+      summary: .node.descriptionHtml
+      createdAt: .node.createdAt
+      updatedAt: .node.updatedAt
+      state: .node.state
+      labels: '[.node.labels.edges[].node.title]'
+      sourceBranch: .node.sourceBranch
+      targetBranch: .node.targetBranch
+      mergedAt: .node.mergedAt
+      diffStats: .node.diffStatsSummary
+      commitSHA: .node.commits.edges[0].node.sha
+    relations:
+      repository:
+        value: '.context.repository.id | split("/") | last'
+      owner:
+        value: .context.ownerGroup.id | tostring
+      author:
+        value: 'if .node.author != null and .node.author.id != null then (.node.author.id | split("/") | last) else null end'
+      assignees:
+        value: '[.node.assignees.edges[].node.id | split("/") | last]'
+      reviewers:
+        value: '[.node.reviewers.edges[].node.id | split("/") | last]'
+
+- kind: pipeline
+  mappings:
+    id: '.node.id | split("/") | last'
+    title: '.context.repository.name + " (" + .node.ref + ") : " + (.node.id | split("/") | last)'
+    blueprintId: '"gitlab.v1.pipeline"'
+    properties:
+      status: .node.status
+      createdAt: .node.createdAt
+      startedAt: .node.startedAt
+      updatedAt: .node.updatedAt
+      finishedAt: .node.finishedAt
+      duration: .node.duration
+      branch: .node.ref
+      failureReason: .node.failureReason
+      commitSHA: .node.sha
+      successful: 'if .node.status == "SUCCESS" then true else false end'
+      webUrl: .context.repository.webUrl + "/-/pipelines/" + (.node.id | split("/") | last)
+    relations:
+      repository:
+        value:  '.context.repository.id | split("/") | last'
+      owner:
+        value: .context.ownerGroup.id | tostring
+      triggeredBy:
+        value: 'if .node.user != null and .node.user.id != null then (.node.user.id | split("/") | last) else null end'
+
+- kind: job
+  mappings:
+    id: .node.id | split("/") | last | "job-" + .
+    title: '"(" + .node.project.name + ") job from branch " + .node.pipeline.ref + ": " + (.node.id | split("/") | last)'
+    blueprintId: '"gitlab.v1.job"'
+    description: '"Gitlab job for repository " + .node.project.name + " Pipeline id: " + (.node.pipeline.id | split("/") |last)
+      + " Branch: " + .node.pipeline.ref + " Job id: " + (.node.id | split("/") | last)'
+    properties:
+      name: .node.name
+      status: .node.status
+      createdAt: .node.createdAt
+      startedAt: .node.startedAt
+      finishedAt: .node.finishedAt
+      duration: .node.duration
+      retried: .node.retried
+      failureMessage: .node.failureMessage
+      triggered: .node.triggered
+      allowFailure: .node.allowFailure
+      stage: .node.stage.name
+    relations:
+      pipeline:
+        value: .node.pipeline.id | split("/") | last | "pipeline-" + .
+      owner:
+        value: '"group-" + .context.owner.name'
+
+- kind: environment
+  mappings:
+    id: '.node.id | split("/") | last'
+    title: .node.name
+    blueprintId: '"gitlab.v1.environment"'
+    properties:
+      status: .node.status
+      createdAt: .node.createdAt
+      updatedAt: .node.updatedAt
+      url: '.context.repository.webUrl + "/-/environments/" + (.node.id | split("/") | last)'
+      externalUrl: .node.externalUrl
+    relations:
+      repository:
+        value:  '.context.repository.id | split("/") | last'
+
+
+- kind: deployment
+  mappings:
+    id: '.node.id | split("/") | last'
+    title: '.context.repository.name + ": (" + .context.environment.node.name  + ") " + .node.iid'
+    blueprintId: '"gitlab.v1.deployment"'
+    properties:
+      status: .node.status
+      createdAt: .node.createdAt
+      updatedAt: .node.updatedAt
+      finishedAt: .node.finishedAt
+      number: '.node.iid | tonumber'
+      envLink: '.context.repository.webUrl + "/-/environments/" + (.context.environment.node.id | split("/") | last)'
+      outputLink: .context.environment.node.externalUrl
+      jobLink: .context.repository.webUrl + "/-/jobs/" + (.node.job.id | split("/") | last)
+      pipelineLink: 'if .node.job.pipeline.id then .context.repository.webUrl + "/-/pipelines/" + (.node.job.pipeline.id | split("/") | last) else "" end'
+      branch: .node.job.refName
+      jobId: '.node.job.id | split("/") | last'
+      commit: .node.job.pipeline.commit.shortId
+      commitTitle: .node.job.pipeline.commit.message
+      commitMessage: .node.job.pipeline.commit.title
+      commitAuthor: .node.job.pipeline.commit.author.name
+    relations:
+      repository:
+        value:  '.context.repository.id | split("/") | last'
+      triggeredBy:
+        value: '.node.triggerer.id | split("/") | last'
+      pipeline:
+        value: '.node.job.pipeline.id | split("/") | last'
+      environment:
+        value:  '.context.environment.node.id | split("/") | last'

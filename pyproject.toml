@@ -1,0 +1,181 @@
+[build-system]
+build-backend = "poetry.core.masonry.api"
+requires      = ["poetry-core>=1.0.0"]
+
+[tool.poetry]
+description = "Rely.io Galaxy framework."
+homepage    = "https://gitlab.com/detech.ai/galaxy"
+name        = "galaxy"
+readme      = "README.md"
+repository  = "https://gitlab.com/detech.ai/galaxy"
+version     = "0.0.1"
+
+authors     = ["Rely.io <no-reply@rely.io>"]
+maintainers = ["Rely.io <no-reply@rely.io>"]
+
+include  = [{ path = "galaxy", format = ["sdist", "wheel"] }]
+packages = [{ include = "galaxy" }]
+
+[tool.poetry.scripts]
+galaxy         = "galaxy.core.cli.galaxy:cli"
+update-version = "deploy.update_version:main"
+
+[tool.poetry.dependencies]
+python = ">=3.11,<4.0"
+
+magneto_api_client = { git = "https://gitlab.com/detech.ai/magneto-sdk.git", rev = "master" }
+
+aiofiles      = "^24.1.0"
+aiohttp       = "^3.9.5"
+apscheduler   = "^3.10.4"
+asyncio       = "^3.4.3"
+click         = "^8.1.7"
+cookiecutter  = "^2.6.0"
+fastapi       = "^0.111.1"
+jinja2        = "^3.1.4"
+jq            = "^1.7.0"
+pygithub      = "^2.3.0"
+pyhumps       = "^3.8.0"
+python-dotenv = "^1.0.1"
+pyyaml        = "^6.0.1"
+setuptools    = "^70.3.0"
+tenacity      = "^8.5.0"
+toml          = "^0.10.2"
+uvicorn       = "^0.30.3"
+
+[tool.poetry.group.dev.dependencies]
+aioresponses = ">=0.7.6"
+codespell    = ">=2.3.0"
+coverage     = ">=7.6.1"
+pre-commit   = ">=3.8.0"
+pytest       = ">=8.3.3"
+# pytest-asyncio '<0.24.0' is to avoid current issues with event loop
+# https://github.com/pytest-dev/pytest-asyncio/issues/924
+pytest-asyncio = ">=0.23.0,<0.24.0"
+pytest-cov     = ">=5.0.0"
+pytest-mock    = ">=3.14.0"
+ruff           = ">=0.6.7"
+
+[tool.poetry-git-version-plugin]
+alpha_version_format = '{version}.{distance}'
+make_alpha_version   = true
+version_format       = '{version}'
+
+[tool.ruff]
+fix              = true
+indent-width     = 4
+line-length      = 120
+required-version = ">=0.6.7"
+target-version   = "py311"
+
+exclude = ["galaxy/core/cli/cookiecutter"]
+src     = ["galaxy"]
+
+[tool.ruff.format]
+docstring-code-format     = true
+indent-style              = "space"
+line-ending               = "lf"
+quote-style               = "double"
+skip-magic-trailing-comma = true
+
+[tool.ruff.lint]
+# select = ["ALL"] # TODO(@dextrotip): enable all lint rules
+ignore = [
+  # The following rules are disabled due to being added in the middle of the project and requiring an high effort
+  # in tackling the issue right now.
+  "ANN401", # any-type (ANN401)
+  "FBT001", # boolean-type-hint-positional-argument (FBT001)
+  "FIX002", # line-contains-todo (FIX002)
+
+  # pydocstyle recommended but currently disabled due to requiring high effort in updating in the middle of the project
+  "D100", # Missing docstring in public module
+  "D101", # Missing docstring in public class
+  "D102", # Missing docstring in public method
+  "D103", # Missing docstring in public function
+  "D104", # Missing docstring in public package
+  "D107", # Missing docstring in init
+
+  # Recommended by ruff: https://docs.astral.sh/ruff/formatter/#conflicting-lint-rules
+  "COM812", # missing-trailing-comma
+  "COM819", # prohibited-trailing-comma
+  "D206",   # indent-with-spaces
+  "D300",   # triple-single-quotes
+  "E111",   # indentation-with-invalid-multiple
+  "E114",   # indentation-with-invalid-multiple-comment
+  "E117",   # over-indented
+  "ISC001", # Implicit string concatenation found
+  "ISC002", # Implicit string concatenation found
+  "Q000",   # bad-quotes-inline-string
+  "Q001",   # bad-quotes-multiline-string
+  "Q002",   # bad-quotes-docstring
+  "Q003",   # avoidable-escaped-quote
+  "W191",   # tab-indentation
+]
+
+fixable   = ["ALL"]
+unfixable = []
+
+[tool.ruff.lint.per-file-ignores]
+"**/tests/**" = [
+  "D",    # pydocstyle (D)
+  "S101", # assert (S101)
+]
+
+[tool.ruff.lint.isort]
+known-first-party       = ["galaxy"]
+required-imports        = []
+split-on-trailing-comma = false
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+# [tool.pyright]
+# exclude                        = ["**/__pycache__"]
+# ignore                         = []
+# include                        = ["src"]
+# reportMissingImports           = true
+# reportMissingTypeStubs         = false
+# reportUnknownParameterType     = true
+# reportUntypedFunctionDecorator = true
+# strict                         = []
+# venvPath                       = ".venv"
+
+[tool.pytest.ini_options]
+addopts      = "-v --cov --cov-report term --cov-report html:htmlcov"
+asyncio_mode = "auto"
+xfail_strict = true
+
+[tool.coverage.run]
+branch = true
+omit   = ["*/tests/*", "galaxy/core/cli/cookiecutter/*"]
+source = ["galaxy/"]
+
+[tool.coverage.report]
+exclude_lines = [
+  # Have to re-enable the standard pragma
+  "pragma: no cover",
+
+  # Don't complain about missing debug-only code:
+  "def __repr__",
+  "if DEBUG",
+  "if debug",
+  "if self.debug",
+
+  # Don't complain if tests don't hit defensive assertion code:
+  "raise AssertionError",
+  "raise NotImplementedError",
+
+  # Don't complain if non-runnable code isn't run:
+  "if 0:",
+  "if False:",
+  "if __name__ == .__main__.:",
+
+  # Don't complain about abstract methods, they aren't run:
+  "@(abc.)?abstractmethod",
+]
+fail_under = 0
+show_missing = true
+
+[tool.codespell]
+ignore-words-list = ["detech"]
+skip              = "poetry.lock"

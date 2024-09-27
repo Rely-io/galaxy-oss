@@ -1,0 +1,41 @@
+# ------------------------------------------------------------------------------
+# Ignore everything by default.
+# ------------------------------------------------------------------------------
+*
+
+# ------------------------------------------------------------------------------
+# Explicitly define directories and files to pass into docker.
+# ------------------------------------------------------------------------------
+
+# Project files
+!/README.md
+!/LICENSE
+
+# Source code and scripts
+!/galaxy
+
+# Deployments
+!/deploy
+
+# Project configuration and Poetry
+!/pyproject.toml
+!/poetry.lock
+!/poetry.toml
+
+# Python version
+!/.python-version
+
+# Makefile and other tools
+!/Makefile
+
+# ------------------------------------------------------------------------------
+# Explicit ignore directories and files to make sure they are not included in the docker image.
+# ------------------------------------------------------------------------------
+# Git directories
+.git/
+
+# Environment files
+.env*
+
+# Caches
+__pycache__/

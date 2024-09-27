@@ -1,0 +1,770 @@
+[
+  {
+    "id": "rely.bitbucket.v1.repository-to-service",
+    "title": "Bitbucket Repository to Service",
+    "description": "This automation creates a service from a Bitbucket repository",
+    "isActive": true,
+    "type": "automation",
+    "arguments": {
+      "sourceBlueprintId": "bitbucket.v1.repository",
+      "targetBlueprintId": "service"
+    },
+    "triggers": [
+      {
+        "type": "onEvent",
+        "event": {
+          "resource": "entity",
+          "action": ["create", "update", "addedAsSource"]
+        },
+        "conditions": [
+          {
+            "field": "data.blueprintId",
+            "operator": "eq",
+            "value": "{{ arguments.sourceBlueprintId }}"
+          }
+        ]
+      }
+    ],
+    "actions": [
+      {
+        "type": "upsertResource",
+        "args": {
+          "resourceType": "entity",
+          "createSuggestion": true,
+          "data": {
+            "id": "{{ data.id |  string }}.{{ arguments.targetBlueprintId }}",
+            "title": "{{ data.title }}",
+            "description": "{{ data.description }}",
+            "blueprintId": "{{ arguments.targetBlueprintId }}",
+            "properties": {
+              "readme": "{{ data.properties.readme if data.properties.readme else none }}",
+              "repoLink": "{{ data.properties.webUrl if data.properties.webUrl else none }}",
+              "mainBranch": "{{ data.properties.mainbranch if data.properties.mainbranch else none }}",
+              "language": "{{ data.properties.language if data.properties.language else none }}",
+              "languages": "{{ [data.properties.language] | tojson if data.properties.language else [] }}"
+            },
+            "relations": {
+              "BitBucketRepository": {
+                "value": "{{ data.id | string }}"
+              }
+            }
+          }
+        },
+        "conditions": [
+          {
+            "field": "event.action",
+            "operator": "neq",
+            "value": "addedAsSource"
+          }
+        ]
+      },
+      {
+        "id": "trigger_bitbucket_service_chain_automation",
+        "type": "triggerAutomations",
+        "title": "Trigger Automations for Bitbucket Post Service Import",
+        "args": {
+          "automationIds": [
+            "rely.bitbucket.v1.environment-to-running-service-instance",
+            "rely.bitbucket.v1.pullrequest-to-pull-request",
+            "rely.bitbucket.v1.deployment-to-deployment"
+          ],
+          "entities": {
+            "conditions": [
+              {
+                "field": "blueprintId",
+                "operator": "in",
+                "value": "bitbucket.v1.pullrequest,bitbucket.v1.environment,bitbucket.v1.deployment"
+              },
+              {
+                "field": "relations/repository/value",
+                "operator": "eq",
+                "value": "{{ data.id }}"
+              }
+            ]
+          }
+        },
+        "conditions": [
+          {
+            "field": "event.action",
+            "operator": "eq",
+            "value": "addedAsSource"
+          }
+        ]
+      }
+    ],
+    "tags": [
+      {
+        "key": "default",
+        "value": "true"
+      },
+      {
+        "key": "owner",
+        "value": "rely"
+      }
+    ]
+  },
+  {
+    "id": "rely.bitbucket.v1.pullrequest-to-pull-request",
+    "title": "Bitbucket Pull Request to Generic Pull Request",
+    "description": "This automation creates a generic pull requests from a Bitbucket pull requests",
+    "isActive": true,
+    "order": 0,
+    "type": "automation",
+    "arguments": {
+      "sourceBlueprintId": "bitbucket.v1.pullrequest",
+      "targetBlueprintId": "pull_request"
+    },
+    "secrets": {},
+    "triggers": [
+      {
+        "type": "onEvent",
+        "event": {
+          "resource": "entity",
+          "action": ["create", "update"]
+        },
+        "conditions": [
+          {
+            "field": "data.blueprintId",
+            "operator": "eq",
+            "value": "{{ arguments.sourceBlueprintId }}"
+          }
+        ]
+      }
+    ],
+    "actions": [
+      {
+        "type": "fetchResource",
+        "args": {
+          "conditions": [
+            {
+              "field": "blueprintId",
+              "value": "service",
+              "operator": "eq"
+            },
+            {
+              "field": "sources",
+              "value": "bitbucket.v1.repository.{{ data.relations.repository.value }}",
+              "operator": "contains"
+            }
+          ],
+          "resourceType": "entity",
+          "stopFlowIfNotFound": true
+        },
+        "id": "fetch_service"
+      },
+      {
+        "type": "fetchResource",
+        "args": {
+          "conditions": [
+            {
+              "field": "blueprintId",
+              "value": "bitbucket.v1.user",
+              "operator": "eq"
+            },
+            {
+              "field": "id",
+              "value": "{{ data.relations.author.value }}",
+              "operator": "eq"
+            }
+          ],
+          "resourceType": "entity",
+          "stopFlowIfNotFound": true
+        },
+        "id": "fetch_author"
+      },
+      {
+        "type": "fetchResource",
+        "args": {
+          "conditions": [
+            {
+              "field": "blueprintId",
+              "value": "bitbucket.v1.user",
+              "operator": "eq"
+            },
+            {
+              "field": "id",
+              "value": "{{ data.relations.closedBy.value }}",
+              "operator": "eq"
+            }
+          ],
+          "resourceType": "entity",
+          "stopFlowIfNotFound": true
+        },
+        "id": "fetch_approver"
+      },
+      {
+        "type": "upsertResource",
+        "args": {
+          "data": {
+            "id": "{{ data.id }}.{{ arguments.targetBlueprintId }}",
+            "title": "{{ data.title }}",
+            "description": "{{ data.description }}",
+            "blueprintId": "{{ arguments.targetBlueprintId }}",
+            "properties": {
+              "link": "{{ data.properties.webUrl if data.properties.webUrl else none }}",
+              "status": "{{ data.properties.state if data.properties.state else none }}",
+              "summary": "{{ data.properties.summary if data.properties.summary else none }}",
+              "createdAt": "{{ data.properties.created_on if data.properties.created_on else none }}",
+              "updatedAt": "{{ data.properties.updated_on if data.properties.updated_on else none }}",
+              "sourceBranch": "{{ data.properties.sourceBranch if data.properties.sourceBranch else none }}",
+              "sourceCommit": "{{ data.properties.sourceCommit if data.properties.sourceCommit else none }}",
+              "targetBranch": "{{ data.properties.destinationBranch if data.properties.destinationBranch else none }}",
+              "mergeCommit": "{{ data.properties.destinationCommit if data.properties.destinationCommit else none }}",
+              "reason": "{{ data.properties.reason if data.properties.reason else none }}",
+              "createdBy": "{{ actions.fetch_author.output.title }}",
+              "closedBy": "{{ actions.fetch_approver.output.title }}"
+            },
+            "relations": {
+              "service": {
+                "value": "{{ actions.fetch_service.output.id | string }}"
+              },
+              "BitBucketPullRequest": {
+                "value": "{{ data.id | string }}"
+              }
+            }
+          },
+          "resourceType": "entity",
+          "createSuggestion": false
+        }
+      }
+    ],
+    "tags": [
+      {
+        "key": "default",
+        "value": "true"
+      },
+      {
+        "key": "owner",
+        "value": "rely"
+      }
+    ]
+  },
+  {
+    "id": "rely.bitbucket.v1.environment-to-running-service-instance",
+    "title": "Bitbucket Environment to Running Service Instance",
+    "description": "Create a running service instance from a bitbucket environment",
+    "isActive": true,
+    "order": 0,
+    "type": "automation",
+    "arguments": {
+      "sourceBlueprintId": "bitbucket.v1.environment",
+      "targetBlueprintId": "running_service_instance"
+    },
+    "secrets": {},
+    "triggers": [
+      {
+        "type": "onEvent",
+        "event": {
+          "resource": "entity",
+          "action": ["create", "update"]
+        },
+        "conditions": [
+          {
+            "field": "data.blueprintId",
+            "operator": "eq",
+            "value": "{{ arguments.sourceBlueprintId }}"
+          }
+        ]
+      }
+    ],
+    "actions": [
+      {
+        "type": "fetchResource",
+        "args": {
+          "conditions": [
+            {
+              "field": "blueprintId",
+              "value": "service",
+              "operator": "eq"
+            },
+            {
+              "field": "sources",
+              "value": "bitbucket.v1.repository.{{ data.relations.repository.value }}",
+              "operator": "contains"
+            }
+          ],
+          "resourceType": "entity",
+          "stopFlowIfNotFound": true
+        },
+        "id": "fetch_service"
+      },
+      {
+        "type": "fetchResource",
+        "args": {
+          "conditions": [
+            {
+              "field": "blueprintId",
+              "value": "environment",
+              "operator": "eq"
+            },
+            {
+              "field": "properties/labels/aws",
+              "value": "{{ data.properties.type }}",
+              "operator": "contains"
+            }
+          ],
+          "resourceType": "entity",
+          "stopFlowIfNotFound": true
+        },
+        "conditions": [
+          {
+            "field": "data.properties.type",
+            "value": null,
+            "operator": "neq"
+          }
+        ],
+        "id": "fetch_environment"
+      },
+      {
+        "type": "upsertResource",
+        "args": {
+          "data": {
+            "id": "{{ data.id }}.{{ arguments.targetBlueprintId }}",
+            "title": "{{ actions.fetch_service.output.title }} ({{ actions.fetch_environment.output.title }})",
+            "description": "{{ data.description }}",
+            "blueprintId": "{{ arguments.targetBlueprintId }}",
+            "properties": {},
+            "relations": {
+              "service": {
+                "value": "{{ actions.fetch_service.output.id | string }}"
+              },
+              "environment": {
+                "value": "{{ actions.fetch_environment.output.id | string }}"
+              },
+              "BitBucketEnvironment": {
+                "value": "{{ data.id | string }}"
+              }
+            }
+          },
+          "resourceType": "entity",
+          "createSuggestion": false
+        }
+      }
+    ],
+    "tags": [
+      {
+        "key": "default",
+        "value": "true"
+      },
+      {
+        "key": "owner",
+        "value": "rely"
+      }
+    ]
+  },
+  {
+    "id": "rely.bitbucket.v1.deployment-to-deployment",
+    "title": "Bitbucket Deployment to Deployment",
+    "description": "Create a generic deployment from a bitbucket deployment",
+    "isActive": true,
+    "order": 0,
+    "type": "automation",
+    "arguments": {
+      "sourceBlueprintId": "bitbucket.v1.deployment",
+      "targetBlueprintId": "deployment"
+    },
+    "secrets": {},
+    "triggers": [
+      {
+        "type": "onEvent",
+        "event": {
+          "resource": "entity",
+          "action": ["create", "update"]
+        },
+        "conditions": [
+          {
+            "field": "data.blueprintId",
+            "operator": "eq",
+            "value": "{{ arguments.sourceBlueprintId }}"
+          }
+        ]
+      }
+    ],
+    "actions": [
+      {
+        "type": "fetchResource",
+        "args": {
+          "conditions": [
+            {
+              "field": "blueprintId",
+              "value": "service",
+              "operator": "eq"
+            },
+            {
+              "field": "sources",
+              "value": "bitbucket.v1.repository.{{ data.relations.repository.value }}",
+              "operator": "contains"
+            }
+          ],
+          "resourceType": "entity",
+          "stopFlowIfNotFound": true
+        },
+        "id": "fetch_service"
+      },
+      {
+        "type": "fetchResource",
+        "args": {
+          "conditions": [
+            {
+              "field": "blueprintId",
+              "value": "bitbucket.v1.pipeline",
+              "operator": "eq"
+            },
+            {
+              "field": "id",
+              "value": "{{ data.relations.pipeline.value }}",
+              "operator": "eq"
+            }
+          ],
+          "resourceType": "entity",
+          "stopFlowIfNotFound": true
+        },
+        "id": "fetch_pipeline"
+      },
+      {
+        "type": "fetchResource",
+        "args": {
+          "conditions": [
+            {
+              "field": "blueprintId",
+              "value": "bitbucket.v1.user",
+              "operator": "eq"
+            },
+            {
+              "field": "id",
+              "value": "{{ actions.fetch_pipeline.output.relations.creator.value }}",
+              "operator": "eq"
+            }
+          ],
+          "resourceType": "entity",
+          "stopFlowIfNotFound": true
+        },
+        "id": "fetch_author"
+      },
+      {
+        "type": "upsertResource",
+        "args": {
+          "data": {
+            "id": "{{ data.id }}.{{ arguments.targetBlueprintId }}",
+            "title": "{{ actions.fetch_service.output.title }} {{ data.title }}",
+            "description": "{{ data.description }}",
+            "blueprintId": "{{ arguments.targetBlueprintId }}",
+            "properties": {
+              "link": "{{ data.properties.webUrl if data.properties.webUrl else none }}",
+              "status": "{{ data.properties.state if data.properties.state else none }}",
+              "createdAt": "{{ data.properties.created_on if data.properties.created_on else actions.fetch_pipeline.output.properties.created_on }}",
+              "updatedAt": "{{ data.properties.updated_on if data.properties.updated_on else none }}",
+              "closedAt": "{{ data.properties.closed_on if data.properties.closed_on else actions.fetch_pipeline.output.properties.completed_on }}",
+              "sourceCommit": "{{ data.properties.commit if data.properties.commit else none }}",
+              "duration": "{{ (actions.fetch_pipeline.output.properties.duration_in_seconds | int) if actions.fetch_pipeline.output.properties.duration_in_seconds else none }}",
+              "successful": "{{ actions.fetch_pipeline.output.properties.successful }}",
+              "triggeredBy": "{{ actions.fetch_author.output.title }}"
+            },
+            "relations": {
+              "service": {
+                "value": "{{ actions.fetch_service.output.id | string }}"
+              },
+              "BitBucketDeployment": {
+                "value": "{{ data.id | string }}"
+              },
+              "BitBucketPipeline": {
+                "value": "{{ data.relations.pipeline.value | string }}"
+              }
+            }
+          },
+          "resourceType": "entity",
+          "createSuggestion": false
+        }
+      },
+      {
+        "type": "fetchResource",
+        "args": {
+          "conditions": [
+            {
+              "field": "blueprintId",
+              "value": "running_service_instance",
+              "operator": "eq"
+            },
+            {
+              "field": "sources",
+              "value": "bitbucket.v1.environment.{{ data.relations.environment.value }}",
+              "operator": "contains"
+            }
+          ],
+          "resourceType": "entity",
+          "stopFlowIfNotFound": true
+        },
+        "id": "fetch_running_service"
+      },
+      {
+        "type": "upsertResource",
+        "args": {
+          "data": {
+            "id": "{{ data.id }}.{{ arguments.targetBlueprintId }}",
+            "title": "{{ actions.fetch_service.output.title }} ({{ actions.fetch_environment.output.title }}): {{ data.id }}",
+            "description": "{{ data.description }}",
+            "blueprintId": "{{ arguments.targetBlueprintId }}",
+            "properties": {},
+            "relations": {
+              "targetEnvironment": {
+                "value": "{{ actions.fetch_running_service.output.relations.environment.value | string }}"
+              }
+            }
+          },
+          "resourceType": "entity",
+          "createSuggestion": false
+        }
+      }
+    ],
+    "tags": [
+      {
+        "key": "default",
+        "value": "true"
+      },
+      {
+        "key": "owner",
+        "value": "rely"
+      }
+    ]
+  },
+  {
+    "id": "rely.bitbucket.v1.pipeline-to-deployment-in-prod",
+    "title": "Bitbucket Pipeline to Deployment (Prod)",
+    "description": "Create Deployment to Prod from pipelines running in 'release/%' branches",
+    "isActive": false,
+    "order": 0,
+    "type": "automation",
+    "arguments": {
+      "sourceBlueprintId": "bitbucket.v1.pipeline",
+      "targetBlueprintId": "deployment"
+    },
+    "secrets": {},
+    "triggers": [
+      {
+        "type": "onEvent",
+        "event": {
+          "resource": "entity",
+          "action": ["create", "update"]
+        },
+        "conditions": [
+          {
+            "field": "data.blueprintId",
+            "operator": "eq",
+            "value": "{{ arguments.sourceBlueprintId }}"
+          },
+          {
+            "field": "data.properties.branch",
+            "operator": "like",
+            "value": "release/%"
+          }
+        ]
+      }
+    ],
+    "actions": [
+      {
+        "type": "fetchResource",
+        "args": {
+          "conditions": [
+            {
+              "field": "blueprintId",
+              "value": "service",
+              "operator": "eq"
+            },
+            {
+              "field": "sources",
+              "value": "bitbucket.v1.repository.{{ data.relations.repository.value }}",
+              "operator": "contains"
+            }
+          ],
+          "resourceType": "entity",
+          "stopFlowIfNotFound": true
+        },
+        "id": "fetch_service"
+      },
+      {
+        "type": "fetchResource",
+        "args": {
+          "conditions": [
+            {
+              "field": "blueprintId",
+              "value": "bitbucket.v1.user",
+              "operator": "eq"
+            },
+            {
+              "field": "id",
+              "value": "{{ data.relations.creator.value }}",
+              "operator": "eq"
+            }
+          ],
+          "resourceType": "entity",
+          "stopFlowIfNotFound": true
+        },
+        "id": "fetch_author"
+      },
+      {
+        "type": "upsertResource",
+        "args": {
+          "data": {
+            "id": "{{ data.id }}.{{ arguments.targetBlueprintId }}",
+            "title": "{{ actions.fetch_service.output.title }} (Prod): {{ data.id }}",
+            "relations": {
+              "service": {
+                "value": "{{ actions.fetch_service.output.id | string }}"
+              },
+              "targetEnvironment": {
+                "value": "prod.environment"
+              },
+              "BitBucketPipeline": {
+                "value": "{{ data.id | string }}"
+              }
+            },
+            "properties": {
+              "link": "{{ data.properties.webUrl if data.properties.webUrl else none }}",
+              "status": "{{ data.properties.state if data.properties.state none }}",
+              "duration": "{{ data.properties.duration_in_seconds | int }}",
+              "createdAt": "{{ data.properties.created_on if data.properties.created_on else none }}",
+              "closedAt": "{{ data.properties.completed_on if data.properties.completed_on else none }}",
+              "sourceCommit": "{{ data.properties.commit if data.properties.commit else none }}",
+              "successful": "{{ data.properties.successful }}",
+              "triggeredBy": "{{ actions.fetch_author.output.title }}"
+            },
+            "blueprintId": "{{ arguments.targetBlueprintId }}",
+            "description": ""
+          },
+          "resourceType": "entity",
+          "createSuggestion": false
+        }
+      }
+    ],
+    "tags": [
+      {
+        "key": "default",
+        "value": "true"
+      },
+      {
+        "key": "owner",
+        "value": "rely"
+      }
+    ]
+  },
+  {
+    "id": "rely.bitbucket.v1.pipeline-to-deployment-in-dev",
+    "title": "Bitbucket Pipeline to Deployment (Dev)",
+    "description": "Create Deployment to Dev from pipelines running in 'release/%' branches",
+    "isActive": false,
+    "order": 0,
+    "type": "automation",
+    "arguments": {
+      "sourceBlueprintId": "bitbucket.v1.pipeline",
+      "targetBlueprintId": "deployment"
+    },
+    "secrets": {},
+    "triggers": [
+      {
+        "type": "onEvent",
+        "event": {
+          "resource": "entity",
+          "action": ["create", "update"]
+        },
+        "conditions": [
+          {
+            "field": "data.blueprintId",
+            "operator": "eq",
+            "value": "{{ arguments.sourceBlueprintId }}"
+          },
+          {
+            "field": "data.properties.branch",
+            "operator": "in",
+            "value": "master,main"
+          }
+        ]
+      }
+    ],
+    "actions": [
+      {
+        "type": "fetchResource",
+        "args": {
+          "conditions": [
+            {
+              "field": "blueprintId",
+              "value": "service",
+              "operator": "eq"
+            },
+            {
+              "field": "sources",
+              "value": "bitbucket.v1.repository.{{ data.relations.repository.value }}",
+              "operator": "contains"
+            }
+          ],
+          "resourceType": "entity",
+          "stopFlowIfNotFound": true
+        },
+        "id": "fetch_service"
+      },
+      {
+        "type": "fetchResource",
+        "args": {
+          "conditions": [
+            {
+              "field": "blueprintId",
+              "value": "bitbucket.v1.user",
+              "operator": "eq"
+            },
+            {
+              "field": "id",
+              "value": "{{ data.relations.creator.value }}",
+              "operator": "eq"
+            }
+          ],
+          "resourceType": "entity",
+          "stopFlowIfNotFound": true
+        },
+        "id": "fetch_author"
+      },
+      {
+        "type": "upsertResource",
+        "args": {
+          "data": {
+            "id": "{{ data.id }}.{{ arguments.targetBlueprintId }}",
+            "title": "{{ actions.fetch_service.output.title }} (Dev): {{ data.id }}",
+            "relations": {
+              "service": {
+                "value": "{{ actions.fetch_service.output.id | string }}"
+              },
+              "targetEnvironment": {
+                "value": "dev.environment"
+              },
+              "BitBucketPipeline": {
+                "value": "{{ data.id | string }}"
+              }
+            },
+            "properties": {
+              "link": "{{ data.properties.webUrl if data.properties.webUrl else none }}",
+              "status": "{{ data.properties.state if data.properties.state else none }}",
+              "duration": "{{ data.properties.duration_in_seconds | int }}",
+              "successful": "{{ data.properties.successful }}",
+              "createdAt": "{{ data.properties.created_on if data.properties.created_on else none }}",
+              "closedAt": "{{ data.properties.completed_on if data.properties.completed_on else none }}",
+              "sourceCommit": "{{ data.properties.commit if data.properties.commit else none }}",
+              "triggeredBy": "{{ actions.fetch_author.output.title }}"
+            },
+            "blueprintId": "{{ arguments.targetBlueprintId }}",
+            "description": ""
+          },
+          "resourceType": "entity",
+          "createSuggestion": false
+        }
+      }
+    ],
+    "tags": [
+      {
+        "key": "default",
+        "value": "true"
+      },
+      {
+        "key": "owner",
+        "value": "rely"
+      }
+    ]
+  }
+]

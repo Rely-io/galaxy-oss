@@ -1,0 +1,12 @@
+resources:
+  - kind: entities
+    mappings:
+      id: .name
+      title: .name
+      blueprintId: '"{{cookiecutter.integration_name}}.v1.entity"'
+      description: '"Test entity for integration {{cookiecutter.integration_name}} " + .name'
+      properties:
+        id : .id
+        name: .name
+        createdAt: .createdAt
+        url: .url

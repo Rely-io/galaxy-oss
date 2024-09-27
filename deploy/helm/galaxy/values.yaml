@@ -1,0 +1,32 @@
+image:
+  repository: oci://registry-1.docker.io/devrelyio/galaxy
+  tag: ""
+
+schedule: "*/5 * * * *"
+
+env:
+  - name: RELY_API_TOKEN
+    value: ""
+    secret: true
+  - name: RELY_API_URL
+    value: ""
+    secret: true
+  - name: RELY_INTEGRATION_ID
+    value: ""
+    secret: false
+
+config:
+  rely:
+    token: "{{ env('RELY_API_TOKEN') }}"
+    url: "{{ env('RELY_API_URL') }}"
+  integration:
+    id: "{{ env('RELY_INTEGRATION_ID') }}"
+    type: "gitlab"
+    executionType: "cronjob"
+    scheduledInterval: 60
+    properties:
+      token: "{{ env('RELY_INTEGRATION_GITLAB_TOKEN') }}"
+      url: "https://gitlab.com/api/graphql"
+      customProperty1: "value1"
+      customProperty2: "value2"
+      anotherProperty: "value3"

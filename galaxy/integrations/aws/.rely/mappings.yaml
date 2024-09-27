@@ -1,0 +1,163 @@
+resources:
+- kind: region
+  mappings:
+    id: .RegionName
+    title: .RegionName
+    blueprintId: '"aws.v1.region"'
+    properties:
+      optInStatus: .OptInStatus
+      servicePage: .Endpoint
+
+- kind: account
+  mappings:
+    id: .AccountId
+    title: .AccountName
+    blueprintId: '"aws.v1.organizations_account"'
+    description: '""'
+    properties:
+      arn: .Arn
+      tags: '.Tags | map({(.Key): .Value}) | add'
+      email: .Email
+      status: .Status
+      joinedAt: '.JoinedTimestamp | split(".") | .[0] + "Z"'
+
+- kind: eks_cluster
+  mappings:
+    id: .Name
+    title: .Name
+    blueprintId: '"aws.v1.eks_cluster"'
+    description: '""'
+    properties:
+      arn: .Arn
+      tags: '.Tags // [] | map({(.Key): .Value}) | add'
+      managementPageUrl: '"https://" + .context.region + ".console.aws.amazon.com/eks/home?region=" + .context.region + "#/clusters/" + .Name'
+      dashboardPageUrl: '"https://" + .context.region + ".console.aws.amazon.com/eks/home?region=" + .context.region + "#/clusters/" + .Name'
+      version: .Version
+      roleArn: .RoleArn
+      clusterSecurityGroupId: .ClusterSecurityGroupId
+    relations:
+      account:
+        value: .context.account
+      region:
+        value: .context.region
+
+- kind: lambda
+  mappings:
+    id: .Arn
+    title: .FunctionName
+    blueprintId: '"aws.v1.lambda_function"'
+    description: .Description
+    properties:
+      arn: .Arn
+      tags: '.Tags // [] | map({(.Key): .Value}) | add'
+      managementPageUrl: '"https://" + .context.region + ".console.aws.amazon.com/lambda/home?region=" + .context.region + "#/functions/" + .FunctionName + "?tab=code"'
+      dashboardPageUrl: '"https://" + .context.region + ".console.aws.amazon.com/lambda/home?region=" + .context.region + "#/functions/" + .FunctionName + "?tab=monitoring"'
+      memorySize: .MemorySize
+      ephemeralStorageSize: .EphemeralStorage.Size
+      timeout: .Timeout
+      runtime: .Runtime
+      packageType: .PackageType
+      architectures: .Architectures
+      iamRole: .Role
+    relations:
+      account:
+        value: .context.account
+      region:
+        value: .context.region
+
+- kind: ec2
+  mappings:
+    id: .InstanceId
+    title: .InstanceId
+    blueprintId: '"aws.v1.ec2_instance"'
+    description: .Description
+    properties:
+      tags: '.Tags// [] | map({(.Key): .Value}) | add'
+      managementPageUrl: '"https://console.aws.amazon.com/ec2/v2/home?region=" + .context.region + "#InstanceDetails:instanceId=" +.InstanceId'
+      dashboardPageUrl: '"https://console.aws.amazon.com/ec2/v2/home?region=" + .context.region + "#InstanceDetails:instanceId=" + .InstanceId'
+      state: .State.Name
+      instanceId: .InstanceId
+      instanceType: .InstanceType
+      imageId: .ImageId
+      monitoringEnabled: '.Monitoring.State == "enabled"'
+      architecture: .Architecture
+      availabilityZone: .Placement.AvailabilityZone
+      launchedAt: .LaunchTime
+      clientToken: .ClientToken
+      platformDetails: .PlatformDetails
+    relations:
+      account:
+        value: .context.account
+      region:
+        value: .context.region
+
+- kind: s3_bucket_region
+  mappings:
+      region: '(.RegionalDomainName // .DomainName |
+               split(".s3.") |
+               .[1] |
+               split(".") |
+               .[0])'
+
+- kind: s3_bucket
+  mappings:
+    id: .Arn
+    title: .BucketName
+    blueprintId: '"aws.v1.s3_bucket"'
+    description: '""'
+    properties:
+      arn: .Arn
+      tags: '(.Tags // [] | map({(.Key): .Value}) | add)'
+      managementPageUrl: '"https://" + .context.region + ".console.aws.amazon.com/s3/buckets/" + .BucketName + "?region=" + .context.region + "&bucketType=general"'
+      dashboardPageUrl: '"https://" + .context.region + ".console.aws.amazon.com/s3/buckets/" + .BucketName + "?region=" + .context.region + "&bucketType=general&tab=metrics"'
+      versioningEnabled: '.VersioningConfiguration.Status == "Enabled"'
+      publicAccessConfig: .PublicAccessBlockConfiguration
+      domainName: .DomainName
+      regionalDomainName: .RegionalDomainName
+      websiteUrl: .WebsiteURL
+    relations:
+      account:
+        value: .context.account
+      region:
+        value: .context.region
+
+- kind: rds_db_instance
+  mappings:
+    id: .DBInstanceArn
+    title: .DBInstanceIdentifier
+    blueprintId: '"aws.v1.rds_db_instance"'
+    description: '""'
+    properties:
+      arn: .DBInstanceArn
+      tags: '.Tags | map({(.Key): .Value}) | add'
+      managementPageUrl: '"https://" + .context.region + ".console.aws.amazon.com/rds/home?region=" + .context.region + "#database:id=" + .DBInstanceIdentifier + ";is-cluster=true"'
+      dashboardPageUrl: '"https://" + .context.region + ".console.aws.amazon.com/rds/home?region=" + .context.region + "#database:id=" + .DBInstanceIdentifier + ";is-cluster=true;tab=monitoring"'
+      engine: .Engine
+      engineVersion: .EngineVersion
+      storageType: .StorageType
+      dbInstanceClass: .DBInstanceClass
+      availabilityZone: .AvailabilityZone
+      dbParameterGroup: .DBParameterGroupName
+      optionGroup: .OptionGroupName
+      dbSubnetGroup: .DBSubnetGroupName
+      masterUsername: .MasterUsername
+      allocatedStorage: .AllocatedStorage
+      maxAllocatedStorage: .MaxAllocatedStorage
+      backupRetentionPeriod: .BackupRetentionPeriod
+      monitoringInterval: .MonitoringInterval
+      multiAZ: .MultiAZ
+      storageEncrypted: .StorageEncrypted
+      enablePerformanceInsights: .EnablePerformanceInsights
+      autoMinorVersionUpgrade: .AutoMinorVersionUpgrade
+      deletionProtection: .DeletionProtection
+      publiclyAccessible: .PubliclyAccessible
+      certificateValidTill: .CertificateValidTill
+      certificateCA: .CertificateCA
+      preferredBackupWindow: .PreferredBackupWindow
+      preferredMaintenanceWindow: .PreferredMaintenanceWindow
+      endpoint: .Endpoint.Address
+    relations:
+      account:
+        value: .context.account
+      region:
+        value: .context.region

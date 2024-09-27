@@ -1,0 +1,170 @@
+resources:
+- kind: repository
+  mappings:
+    id: .metadata.id | tostring
+    title: .metadata.name
+    blueprintId: '"github.v1.repository"'
+    description: .metadata.description
+    properties:
+      link: .metadata.html_url
+      githubOwnerName: .metadata.owner.login
+      githubOwnerId: .metadata.owner.id | tostring
+      isPrivate: .metadata.private
+      isTemplate: .metadata.is_template
+      visibility: .metadata.visibility
+      createdAt: .metadata.created_at
+      updatedAt: .metadata.updated_at
+      defaultBranch: .content.defaultBranchRef.name
+      languages: '[.content.languages.edges[].node.name]'
+      primaryLanguage: .content.primaryLanguage.name
+      codeOwners: .content.codeOwners.text
+      readme: .content.defaultBranchRef.target.file.object.text
+      openPullRequests: .content.openPullRequests.totalCount
+      openIssues: .content.openIssues.totalCount
+
+- kind: team
+  mappings:
+    id: .databaseId | tostring
+    title: .name
+    blueprintId: '"github.v1.team"'
+    description: .description
+    properties:
+      url: .url
+      repositoryCount: .repositories.nodes | length
+      membersCount: .members.nodes | length
+    relations:
+      repositories:
+        value: '.repositories.nodes // [] | map(.databaseId | tostring)'
+
+- kind: team_member
+  mappings:
+    id: .node.login
+    title: .node.name // .node.login
+    blueprintId: '"github.v1.teammember"'
+    description: '""'
+    properties:
+      email: .node.email
+      username: .node.login
+      role: .role
+    relations:
+      teams:
+        value: '.teams // [] | map(tostring)'
+
+- kind: pull_request
+  mappings:
+    id: .context.repositoryName + "-" + (.number | tostring)
+    title: .title
+    blueprintId: '"github.v1.pullrequest"'
+    description: '""'
+    properties:
+      link: .url
+      summary: .body
+      createdAt: .createdAt
+      updatedAt: .updatedAt
+      closedAt: .closedAt
+      mergedAt: .mergedAt
+      status: .state
+      owner: .context.owner.username
+    relations:
+      repository:
+        value: .context.repositoryId | tostring
+      reviewers:
+        value: '.reviews.edges[].node.author.login // []'
+      assignees:
+        value: '.assignees.nodes[].login // []'
+      creator:
+        value: .author.login | tostring
+
+- kind: issue
+  mappings:
+    id: .context.repository.name + "-" + (.databaseId|tostring)
+    title: .context.repository.name + "-" + (.databaseId|tostring)
+    blueprintId: '"github.v1.issue"'
+    description: '"Github repository " + .context.repository.name + " issue " + (.databaseId|tostring)'
+    properties:
+      link: .context.repository.html_url + "/issues/" + (.databaseId|tostring)
+      summary: .body
+      createdAt: .createdAt
+      closedAt: .closedAt
+      updatedAt: .updatedAt
+      status: .state
+      issueNumber: .databaseId
+      labels: .labels.nodes
+      owner: .context.owner.username
+    relations:
+      repository:
+        value: .context.repository.name
+      assignees:
+        value: '[.assignees.nodes[].login]'
+      creator:
+        value: .author.login
+
+- kind: workflow
+  mappings:
+    id: .id | tostring
+    title: .name
+    blueprintId: '"github.v1.workflow"'
+    description: '""'
+    properties:
+      link: .url
+      configLink: .html_url
+      path: .path
+      status: .state
+      createdAt: .created_at
+      updatedAt: .updated_at
+      deletedAt: .deleted_at
+    relations:
+      repository:
+        value: .context.repositoryId | tostring
+
+- kind: workflow_run
+  mappings:
+    id: .id | tostring
+    title: .display_title
+    blueprintId: '"github.v1.workflowrun"'
+    description: '""'
+    properties:
+      link: .html_url
+      workflowLink: .workflow_url
+      artifactsLink: .artifacts_url
+      logsLink: .logs_url
+      jobsLink: .jobs_url
+      status: .status
+      conclusion: .conclusion
+      runStartedAt: .run_started_at
+      createdAt: .created_at
+      updatedAt: .updated_at
+      branch: .head_branch
+      commitSHA: .head_sha
+      event: .event
+      runNumber: .run_number
+      runAttempts: .run_attempt
+      successful: 'if .conclusion == "success" then true else false end'
+    relations:
+      repository:
+        value: .context.repositoryId | tostring
+      workflows:
+        value: .workflow_id | tostring
+      triggeringActor:
+        value: .triggering_actor.login
+
+- kind: workflow_job
+  mappings:
+    id: .context.repository.name + "-" + (.id|tostring)
+    title: .context.repository.name + "-" + .name
+    blueprintId: '"github.v1.workflowjob"'
+    description: '"Github repository " + .context.repository.name + " workflow job " + (.id|tostring)'
+    properties:
+      link: .html_url
+      startedAt: .started_at
+      completedAt: .completed_at
+      createdAt: .created_at
+      status: .status
+      runAttempt: .run_attempt
+      steps: .steps
+      labels: .labels
+      conclusion: .conclusion
+      owner: .context.owner.username
+    relations:
+      workflowRun:
+        value: .context.repository.name + "-" + (.run_id|tostring)
