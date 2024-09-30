@@ -40,8 +40,7 @@ jobs:
         make install
     - name: Run linter
       run: |
-        export PATH="${VENV_PATH}/bin:${POETRY_HOME}/bin:${BIN_PATH}:$PATH"
-        POETRY_HOME=${POETRY_HOME}/bin make lint
+        POETRY_HOME=${POETRY_HOME} make lint
     - name: Run tests
       run: |
         export PATH="${VENV_PATH}/bin:${POETRY_HOME}/bin:${BIN_PATH}:$PATH"
