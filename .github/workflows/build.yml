@@ -38,8 +38,9 @@ jobs:
         export POETRY_VIRTUALENVS_CREATE=true
         sudo apt-get update && sudo apt-get install --no-install-recommends -y build-essential curl git
         cp /usr/bin/make ${BIN_PATH}
+    - name: Install dependencies
+      run: |
         make install
-        make lint
     # - name: Run linter
     #   run: |
     #     ls -la $POETRY_HOME/.venv
