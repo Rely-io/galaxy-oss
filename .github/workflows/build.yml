@@ -24,12 +24,17 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
-    - name: print path
-      run: echo ${{ github.path }}
+    - name: Setup environment
+      run: |
+        mkdir -p ${VENV_PATH} ${POETRY_HOME} ${BIN_PATH}
+        export PYTHONUNBUFFERED=1
+        export PYTHONDONTWRITEBYTECODE=1
+        export POETRY_VIRTUALENVS_IN_PROJECT=true
+        apt-get update && apt-get install --no-install-recommends -y build-essential curl git
+        cp /usr/bin/make ${BIN_PATH}
+        make install
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v3
       with:
         python-version: ${{ matrix.python-version }}
-    - name: Setup Poetry
-      uses: Gr1N/setup-poetry@v9
 
