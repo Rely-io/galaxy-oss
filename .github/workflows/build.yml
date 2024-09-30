@@ -15,8 +15,6 @@ jobs:
       fail-fast: false
       matrix:
         python-version: ["3.11"]
-
-
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
@@ -40,10 +38,15 @@ jobs:
         sudo apt-get update && sudo apt-get install --no-install-recommends -y build-essential curl git
         cp /usr/bin/make ${BIN_PATH}
         make install
-    - uses: actions/cache@v4.0.2
-      name: Define a cache for the virtual environment based on the dependencies lock file
-      with:
-        path: $VENV_PATH
-        key: venv-${{ hashFiles('poetry.lock') }}
+  lint:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11"]
+    needs: build
+    steps:
+    - name: Run linter
+      run: make lint
 
 
