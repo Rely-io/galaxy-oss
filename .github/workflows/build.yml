@@ -38,15 +38,13 @@ jobs:
         sudo apt-get update && sudo apt-get install --no-install-recommends -y build-essential curl git
         cp /usr/bin/make ${BIN_PATH}
         make install
-    - name: Which poetry
-      run: which poetry
-    # - name: Run linter
-    #   run: |
-    #     export PATH="${VENV_PATH}/bin:${POETRY_HOME}/bin:${BIN_PATH}:$PATH"
-    #     make lint
-    # - name: Run tests
-    #   run: |
-    #     export PATH="${VENV_PATH}/bin:${POETRY_HOME}/bin:${BIN_PATH}:$PATH"
-    #     make test
+    - name: Run linter
+      run: |
+        export PATH="${VENV_PATH}/bin:${POETRY_HOME}/bin:${BIN_PATH}:$PATH"
+        POETRY_HOME=${POETRY_HOME}/bin make lint
+    - name: Run tests
+      run: |
+        export PATH="${VENV_PATH}/bin:${POETRY_HOME}/bin:${BIN_PATH}:$PATH"
+        make test
 
 
