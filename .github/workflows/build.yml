@@ -108,11 +108,17 @@ jobs:
     #     secret-envs: # optional
     #     # List of tags
     #     tags: # optional
+    - name: debug
+      env:
+        GITHUB_PATH: ${{ github.path }}
+      run: |
+        echo "$GITHUB_PATH/deploy/docker"
     - name: Build and push
       uses: docker/build-push-action@v6
       with:
         context: "$GITHUB_PATH/deploy/docker"
         # push: true
         tags: devrelyio/galaxy:0.1.0-
+        platforms: linux/amd64,linux/arm64
 
 
