@@ -15,11 +15,11 @@ jobs:
       matrix:
         python-version: ["3.11"]
     env:
-      VENV_PATH: "${{GITHUB_ACTION_PATH}/.venv"
-      POETRY_HOME: "${{GITHUB_ACTION_PATH}/.cache/.poetry"
-      BIN_PATH: "${GITHUB_ACTION_PATH}/.cache/.bin"
+      VENV_PATH: "${{GITHUB_ACTION_PATH}}/.venv"
+      POETRY_HOME: "${{GITHUB_ACTION_PATH}}/.cache/.poetry"
+      BIN_PATH: "${{GITHUB_ACTION_PATH}}/.cache/.bin"
 
-      
+
 
     steps:
     - name: Checkout repository
@@ -30,4 +30,4 @@ jobs:
         python-version: ${{ matrix.python-version }}
     - name: Setup Poetry
       uses: Gr1N/setup-poetry@v9
-  
+
