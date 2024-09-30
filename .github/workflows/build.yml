@@ -24,11 +24,6 @@ jobs:
       uses: actions/setup-python@v5.2.0
       with:
         python-version: ${{ matrix.python-version }}
-    - uses: actions/cache@v4.0.2
-      name: Define a cache for the virtual environment based on the dependencies lock file
-      with:
-        path: $VENV_PATH
-        key: venv-${{ hashFiles('poetry.lock') }}
     - name: Setup environment
       env:
         GITHUB_PATH: ${{ github.path }}
@@ -45,5 +40,10 @@ jobs:
         sudo apt-get update && sudo apt-get install --no-install-recommends -y build-essential curl git
         cp /usr/bin/make ${BIN_PATH}
         make install
+    - uses: actions/cache@v4.0.2
+      name: Define a cache for the virtual environment based on the dependencies lock file
+      with:
+        path: $VENV_PATH
+        key: venv-${{ hashFiles('poetry.lock') }}
 
 
