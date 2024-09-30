@@ -14,18 +14,16 @@ jobs:
       fail-fast: false
       matrix:
         python-version: ["3.11"]
-    env:
-      GITHUB_PATH: ${{ github.path }}
-      VENV_PATH: "${GITHUB_PATH}/.venv"
-      POETRY_HOME: "${GITHUB_PATH}/.cache/.poetry"
-      BIN_PATH: "${GITHUB_PATH}/.cache/.bin"
-
-
 
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
     - name: Setup environment
+      env:
+        GITHUB_PATH: ${{ github.path }}
+        VENV_PATH: "${GITHUB_PATH}/.venv"
+        POETRY_HOME: "${GITHUB_PATH}/.cache/.poetry"
+        BIN_PATH: "${GITHUB_PATH}/.cache/.bin"
       run: |
         mkdir -p ${VENV_PATH} ${POETRY_HOME} ${BIN_PATH}
         export PYTHONUNBUFFERED=1
