@@ -15,9 +15,10 @@ jobs:
       matrix:
         python-version: ["3.11"]
     env:
-      VENV_PATH: "${{ github.path }}/.venv"
-      POETRY_HOME: "${{ github.path }}/.cache/.poetry"
-      BIN_PATH: "${{github.path}}/.cache/.bin"
+      GITHUB_PATH: ${{ github.path }}
+      VENV_PATH: "${GITHUB_PATH}/.venv"
+      POETRY_HOME: "${GITHUB_PATH}/.cache/.poetry"
+      BIN_PATH: "${GITHUB_PATH}/.cache/.bin"
 
 
 
