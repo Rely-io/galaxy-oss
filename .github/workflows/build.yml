@@ -41,7 +41,7 @@ jobs:
         make install
     - name: Run linter
       run: |
-        ls -la $POETRY_HOME
+        ls -la $POETRY_HOME/.venv
         POETRY_HOME=$POETRY_HOME make lint
     # - name: Run tests
     #   run: |
