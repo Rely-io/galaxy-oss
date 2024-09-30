@@ -110,7 +110,7 @@ jobs:
     #     tags: # optional
     - name: debug
       run: |
-        ls -la
+        ls -la deploy/docker
     - name: Build and push
       uses: docker/build-push-action@v6
       env:
