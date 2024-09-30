@@ -26,8 +26,9 @@ jobs:
       env:
         GITHUB_PATH: ${{ github.path }}
         VENV_PATH: "$GITHUB_PATH/.venv"
-        POETRY_HOME: "$GITHUB_PATH/.cache/.poetry"
-        BIN_PATH: "$GITHUB_PATH/.cache/.bin"
+        # POETRY_HOME: "$GITHUB_PATH/.cache/.poetry"
+        POETRY_HOME: "$GITHUB_PATH/.poetry"
+        BIN_PATH: "$GITHUB_PATH/.bin"
       run: |
         mkdir -p ${VENV_PATH} ${POETRY_HOME} ${BIN_PATH}
         export PATH="${VENV_PATH}/bin:${POETRY_HOME}/bin:${BIN_PATH}:$PATH"
