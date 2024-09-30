@@ -41,7 +41,7 @@ jobs:
         make install
     - name: Run linter
       run: |
-        echo $POETRY_HOME
+        ls -la $POETRY_HOME
         POETRY_HOME=$POETRY_HOME make lint
     # - name: Run tests
     #   run: |
