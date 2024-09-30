@@ -40,6 +40,8 @@ jobs:
         make install
     - name: Run linter
       run: |
+        ls -la $GITHUB_PATH
+        ls $POETRY_HOME
         POETRY_HOME=$POETRY_HOME make lint
     - name: Run tests
       run: |
