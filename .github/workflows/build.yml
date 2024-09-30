@@ -108,15 +108,12 @@ jobs:
     #     secret-envs: # optional
     #     # List of tags
     #     tags: # optional
-    - name: debug
-      run: |
-        ls -la deploy/docker
     - name: Build and push
       uses: docker/build-push-action@v6
       env:
         GITHUB_PATH: ${{ github.path }}
       with:
-        file: "{{defaultContext}}:deploy/docker/Dockerfile"
+        file: deploy/docker/Dockerfile
         # push: true
         tags: devrelyio/galaxy:0.1.1-next.0
         platforms: linux/amd64,linux/arm64
