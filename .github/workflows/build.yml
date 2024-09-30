@@ -5,7 +5,9 @@ name: Build and Test Galaxy
 
 on:
   push:
-    branches: [ "*" ]
+    branches: [ "main" ]
+
+  workflow_dispatch:
 
 jobs:
   build:
