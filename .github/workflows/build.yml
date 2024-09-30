@@ -17,7 +17,6 @@ jobs:
         python-version: ["3.11"]
 
 
-
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
@@ -32,7 +31,7 @@ jobs:
         export PYTHONUNBUFFERED=1
         export PYTHONDONTWRITEBYTECODE=1
         export POETRY_VIRTUALENVS_IN_PROJECT=true
-        apt-get update && apt-get install --no-install-recommends -y build-essential curl git
+        sudo apt-get update && sudo apt-get install --no-install-recommends -y build-essential curl git
         cp /usr/bin/make ${BIN_PATH}
         make install
     - name: Set up Python ${{ matrix.python-version }}
