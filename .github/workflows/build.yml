@@ -38,15 +38,8 @@ jobs:
         sudo apt-get update && sudo apt-get install --no-install-recommends -y build-essential curl git
         cp /usr/bin/make ${BIN_PATH}
         make install
-  lint:
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        python-version: ["3.11"]
-    needs: build
-    steps:
     - name: Run linter
       run: make lint
+
 
 
