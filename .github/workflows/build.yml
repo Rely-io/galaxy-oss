@@ -23,9 +23,9 @@ jobs:
     - name: Setup environment
       env:
         GITHUB_PATH: ${{ github.path }}
-        VENV_PATH: "${{GITHUB_PATH}}/.venv"
-        POETRY_HOME: "${{GITHUB_PATH}}/.cache/.poetry"
-        BIN_PATH: "${{GITHUB_PATH}}/.cache/.bin"
+        VENV_PATH: "$GITHUB_PATH/.venv"
+        POETRY_HOME: "$GITHUB_PATH/.cache/.poetry"
+        BIN_PATH: "$GITHUB_PATH/.cache/.bin"
       run: |
         mkdir -p ${VENV_PATH} ${POETRY_HOME} ${BIN_PATH}
         export PYTHONUNBUFFERED=1
