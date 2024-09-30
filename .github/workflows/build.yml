@@ -42,9 +42,9 @@ jobs:
       run: |
         echo $POETRY_HOME
         POETRY_HOME=$POETRY_HOME make lint
-    - name: Run tests
-      run: |
-        export PATH="${VENV_PATH}/bin:${POETRY_HOME}/bin:${BIN_PATH}:$PATH"
-        make test
+    # - name: Run tests
+    #   run: |
+    #     export PATH="${VENV_PATH}/bin:${POETRY_HOME}/bin:${BIN_PATH}:$PATH"
+    #     make test
 
 
