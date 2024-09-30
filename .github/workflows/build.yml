@@ -113,12 +113,15 @@ jobs:
         GITHUB_PATH: ${{ github.path }}
       run: |
         echo "$GITHUB_PATH/deploy/docker"
+        ls -la "$GITHUB_PATH/deploy/docker"
     - name: Build and push
       uses: docker/build-push-action@v6
+      env:
+        GITHUB_PATH: ${{ github.path }}
       with:
         context: "$GITHUB_PATH/deploy/docker"
         # push: true
-        tags: devrelyio/galaxy:0.1.0-
+        tags: devrelyio/galaxy:0.1.1-next.0
         platforms: linux/amd64,linux/arm64
 
 
