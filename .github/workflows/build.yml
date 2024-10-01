@@ -58,15 +58,10 @@ jobs:
         username: ${{ secrets.DOCKER_HUB_USERNAME }}
         # Password or personal access token used to log against the Docker registry
         password: ${{ secrets.DOCKER_HUB_SECRET }}
-    - name: Git describe
-      id: ghd
-      uses: proudust/gh-describe@v2
-    - name: validate git describe
-      run: |
-        echo "tag       : ${{ steps.ghd.outputs.tag }}"
     - name: describe tags
+      id: describe_tags
       run: |
-        echo $(git describe --tags --abbrev=0 2>/dev/null || echo "0.0.0")-build.${CI_PIPELINE_ID}-${CI_COMMIT_SHORT_SHA}
+        echo "IMAGE_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "0.0.0")-build.${GITHUB_RUN_ID}-${GITHUB_SHA}"" >> "$GITHUB_OUTPUT"
 
     # - name: Build and push Docker images
     #   uses: docker/build-push-action@v6.9.0
@@ -114,11 +109,11 @@ jobs:
     - name: Build and push
       uses: docker/build-push-action@v6
       env:
-        GITHUB_PATH: ${{ github.path }}
+        IMAGE_TAG: ${{ steps.describe_tags.outputs.IMAGE_TAG }}
       with:
         file: deploy/docker/Dockerfile
         # push: true
-        tags: devrelyio/galaxy:0.1.1-next.0
+        tags: devrelyio/galaxy:${IMAGE_TAG}
         platforms: linux/amd64,linux/arm64
 
 
