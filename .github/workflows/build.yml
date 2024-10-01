@@ -61,7 +61,7 @@ jobs:
     - name: describe tags
       id: describe_tags
       run: |
-        echo "IMAGE_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "0.0.0")-build.${GITHUB_RUN_ID}-${GITHUB_SHA}"" >> "$GITHUB_OUTPUT"
+        echo "IMAGE_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "0.0.0")-build.${GITHUB_RUN_ID}-${GITHUB_SHA}" >> "$GITHUB_OUTPUT"
 
     # - name: Build and push Docker images
     #   uses: docker/build-push-action@v6.9.0
