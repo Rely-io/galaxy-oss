@@ -76,6 +76,7 @@ jobs:
       env:
         DOCKER_HUB_USERNAME: ${{ secrets.DOCKER_HUB_USERNAME }}
         DOCKER_HUB_SECRET: ${{ secrets.DOCKER_HUB_SECRET }}
+        HELM_CHART_REGISTRY: ${HELM_CHART_REGISTRY}
       run: |
           sed -i "s+repository.*+repository:\ $CI_REGISTRY_IMAGE+g" $HELM_CHART_PATH/values.yaml
           sed -i "s+tag.*+tag:\ $GITHUB_REF_NAME+g" $HELM_CHART_PATH/values.yaml
@@ -84,6 +85,6 @@ jobs:
           mkdir -p ./public
           helm package $HELM_CHART_PATH --destination ./public --version $GITHUB_REF_NAME
           echo $DOCKER_HUB_SECRET | helm registry login "$HELM_CHART_REGISTRY_DOMAIN" -u $DOCKER_HUB_USERNAME --password-stdin
-          helm push $HELM_PACKAGE_NAME $HELM_CHART_REGISTRY
+          helm push $HELM_PACKAGE_NAME oci://${HELM_CHART_REGISTRY_DOMAIN}/devrelyio
           echo "Helm chart with tag ${GITHUB_REF_NAME} pushed to registry"
 
