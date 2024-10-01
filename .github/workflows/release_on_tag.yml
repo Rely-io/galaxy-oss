@@ -71,6 +71,7 @@ jobs:
         cache-to: type=gha,mode=max
         tags: |
           ${{ env.CI_REGISTRY_IMAGE }}:${{ github.ref_name }}
+          ${{ env.CI_REGISTRY_IMAGE }}:latest
         platforms: linux/amd64,linux/arm64
     - name: Package and Publish Helm Chart
       env:
