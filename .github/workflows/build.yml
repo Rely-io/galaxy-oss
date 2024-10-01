@@ -66,7 +66,7 @@ jobs:
       uses: docker/build-push-action@v6
       with:
         file: deploy/docker/Dockerfile
-        # push: true
+        push: true
         cache-from: type=gha
         cache-to: type=gha,mode=max
         tags: devrelyio/galaxy:${{ steps.describe_tags.outputs.IMAGE_TAG }}
