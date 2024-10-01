@@ -80,6 +80,7 @@ jobs:
           HELM_PACKAGE_NAME=$(ls *.tgz)
           mkdir -p ./public
           helm package $HELM_CHART_PATH --destination ./public --version $GITHUB_REF_NAME
+
           helm registry login "$HELM_CHART_REGISTRY_DOMAIN" -u $DOCKER_HUB_USERNAME --password $DOCKER_HUB_SECRET
       # run: |
       #   sed -i "s+repository.*+repository:\ $CI_REGISTRY_IMAGE+g" $HELM_CHART_PATH/values.yaml
