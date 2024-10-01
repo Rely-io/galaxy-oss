@@ -1,7 +1,7 @@
 # This workflow will install Python dependencies, run tests and lint with a variety of Python versions
 # For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python
 
-name: Build and Test Galaxy
+name: CI on Pull Request
 
 on:
   pull_request:
@@ -85,8 +85,6 @@ jobs:
       run: |
         sed -i "s+repository.*+repository:\ $CI_REGISTRY_IMAGE+g" $HELM_CHART_PATH/values.yaml
         sed -i "s+tag.*+tag:\ $GITHUB_REF_NAME+g" $HELM_CHART_PATH/values.yaml
+        helm lint $HELM_CHART_PATH
         helm package $HELM_CHART_PATH -d . --version 0.0.0
-        HELM_PACKAGE_NAME=$(ls *.tgz)
-        mkdir -p ./public
-        helm package $HELM_CHART_PATH --destination ./public --version 0.0.0
 
