@@ -86,5 +86,6 @@ jobs:
         sed -i "s+repository.*+repository:\ $CI_REGISTRY_IMAGE+g" $HELM_CHART_PATH/values.yaml
         sed -i "s+tag.*+tag:\ 0.0.0+g" $HELM_CHART_PATH/values.yaml
         cat $HELM_CHART_PATH/values.yaml
+        helm lint $HELM_CHART_PATH
         helm package $HELM_CHART_PATH -d . --version 0.0.0
 
