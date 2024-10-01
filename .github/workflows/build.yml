@@ -64,6 +64,9 @@ jobs:
     - name: validate git describe
       run: |
         echo "tag       : ${{ steps.ghd.outputs.tag }}"
+    - name: describe tags
+      run: |
+        echo $(git describe --tags --abbrev=0 2>/dev/null || echo "0.0.0")-build.${CI_PIPELINE_ID}-${CI_COMMIT_SHORT_SHA}
 
     # - name: Build and push Docker images
     #   uses: docker/build-push-action@v6.9.0
