@@ -76,6 +76,7 @@ jobs:
         platforms: linux/amd64,linux/arm64
     - name: Package and Publish Helm Chart
       run: |
+        echo "Building Helm Chart with version $GITHUB_REF_NAME"
         sed -i "s+repository.*+repository:\ $CI_REGISTRY_IMAGE+g" $HELM_CHART_PATH/values.yaml
         sed -i "s+tag.*+tag:\ $GITHUB_REF_NAME+g" $HELM_CHART_PATH/values.yaml
         helm package $HELM_CHART_PATH -d . --version $GITHUB_REF_NAME
