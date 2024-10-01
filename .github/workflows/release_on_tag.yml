@@ -85,6 +85,6 @@ jobs:
           mkdir -p ./public
           helm package $HELM_CHART_PATH --destination ./public --version $GITHUB_REF_NAME
           echo $DOCKER_HUB_SECRET | helm registry login "$HELM_CHART_REGISTRY_DOMAIN" -u $DOCKER_HUB_USERNAME --password-stdin
-          helm push $HELM_PACKAGE_NAME oci://${HELM_CHART_REGISTRY_DOMAIN}/devrelyio
+          helm push $HELM_PACKAGE_NAME oci://registry-1.docker.io/devrelyio
           echo "Helm chart with tag ${GITHUB_REF_NAME} pushed to registry"
 
