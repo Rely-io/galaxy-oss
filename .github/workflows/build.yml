@@ -113,7 +113,7 @@ jobs:
       with:
         file: deploy/docker/Dockerfile
         # push: true
-        tags: devrelyio/galaxy:${{ IMAGE_TAG }}
+        tags: devrelyio/galaxy:${{ steps.describe_tags.outputs.IMAGE_TAG }}
         platforms: linux/amd64,linux/arm64
 
 
