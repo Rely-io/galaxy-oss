@@ -62,57 +62,13 @@ jobs:
       id: describe_tags
       run: |
         echo "IMAGE_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "0.0.0")-build.${GITHUB_RUN_ID}-${GITHUB_SHA}" >> "$GITHUB_OUTPUT"
-
-    # - name: Build and push Docker images
-    #   uses: docker/build-push-action@v6.9.0
-    #   with:
-    #     # List of annotation to set to the image
-    #     annotations: # optional
-    #     # List of build-time variables
-    #     build-args: # optional
-    #     # List of additional build contexts (e.g., name=path)
-    #     build-contexts: # optional
-    #     # Builder instance
-    #     builder: # optional
-    #     # List of external cache sources for buildx (e.g., user/app:cache, type=local,src=path/to/dir)
-    #     cache-from: # optional
-    #     # List of cache export destinations for buildx (e.g., user/app:cache, type=local,dest=path/to/dir)
-    #     cache-to: # optional
-    #     # Optional parent cgroup for the container used in the build
-    #     cgroup-parent: # optional
-    #     # Build's context is the set of files located in the specified PATH or URL
-    #     context: # optional
-    #     # Path to the Dockerfile
-    #     file: # optional
-    #     # List of metadata for an image
-    #     labels: # optional
-    #     # Load is a shorthand for --output=type=docker
-    #     load: # optional, default is false
-    #     # Set the networking mode for the RUN instructions during build
-    #     network: # optional
-    #     # Do not use cache when building the image
-    #     no-cache: # optional, default is false
-    #     # Do not cache specified stages
-    #     no-cache-filters: # optional
-    #     # List of output destinations (format: type=local,dest=path)
-    #     outputs: # optional
-    #     # List of target platforms for build
-    #     platforms: # optional
-    #     # Push is a shorthand for --output=type=registry
-    #     # push: # optional, default is false
-    #     # List of secrets to expose to the build (e.g., key=string, GIT_AUTH_TOKEN=mytoken)
-    #     secrets: # optional
-    #     # List of secret env vars to expose to the build (e.g., key=envname, MY_SECRET=MY_ENV_VAR)
-    #     secret-envs: # optional
-    #     # List of tags
-    #     tags: # optional
     - name: Build and push
       uses: docker/build-push-action@v6
-      env:
-        IMAGE_TAG: ${{ steps.describe_tags.outputs.IMAGE_TAG }}
       with:
         file: deploy/docker/Dockerfile
         # push: true
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
         tags: devrelyio/galaxy:${{ steps.describe_tags.outputs.IMAGE_TAG }}
         platforms: linux/amd64,linux/arm64
 
