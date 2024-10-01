@@ -159,3 +159,4 @@ temp/
 
 # Docker
 .env.compose
+.DS_Store
