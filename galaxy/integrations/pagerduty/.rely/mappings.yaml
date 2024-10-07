@@ -1,0 +1,93 @@
+resources:
+  - kind: team
+    mappings:
+      id: '.id | ascii_downcase'
+      title: .name
+      blueprintId: '"pagerduty.v1.team"'
+      description: .description
+      properties:
+        link: .html_url
+        summary: .summary
+        defaultRole: .default_role
+
+  - kind: user
+    mappings:
+      id: '.id | ascii_downcase'
+      title: .name
+      blueprintId: '"pagerduty.v1.user"'
+      description: .description
+      properties:
+        email: .email
+        timeZone: .time_zone
+        role: .role
+        jobTitle: .job_title
+        link: .html_url
+        onCallSchedule: .oncall_schedule_link
+        currentlyOnCall: .is_currently_oncall
+        nextOnCallStart: .next_oncall_start
+        nextOnCallEnd: .next_oncall_end
+      relations:
+        teams:
+          value: '[.teams[].id | ascii_downcase]'
+
+  - kind: service
+    mappings:
+      id: '.id | ascii_downcase'
+      title: .name
+      blueprintId: '"pagerduty.v1.service"'
+      description: .description
+      properties:
+        lastIncident: .last_incident_timestamp
+        status: .status
+        link: .html_url
+        resolveTimeout: .auto_resolve_timeout
+        creationDate: .created_at
+        acknowledgementTimeout: .acknowledgement_timeout
+      relations:
+        teams:
+          value: '[.teams[].id | ascii_downcase]'
+        escalationPolicy:
+          value: '.escalation_policy.id | ascii_downcase'
+
+  - kind: incident
+    mappings:
+      id: '.id | ascii_downcase'
+      title: .title
+      blueprintId: '"pagerduty.v1.incident"'
+      description: .description
+      properties:
+        incidentNumber: .incident_number
+        summary: .summary
+        link: .html_url
+        status: .status
+        urgency: .urgency
+        priority: .priority.name
+        incidentType: .incident_type.name
+        assignedVia: .assigned_via
+        createdAt: .created_at
+        updatedAt: .updated_at
+        resolvedAt: .resolved_at
+        lastStatusChangedAt: .last_status_change_at
+      relations:
+        service:
+          value: '.service.id | ascii_downcase'
+        teams:
+          value: '[.teams[].id | ascii_downcase]'
+        escalationPolicy:
+          value: '.escalation_policy.id | ascii_downcase'
+
+  - kind: escalation_policy
+    mappings:
+      id: '.id | ascii_downcase'
+      title: .name
+      blueprintId: '"pagerduty.v1.escalation_policy"'
+      description: .description
+      properties:
+        link: .html_url
+        summary: .summary
+        onCallHandoffNotifications: .on_call_handoff_notifications
+        loops: .num_loops
+        rules: .rules | tostring
+      relations:
+        teams:
+          value: '[.teams[].id | ascii_downcase]'

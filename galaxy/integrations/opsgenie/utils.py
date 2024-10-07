@@ -1,5 +1,6 @@
-from dateutil.parser import isoparse
 from datetime import datetime, timezone
+
+from dateutil.parser import isoparse
 
 
 def map_users_to_teams(team_users):
@@ -36,6 +37,7 @@ def flatten_team_timeline(schedules):
 
 def get_user_on_call_teams(user):
     teams_on_call = []
+
     for team in user["teams"]:
         ongoing_periods = [
             period

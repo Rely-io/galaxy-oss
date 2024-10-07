@@ -6,7 +6,7 @@ integration:
   id: "{{ env('RELY_INTEGRATION_ID') }}"
   # The type of the integration.
   type: "github"
-# The execution type of the integration.
+  # The execution type of the integration.
   executionType: "{{ env('RELY_INTEGRATION_EXECUTION_TYPE') | default('cronjob', true)  }}"
   scheduledInterval: 60
   defaultModelMappings:
@@ -14,10 +14,12 @@ integration:
     "github.v1.team": "team"
     "github.v1.pullrequest": "pull_request"
     "github.v1.issue": "issue"
+    "github.v1.environment": "running_service_instance"
+    "github.v1.deployment": "deployment"
     "github.v1.workflowrun": "deployment"
   properties:
     appId: "{{ env('RELY_INTEGRATION_GITHUB_APP_ID') }}"
     appPrivateKey: "{{ env('RELY_INTEGRATION_GITHUB_APP_PRIVATE_KEY') }}"
     installationId: "{{ env('RELY_INTEGRATION_GITHUB_INSTALLATION_ID') }}"
     url: "{{ env('RELY_INTEGRATION_GITHUB_URL') | default('https://api.github.com', true)  }}"
-    daysOfHistory: 90
+    daysOfHistory: "{{ env('DAYS_OF_HISTORY') | default(30, true) | int }}"

@@ -1,9 +1,14 @@
+from types import TracebackType
+
 from galaxy.core.galaxy import Integration, register
 from galaxy.core.models import Config
 from galaxy.integrations.github.client import GithubClient
 from galaxy.integrations.github.utils import (
     extract_repositories_from_team,
     extract_team_members_from_team,
+    get_inactive_usernames_from_deployments,
+    get_inactive_usernames_from_pull_requests,
+    get_inactive_usernames_from_workflow_runs,
     map_users_to_teams,
 )
 
@@ -21,13 +26,7 @@ class Github(Integration):
         "databaseId": "former-github-members",
         "name": "Former Organization Members",
         "description": "Group for all previous members of the organization.",
-        "repositories": {"repositories": {"nodes": []}},
-        "members": {"repositories": {"nodes": []}},
-    }
-    everyone_team = {
-        "name": "Everyone",
-        "description": "Default team for all public users",
-        "url": "",  # You can set a URL if needed
+        "url": "",
         "repositories": {"nodes": []},
         "members": {"nodes": []},
     }
@@ -45,6 +44,7 @@ class Github(Integration):
         )
         self.organization = None
 
+        self.users = {}
         self.teams = {}
         self.repositories = {}
 
@@ -54,15 +54,21 @@ class Github(Integration):
         self.repository_to_pull_requests = {}
         self.repository_to_issues = {}
         self.repository_to_workflows = {}
+        self.repository_to_environments = {}
+        self.repository_to_deployments = {}
 
         self.workflows_to_runs = {}
 
-    def helper(self):
-        pass
+    async def __aenter__(self) -> "Github":
+        await self.client.__aenter__()
+        return self
+
+    async def __aexit__(self, exc_type: type, exc: Exception, tb: TracebackType) -> None:
+        await self.client.__aexit__(exc_type, exc, tb)
 
     @register(_methods, group=1)
     async def organization(self) -> None:
-        repo = await self.client.list_repositories_with_access_token(limit=1, include_archived=True, include_old=True)
+        repo = await self.client.get_repos(limit=1, include_archived=True, include_old=True)
         if len(repo) > 0:
             self.organization = repo[0]["owner"]["login"].lower()
             self.logger.info(f"Found organization: {self.organization!r}")
@@ -71,13 +77,14 @@ class Github(Integration):
 
     @register(_methods, group=1)
     async def repository(self) -> None:
-        repositories_metadata = await self.client.list_repositories_with_access_token()
+        repositories_metadata = await self.client.get_repos()
 
         for metadata in repositories_metadata:
             self.repositories[metadata["id"]] = {
                 "id": metadata["id"],
                 "slug": metadata["name"],
                 "owner": metadata["owner"]["login"],
+                "link": metadata["html_url"],
                 "metadata": metadata,
                 "content": await self.client.get_repo(metadata["owner"]["login"], metadata["name"]),
             }
@@ -88,7 +95,9 @@ class Github(Integration):
 
     @register(_methods, group=2)
     async def team(self) -> list[dict]:
-        self.teams = {team["databaseId"]: team for team in (await self.client.get_all_teams(self.organization))}
+        self.teams = {team["databaseId"]: team for team in (await self.client.get_teams(self.organization))}
+        self.teams[self.template_inactive_members_team["databaseId"]] = self.template_inactive_members_team
+
         for team_id, team in self.teams.items():
             self.team_to_repos[team_id] = extract_repositories_from_team(team)
             self.team_to_users[team_id] = extract_team_members_from_team(team)
@@ -103,7 +112,7 @@ class Github(Integration):
     async def team_member(self) -> list[dict]:
         self.users_to_teams = map_users_to_teams(self.team_to_users)
 
-        users_raw = await self.client.get_all_members(self.organization)
+        users_raw = await self.client.get_members(self.organization)
 
         self.users = {}
         for user in users_raw:
@@ -120,9 +129,9 @@ class Github(Integration):
     @register(_methods, group=4)
     async def pull_request(self) -> list[dict]:
         prs_mapped = []
-
+        inactive_usernames = set()
         for repo_id, repo in self.repositories.items():
-            self.repository_to_pull_requests[repo_id] = await self.client.get_all_requests(
+            self.repository_to_pull_requests[repo_id] = await self.client.get_pull_requests(
                 repo["owner"], repo["slug"], self.PULL_REQUEST_STATUS_TO_FETCH
             )
             prs_mapped.extend(
@@ -135,17 +144,26 @@ class Github(Integration):
                 )
             )
 
+            inactive_usernames.update(
+                get_inactive_usernames_from_pull_requests(self.repository_to_pull_requests[repo_id], self.users)
+            )
+
         self.logger.info(
             f"Found {len(prs_mapped)} pull requests from the last "
             f"{self.config.integration.properties['daysOfHistory']} days"
         )
-        return prs_mapped
+        new_entities = await self.register_inactive_users(inactive_usernames)
+        if new_entities:
+            self.logger.info(f"Found {len(new_entities) - 1} inactive members associated to deployments")
 
+        return new_entities + prs_mapped
+
+    # Disabled
     async def issue(self) -> list[dict]:
         issues_mapped = []
 
         for repo_id, repo in self.repositories.items():
-            repo_issues = await self.client.get_all_issues(repo["owner"], repo["slug"], self.ISSUE_STATUS_TO_FETCH)
+            repo_issues = await self.client.get_issues(repo["owner"], repo["slug"], self.ISSUE_STATUS_TO_FETCH)
 
             self.repository_to_pull_requests[repo_id] = repo_issues
             issues_mapped.extend(
@@ -171,7 +189,7 @@ class Github(Integration):
         workflows_mapped = []
 
         for repo_id, repo in self.repositories.items():
-            self.repository_to_workflows[repo_id] = await self.client.get_all_workflows(repo["owner"], repo["slug"])
+            self.repository_to_workflows[repo_id] = await self.client.get_workflows(repo["owner"], repo["slug"])
             workflows_mapped.extend(
                 (
                     await self.mapper.process(
@@ -189,10 +207,10 @@ class Github(Integration):
     @register(_methods, group=5)
     async def workflow_run(self) -> list[dict]:
         workflows_runs_mapped = []
-
+        inactive_usernames = set()
         for repo_id, repo in self.repositories.items():
             for workflow in self.repository_to_workflows[repo_id]:
-                self.workflows_to_runs[repo_id] = await self.client.get_all_workflow_runs(
+                self.workflows_to_runs[repo_id] = await self.client.get_workflow_runs(
                     repo["owner"], repo["slug"], workflow["id"]
                 )
                 workflows_runs_mapped.extend(
@@ -205,8 +223,96 @@ class Github(Integration):
                     )
                 )
 
+                inactive_usernames.update(
+                    get_inactive_usernames_from_workflow_runs(self.repository_to_pull_requests[repo_id], self.users)
+                )
         self.logger.info(
             f"Found {len(workflows_runs_mapped)} workflow runs from the last "
             f"{self.config.integration.properties['daysOfHistory']} days"
         )
+        new_entities = await self.register_inactive_users(inactive_usernames)
+        if new_entities:
+            self.logger.info(f"Found {len(new_entities) - 1} inactive members associated to deployments")
+
         return workflows_runs_mapped
+
+    @register(_methods, group=4)
+    async def environment(self) -> list[dict]:
+        environments_mapped = []
+
+        for repo_id, repo in self.repositories.items():
+            self.repository_to_environments[repo_id] = await self.client.get_environments(repo["owner"], repo["slug"])
+            environments_mapped.extend(
+                (
+                    await self.mapper.process(
+                        "environment", self.repository_to_environments[repo_id], context={"repositoryId": repo_id}
+                    )
+                )
+            )
+
+        self.logger.info(f"Found {len(environments_mapped)} environments")
+        return environments_mapped
+
+    @register(_methods, group=6)
+    async def deployments(self) -> list[dict]:
+        deployments_mapped = []
+        inactive_usernames = set()
+        for repo_id, repo in self.repositories.items():
+            self.repository_to_deployments[repo_id] = []
+            for environment in self.repository_to_environments[repo_id]:
+                repo_env_deployments = await self.client.get_deployments(
+                    repo["owner"], repo["slug"], [environment["name"]]
+                )
+
+                self.repository_to_deployments[repo_id].extend(repo_env_deployments)
+                deployments_mapped.extend(
+                    (
+                        await self.mapper.process(
+                            "deployment",
+                            repo_env_deployments,
+                            context={
+                                "repositoryId": repo_id,
+                                "repositoryName": repo["slug"],
+                                "repositoryLink": repo["link"],
+                                "environmentId": environment["id"],
+                            },
+                        )
+                    )
+                )
+
+                inactive_usernames.update(get_inactive_usernames_from_deployments(repo_env_deployments, self.users))
+
+        self.logger.info(f"Found {len(deployments_mapped)} deployments")
+
+        new_entities = await self.register_inactive_users(inactive_usernames)
+        if new_entities:
+            self.logger.info(f"Found {len(new_entities) - 1} inactive members associated to deployments")
+
+        return new_entities + deployments_mapped
+
+    async def register_inactive_users(self, inactive_usernames):
+        if not inactive_usernames:
+            return []
+
+        inactive_team_id = self.template_inactive_members_team["databaseId"]
+
+        # Fetch information from all inactive users and add them to the list of known users
+        new_users = []
+        for username in inactive_usernames:
+            self.users[username] = {
+                "node": {"name": username, "login": username, "email": "", "role": ""},
+                "teams": [inactive_team_id],
+            }
+
+            new_users.append(self.users[username])
+            self.teams[inactive_team_id]["members"]["nodes"].append(self.users[username])
+            self.team_to_users[inactive_team_id].append(username)
+
+        inactive_group_mapped = await self.mapper.process(
+            "team", [self.teams[inactive_team_id]], context={"organization": self.organization}
+        )
+        new_users_mapped = await self.mapper.process(
+            "team_member", new_users, context={"organization": self.organization}
+        )
+
+        return inactive_group_mapped + new_users_mapped

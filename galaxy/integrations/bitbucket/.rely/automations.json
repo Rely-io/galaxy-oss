@@ -51,46 +51,42 @@
           }
         },
         "conditions": [
-          {
-            "field": "event.action",
-            "operator": "neq",
-            "value": "addedAsSource"
-          }
+            {
+                "field": "event.action",
+                "operator": "neq",
+                "value": "addedAsSource"
+            }
         ]
       },
       {
-        "id": "trigger_bitbucket_service_chain_automation",
-        "type": "triggerAutomations",
-        "title": "Trigger Automations for Bitbucket Post Service Import",
-        "args": {
-          "automationIds": [
-            "rely.bitbucket.v1.environment-to-running-service-instance",
-            "rely.bitbucket.v1.pullrequest-to-pull-request",
-            "rely.bitbucket.v1.deployment-to-deployment"
-          ],
-          "entities": {
+            "id": "trigger_bitbucket_service_chain_automation",
+            "type": "triggerAutomations",
+            "title": "Trigger Automations for Bitbucket Post Service Import",
+            "args": {
+				        "automationIds": ["rely.bitbucket.v1.environment-to-running-service-instance","rely.bitbucket.v1.pullrequest-to-pull-request","rely.bitbucket.v1.deployment-to-deployment"],
+                "entities": {
+                    "conditions": [
+                        {
+                            "field": "blueprintId",
+                            "operator": "in",
+                            "value": "bitbucket.v1.pullrequest,bitbucket.v1.environment,bitbucket.v1.deployment"
+                        },
+                        {
+                            "field": "relations/repository/value",
+                            "operator": "eq",
+                            "value": "{{ data.id }}"
+                        }
+                    ]
+                }
+            },
             "conditions": [
-              {
-                "field": "blueprintId",
-                "operator": "in",
-                "value": "bitbucket.v1.pullrequest,bitbucket.v1.environment,bitbucket.v1.deployment"
-              },
-              {
-                "field": "relations/repository/value",
-                "operator": "eq",
-                "value": "{{ data.id }}"
-              }
+                {
+                    "field": "event.action",
+                    "operator": "eq",
+                    "value": "addedAsSource"
+                }
             ]
-          }
-        },
-        "conditions": [
-          {
-            "field": "event.action",
-            "operator": "eq",
-            "value": "addedAsSource"
-          }
-        ]
-      }
+        }
     ],
     "tags": [
       {
@@ -202,7 +198,7 @@
             "blueprintId": "{{ arguments.targetBlueprintId }}",
             "properties": {
               "link": "{{ data.properties.webUrl if data.properties.webUrl else none }}",
-              "status": "{{ data.properties.state if data.properties.state else none }}",
+              "status": "{{ standardize_status(data.properties.state, arguments.targetBlueprintId) if data.properties.state else none }}",
               "summary": "{{ data.properties.summary if data.properties.summary else none }}",
               "createdAt": "{{ data.properties.created_on if data.properties.created_on else none }}",
               "updatedAt": "{{ data.properties.updated_on if data.properties.updated_on else none }}",
@@ -289,31 +285,31 @@
         "id": "fetch_service"
       },
       {
-        "type": "fetchResource",
-        "args": {
-          "conditions": [
+         "type":"fetchResource",
+         "args":{
+            "conditions":[
+               {
+                  "field":"blueprintId",
+                  "value":"environment",
+                  "operator":"eq"
+               },
+               {
+                  "field":"properties/labels/aws",
+                  "value": "{{ data.properties.type }}",
+                  "operator":"contains"
+               }
+            ],
+            "resourceType":"entity",
+            "stopFlowIfNotFound": true
+         },
+         "conditions":[
             {
-              "field": "blueprintId",
-              "value": "environment",
-              "operator": "eq"
-            },
-            {
-              "field": "properties/labels/aws",
-              "value": "{{ data.properties.type }}",
-              "operator": "contains"
+               "field":"data.properties.type",
+               "value":null,
+               "operator":"neq"
             }
-          ],
-          "resourceType": "entity",
-          "stopFlowIfNotFound": true
-        },
-        "conditions": [
-          {
-            "field": "data.properties.type",
-            "value": null,
-            "operator": "neq"
-          }
-        ],
-        "id": "fetch_environment"
+         ],
+         "id":"fetch_environment"
       },
       {
         "type": "upsertResource",
@@ -323,7 +319,8 @@
             "title": "{{ actions.fetch_service.output.title }} ({{ actions.fetch_environment.output.title }})",
             "description": "{{ data.description }}",
             "blueprintId": "{{ arguments.targetBlueprintId }}",
-            "properties": {},
+            "properties": {
+            },
             "relations": {
               "service": {
                 "value": "{{ actions.fetch_service.output.id | string }}"
@@ -451,7 +448,7 @@
             "blueprintId": "{{ arguments.targetBlueprintId }}",
             "properties": {
               "link": "{{ data.properties.webUrl if data.properties.webUrl else none }}",
-              "status": "{{ data.properties.state if data.properties.state else none }}",
+              "status": "{{ standardize_status(data.properties.state, arguments.targetBlueprintId) if data.properties.state else none }}",
               "createdAt": "{{ data.properties.created_on if data.properties.created_on else actions.fetch_pipeline.output.properties.created_on }}",
               "updatedAt": "{{ data.properties.updated_on if data.properties.updated_on else none }}",
               "closedAt": "{{ data.properties.closed_on if data.properties.closed_on else actions.fetch_pipeline.output.properties.completed_on }}",
@@ -504,7 +501,8 @@
             "title": "{{ actions.fetch_service.output.title }} ({{ actions.fetch_environment.output.title }}): {{ data.id }}",
             "description": "{{ data.description }}",
             "blueprintId": "{{ arguments.targetBlueprintId }}",
-            "properties": {},
+            "properties": {
+            },
             "relations": {
               "targetEnvironment": {
                 "value": "{{ actions.fetch_running_service.output.relations.environment.value | string }}"
@@ -553,10 +551,10 @@
             "value": "{{ arguments.sourceBlueprintId }}"
           },
           {
-            "field": "data.properties.branch",
-            "operator": "like",
-            "value": "release/%"
-          }
+          "field": "data.properties.branch",
+          "operator": "like",
+          "value": "release/%"
+        }
         ]
       }
     ],
@@ -620,7 +618,7 @@
             },
             "properties": {
               "link": "{{ data.properties.webUrl if data.properties.webUrl else none }}",
-              "status": "{{ data.properties.state if data.properties.state none }}",
+              "status": "{{ standardize_status(data.properties.state, arguments.targetBlueprintId) if data.properties.state else none }}",
               "duration": "{{ data.properties.duration_in_seconds | int }}",
               "createdAt": "{{ data.properties.created_on if data.properties.created_on else none }}",
               "closedAt": "{{ data.properties.completed_on if data.properties.completed_on else none }}",
@@ -673,9 +671,9 @@
             "value": "{{ arguments.sourceBlueprintId }}"
           },
           {
-            "field": "data.properties.branch",
-            "operator": "in",
-            "value": "master,main"
+          "field": "data.properties.branch",
+          "operator": "in",
+          "value": "master,main"
           }
         ]
       }
@@ -740,7 +738,7 @@
             },
             "properties": {
               "link": "{{ data.properties.webUrl if data.properties.webUrl else none }}",
-              "status": "{{ data.properties.state if data.properties.state else none }}",
+              "status": "{{ standardize_status(data.properties.state, arguments.targetBlueprintId) if data.properties.state else none }}",
               "duration": "{{ data.properties.duration_in_seconds | int }}",
               "successful": "{{ data.properties.successful }}",
               "createdAt": "{{ data.properties.created_on if data.properties.created_on else none }}",

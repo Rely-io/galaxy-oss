@@ -1,0 +1,106 @@
+[
+  {
+    "id": "sonarqube.v1.project",
+    "title": "SonarQube Project",
+    "description": "Blueprint defining a SonarQube project",
+    "icon": "sonarqube",
+    "schemaProperties": {
+      "title": "blueprint properties",
+      "type": "object",
+      "properties": {
+        "lastAnalysisDate": {
+          "type": "string",
+          "title": "Last Analysis Date",
+          "format": "date-time"
+        },
+        "lastAnalysisStatus": {
+          "type": "string",
+          "title": "Last Analysis Status"
+        },
+        "numberOfBugs": {
+          "type": "integer",
+          "title": "Number Of Bugs"
+        },
+        "numberOfCodeSmells": {
+          "type": "integer",
+          "title": "Number Of CodeSmells"
+        },
+        "numberOfVulnerabilities": {
+          "type": "integer",
+          "title": "Number Of Vulnerabilities"
+        },
+        "numberOfHotSpots": {
+          "type": "integer",
+          "title": "Number Of HotSpots"
+        },
+        "numberOfDuplications": {
+          "type": "integer",
+          "title": "Number Of Duplications"
+        },
+        "coverage": {
+          "type": "number",
+          "title": "Coverage"
+        },
+        "mainBranch": {
+          "type": "string",
+          "title": "Main Branch"
+        }
+      }
+    }
+  },
+  {
+    "id": "sonarqube.v1.issue",
+    "title": "SonarQube Issue",
+    "description": "Blueprint defining a SonarQube issue",
+    "icon": "sonarqube",
+    "schemaProperties": {
+      "title": "blueprint properties",
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "title": "Type",
+          "enum": ["CODE_SMELL", "BUG", "VULNERABILITY"]
+        },
+        "severity": {
+          "type": "string",
+          "title": "Severity",
+          "enum": ["MAJOR", "INFO", "MINOR", "CRITICAL", "BLOCKER"]
+        },
+        "message": {
+          "type": "string",
+          "title": "Message"
+        },
+        "status": {
+          "type": "string",
+          "title": "Status",
+          "enum": ["OPEN", "CLOSED", "RESOLVED", "REOPENED", "CONFIRMED"]
+        },
+        "author": {
+          "title": "Author",
+          "type": "string",
+          "format": "user"
+        },
+        "tags": {
+          "type": "array",
+          "title": "Tags",
+          "items": {
+            "type": "string"
+          }
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "title": "Created At"
+        }
+      }
+    },
+    "relations": {
+      "project": {
+        "value": "sonarqube.v1.project",
+        "title": "Project",
+        "description": "The project that the analysis belongs"
+      }
+    }
+  }
+]

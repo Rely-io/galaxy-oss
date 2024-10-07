@@ -23,13 +23,35 @@ def extract_team_members_from_team(team: dict) -> list[dict]:
 
 
 def get_inactive_usernames_from_pull_requests(prs: list[dict], users: list):
-    inactive_usernames = []
+    inactive_usernames = set()
 
     for pr in prs:
-        mentioned_users = {pr.get("author").get("login")}
+        mentioned_users = set()
+        author = pr.get("author").get("login")
+        if author:
+            mentioned_users.add(author)
         mentioned_users.update(u["login"] for u in pr.get("assignees", {}).get("nodes", []))
         mentioned_users.update(u["login"] for u in pr.get("reviews", {}).get("nodes", []))
+        inactive_usernames.update([user_login for user_login in mentioned_users if user_login not in users])
 
-        inactive_usernames.extend([user_login for user_login in mentioned_users if user_login not in users])
+    return inactive_usernames
+
+
+def get_inactive_usernames_from_deployments(deployments: list[dict], users: dict):
+    inactive_usernames = set()
+    for dp in deployments:
+        author = dp.get("creator", {}).get("login")
+        if author and author not in users:
+            inactive_usernames.add(author)
+    return inactive_usernames
+
+
+def get_inactive_usernames_from_workflow_runs(runs: list[dict], users: list):
+    inactive_usernames = set()
+
+    for run in runs:
+        author = run.get("triggering_actor", {}).get("login")
+        if author and author not in users:
+            inactive_usernames.add(author)
 
     return inactive_usernames

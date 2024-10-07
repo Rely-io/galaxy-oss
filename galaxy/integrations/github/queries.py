@@ -119,7 +119,7 @@ def _build_pull_requests_query(
     source_branch: Optional[str] = None,
     states: Optional[Iterable[str]] = None,
     labels: Optional[Iterable[str]] = None,
-    last: int = 100,
+    last: int = 50,
     after: Optional[str] = None,
 ) -> tuple[str, dict[str, str | None | int | list[str] | Any]]:
     query = """
@@ -162,14 +162,14 @@ def _build_pull_requests_query(
                                 totalCount
                             }
                             changedFiles
-                            labels(first: 15) {         # Adjust the 'first' value as needed
+                            labels(first: 15) {
                                 edges {
                                     node {
                                         name
                                     }
                                 }
                             }
-                            reviews(first: 25) {            # Adjust the 'first' value as needed
+                            reviews(first: 25) {
                                 edges {
                                     node {
                                         author {
@@ -179,7 +179,7 @@ def _build_pull_requests_query(
                                     }
                                 }
                             }
-                            assignees(first: 25) {  # Adjust the 'first' value as needed
+                            assignees(first: 25) {
                                 nodes {
                                     databaseId
                                     login
@@ -210,7 +210,7 @@ def _build_pull_requests_query(
 
 
 def _build_deployments_query(
-    repo_id: str, environments: Optional[Iterable[str]] = None, last: int = 100, after: Optional[str] = None
+    repo_id: str, environments: Optional[Iterable[str]] = None, last: int = 50, after: Optional[str] = None
 ) -> tuple[str, dict[str, str | None | int | list[str] | Any]]:
     query = """
         ####################
@@ -234,15 +234,35 @@ def _build_deployments_query(
         # Deployments
         ####################
 
+        fragment deploymentStatus on DeploymentStatus {
+            state
+            createdAt
+            description
+        }
+
         fragment deployment on Deployment {
             databaseId
-            state
+            description
+            state               # Ongoing, finished, canceled (state of the deployment)
             createdAt
             updatedAt
             commit {
+                oid # The source commit hash
                 committedDate
             }
             environment
+            creator {
+                login
+            }
+            statuses(last: 1) {
+                nodes {
+                    ...deploymentStatus # This captures the last deployment status (success/failure)
+                }
+            }
+            task
+            ref {
+                name
+            }
         }
 
         query GetDeployments(
@@ -259,7 +279,7 @@ def _build_deployments_query(
             repository(owner: $owner, name: $name, followRenames: true) {
                 deployments(
                     environments: $environments
-                    orderBy: { field: CREATED_AT, direction: DESC }
+                    orderBy: { field: CREATED_AT, direction: ASC }
                     last: $last
                     after: $after
                 ) {

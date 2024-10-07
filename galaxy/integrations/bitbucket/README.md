@@ -15,14 +15,14 @@ Already a pro? Just edit this README.md and make it your own. Want to make it ea
 
 ```
 cd existing_repo
-git remote add origin https://gitlab.com/detech.ai/galaxy.git
+git remote add origin https://gitlab.com/relyio/backend/galaxy.git
 git branch -M master
 git push -uf origin master
 ```
 
 ## Integrate with your tools
 
-- [ ] [Set up project integrations](https://gitlab.com/detech.ai/galaxy/-/settings/integrations)
+- [ ] [Set up project integrations](https://gitlab.com/relyio/backend/galaxy/-/settings/integrations)
 
 ## Collaborate with your team
 
