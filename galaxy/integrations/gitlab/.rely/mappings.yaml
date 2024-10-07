@@ -1,7 +1,7 @@
 resources:
 - kind: group
   mappings:
-    id: .id | tostring
+    id: '"gitlab_group_" + (.id | tostring)'
     title: .name
     blueprintId: '"gitlab.v1.group"'
     description: .description
@@ -14,7 +14,7 @@ resources:
 
 - kind: repository
   mappings:
-    id: '.id | split("/") | last'
+    id: '"gitlab_repo_" + (.id | split("/") | last)'
     title: .name
     blueprintId: '"gitlab.v1.repository"'
     properties:
@@ -32,11 +32,11 @@ resources:
       readme: 'if .repository.blobs.nodes | length > 0 then .repository.blobs.nodes[0].rawBlob else "" end'
     relations:
       owner:
-        value: .context.ownerGroup | tostring
+        value: '"gitlab_group_" + (.context.ownerGroup | tostring)'
 
 - kind: user
   mappings:
-    id: '.id | split("/") | last'
+    id: '"gitlab_user_" + (.id | split("/") | last)'
     title: .name
     blueprintId: '"gitlab.v1.groupmember"'
     description: '""'
@@ -47,11 +47,11 @@ resources:
       createdAt: .createdAt
     relations:
       groups:
-        value: '[.groupMemberships.edges[] | select(.node.group.id != null) | .node.group.id | split("/") | last]'
+        value: '[.groupMemberships.edges[] | select(.node.group.id != null) | "gitlab_group_" + (.node.group.id | split("/") | last)]'
 
 - kind: issue
   mappings:
-    id: '.node.id | split("/") | last'
+    id: '"gitlab_issue_" + (.node.id | split("/") | last)'
     title: .node.title
     blueprintId: '"gitlab.v1.issue"'
     description: .node.description
@@ -65,18 +65,18 @@ resources:
       labels: '[.node.labels.edges[].node.title]'
     relations:
       repository:
-        value:  '.context.repository.id | split("/") | last'
+        value:  '"gitlab_repo_" + (.context.repository.id | split("/") | last)'
       owner:
-        value: .context.ownerGroup.id | tostring
+        value: '"gitlab_group_" + (.context.ownerGroup.id | tostring | tostring)'
       assignees:
-        value: '[.node.assignees.edges[].node.id | split("/") | last]'
+        value: '[.node.assignees.edges[].node.id | split("/") | last | "gitlab_user_" + .]'
       createdBy:
-        value: '.node.author.id | split("/") | last'
+        value: '"gitlab_user_" + (.node.author.id | split("/") | last)'
 
 
 - kind: merge_request
   mappings:
-    id: '.node.id | split("/") | last'
+    id: '"gitlab_mr_" + (.node.id | split("/") | last)'
     title: .node.title
     blueprintId: '"gitlab.v1.mergerequest"'
     properties:
@@ -93,19 +93,20 @@ resources:
       commitSHA: .node.commits.edges[0].node.sha
     relations:
       repository:
-        value: '.context.repository.id | split("/") | last'
+        value:  '"gitlab_repo_" + (.context.repository.id | split("/") | last)'
       owner:
-        value: .context.ownerGroup.id | tostring
+        value: '"gitlab_group_" + (.context.ownerGroup.id | tostring | tostring)'
       author:
-        value: 'if .node.author != null and .node.author.id != null then (.node.author.id | split("/") | last) else null end'
+        value: 'if .node.author != null and .node.author.id != null then ("gitlab_user_" + (.node.author.id | split("/") | last)) else null end'
       assignees:
-        value: '[.node.assignees.edges[].node.id | split("/") | last]'
+        value: '[.node.assignees.edges[].node.id | split("/") | last | "gitlab_user_" + .]'
       reviewers:
-        value: '[.node.reviewers.edges[].node.id | split("/") | last]'
+        value: '[.node.reviewers.edges[].node.id | split("/") | last | "gitlab_user_" + .]'
+
 
 - kind: pipeline
   mappings:
-    id: '.node.id | split("/") | last'
+    id: '"gitlab_pipeline_" + (.node.id | split("/") | last)'
     title: '.context.repository.name + " (" + .node.ref + ") : " + (.node.id | split("/") | last)'
     blueprintId: '"gitlab.v1.pipeline"'
     properties:
@@ -122,11 +123,11 @@ resources:
       webUrl: .context.repository.webUrl + "/-/pipelines/" + (.node.id | split("/") | last)
     relations:
       repository:
-        value:  '.context.repository.id | split("/") | last'
+        value:  '"gitlab_repo_" + (.context.repository.id | split("/") | last)'
       owner:
-        value: .context.ownerGroup.id | tostring
+        value: '"gitlab_group_" + (.context.ownerGroup.id | tostring)'
       triggeredBy:
-        value: 'if .node.user != null and .node.user.id != null then (.node.user.id | split("/") | last) else null end'
+        value: 'if .node.user != null and .node.user.id != null then ("gitlab_user_" + (.node.user.id | split("/") | last)) else null end'
 
 - kind: job
   mappings:
@@ -155,7 +156,7 @@ resources:
 
 - kind: environment
   mappings:
-    id: '.node.id | split("/") | last'
+    id: '"gitlab_env_" + (.node.id | split("/") | last)'
     title: .node.name
     blueprintId: '"gitlab.v1.environment"'
     properties:
@@ -166,12 +167,11 @@ resources:
       externalUrl: .node.externalUrl
     relations:
       repository:
-        value:  '.context.repository.id | split("/") | last'
-
+        value:  '"gitlab_repo_" + (.context.repository.id | split("/") | last)'
 
 - kind: deployment
   mappings:
-    id: '.node.id | split("/") | last'
+    id: '"gitlab_deployment_" + (.node.id | split("/") | last)'
     title: '.context.repository.name + ": (" + .context.environment.node.name  + ") " + .node.iid'
     blueprintId: '"gitlab.v1.deployment"'
     properties:
@@ -192,10 +192,10 @@ resources:
       commitAuthor: .node.job.pipeline.commit.author.name
     relations:
       repository:
-        value:  '.context.repository.id | split("/") | last'
+        value:  '"gitlab_repo_" + (.context.repository.id | split("/") | last)'
       triggeredBy:
-        value: '.node.triggerer.id | split("/") | last'
+        value: '"gitlab_user_" + (.node.triggerer.id | split("/") | last)'
       pipeline:
-        value: '.node.job.pipeline.id | split("/") | last'
+        value: '"gitlab_pipeline_" + (.node.job.pipeline.id | split("/") | last)'
       environment:
-        value:  '.context.environment.node.id | split("/") | last'
+        value: '"gitlab_env_" + (.context.environment.node.id | split("/") | last)'
