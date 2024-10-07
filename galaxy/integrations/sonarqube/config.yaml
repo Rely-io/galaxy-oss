@@ -1,0 +1,16 @@
+rely:
+  token: "{{ env('RELY_API_TOKEN') }}"
+  url: "{{ env('RELY_API_URL') }}"
+
+integration:
+  id: "{{ env('RELY_INTEGRATION_ID') }}"
+  type: "sonarqube"
+  executionType: "{{ env('RELY_INTEGRATION_EXECUTION_TYPE') | default('cronjob', true) }}"
+
+  # The configuration for the integration.
+  scheduledInterval: 60
+  defaultModelMappings:
+    sonarqube.v1.project: "service"
+  properties:
+    apiToken: "{{ env('RELY_INTEGRATION_SONARQUBE_TOKEN') }}"
+    serverUrl: "{{ env('RELY_INTEGRATION_SONARQUBE_URL') }}"

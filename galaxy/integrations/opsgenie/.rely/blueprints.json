@@ -1,291 +1,299 @@
 [
-  {
-    "id": "opsgenie.v1.team",
-    "title": "OpsGenie Team",
-    "description": "Blueprint defining an OpsGenie team.",
-    "icon": "opsgenie",
-    "schemaProperties": {
-      "type": "object",
-      "title": "team properties",
-      "properties": {
-        "onCallSchedules": {
-          "type": "array",
-          "items": {
-            "type": "string"
+   {
+      "id":"opsgenie.v1.team",
+      "title":"OpsGenie Team",
+      "description":"Blueprint defining an OpsGenie team.",
+      "icon":"opsgenie",
+      "schemaProperties":{
+         "type":"object",
+         "title":"team properties",
+         "properties":{
+            "onCallSchedules": {
+               "type": "array",
+               "items": {
+                  "type": "string"
+                },
+               "title":"Active On-Call Schedules",
+               "description":"The name of the On-Call schedules that are currently active for the team",
+               "icon":"opsgenie"
+            },
+            "webUrl": {
+               "type":"string",
+               "title":"Team Dashboard",
+               "description":"The URL of the team's page in OpsGenie.",
+               "format":"url",
+               "icon":"opsgenie"
+            },
+            "apiUrl":{
+               "type":"string",
+               "title":"Team API URL",
+               "description":"The URL of the team's CRUD route in OpsGenie's API.",
+               "format":"url",
+               "icon":"opsgenie"
+            }
+         }
+      },
+      "referenceProperties":{
+
+      },
+      "relations":{
+
+      },
+      "options":{
+         "showInSideBar":true
+      }
+   },
+   {
+      "id":"opsgenie.v1.service",
+      "title":"OpsGenie Service",
+      "description":"Blueprint defining an OpsGenie service.",
+      "icon":"opsgenie",
+      "schemaProperties":{
+         "type":"object",
+         "title":"service properties",
+         "properties":{
+            "webUrl":{
+               "type":"string",
+               "title":"Service URL",
+               "description":"The URL of the service's page on OpsGenie.",
+               "format":"url",
+               "icon":"opsgenie"
+            },
+            "isExternal":{
+               "type":"boolean",
+               "format":null,
+               "title":"Is External?",
+               "description":"Describes if this Service is managed internally or by a third party."
+            }
+         }
+      },
+      "referenceProperties":{
+
+      },
+      "relations":{
+         "team":{
+            "value":"opsgenie.v1.team",
+            "array":false,
+            "title":"Team",
+            "description":"The team that owns this service."
+         }
+      },
+      "options":{
+         "showInSideBar":true
+      },
+      "isActive":true
+   },
+   {
+      "id":"opsgenie.v1.user",
+      "title":"OpsGenie User",
+      "description":"Blueprint defining an OpsGenie user.",
+      "icon":"opsgenie",
+      "schemaProperties":{
+         "type":"object",
+         "title":"user properties",
+         "properties":{
+            "username":{
+               "type":"string",
+               "title":"Username",
+               "description":"The name of the user as listed in OpsGenie."
+            },
+            "role":{
+               "type":"string",
+               "title":"Role",
+               "description":"The role of the user as listed in OpsGenie."
+            },
+            "timeZone":{
+               "type":"string",
+               "title":"TimeZone",
+               "description":"The user's TimeZone as specified in OpsGenie."
+            },
+            "locale":{
+               "type":"string",
+               "title":"Locale",
+               "description":"The user's Locale as specified in OpsGenie."
+            },
+            "blocked":{
+               "type":"boolean",
+               "format":null,
+               "title":"Blocked?",
+               "description":"Flags whether or not the user is blocked in OpsGenie."
+            },
+            "verified":{
+               "type":"boolean",
+               "format":null,
+               "title":"Verified?",
+               "description":"Flags whether or not the user is verified in OpsGenie."
+            },
+            "createdAt":{
+               "type":"string",
+               "format":"date-time",
+               "title":"Create At",
+               "description":"Describes when the user was first created in OpsGenie."
+            },
+            "webUrl":{
+               "type":"string",
+               "format":"url",
+               "title":"Web URL",
+               "description":"The URL of the user's page in OpsGenie."
+            },
+            "currentlyOnCall":{
+               "type":"boolean",
+               "format":null,
+               "title":"Currently On Call?",
+               "description":"Whether the user is currently on-call and part of an active rotation's cycle."
+            },
+            "onCallDashboard":{
+               "type":"string",
+               "format":"url",
+               "title":"On Call Dashboard",
+               "description":"The user's on call schedule dashboard link."
+            },
+            "nextOnCallStart": {
+              "type": "string",
+              "format": "date-time",
+              "title": "Next OnCall Start",
+              "description": "The date and time at which user will start their next active rotation, taking all overrides into account."
+            },
+            "nextOnCallEnd": {
+              "type": "string",
+              "format": "date-time",
+              "title": "Next OnCall End",
+              "description": "The date and time at which user will end their next active rotation, taking all overrides into account."
+            }
+         }
+      },
+      "referenceProperties":{
+
+      },
+      "relations":{
+         "teams":{
+            "value":"opsgenie.v1.team",
+            "array":true,
+            "title":"Teams",
+            "description":"The teams to which this user belongs."
+         },
+         "currentlyOnCallFor":{
+            "value":"opsgenie.v1.team",
+            "array":true,
+            "title":"Currently On Call For",
+            "description":"The teams to which this user is currently on call for."
+         },
+         "nextOnCallFor":{
+            "value":"opsgenie.v1.team",
+            "array":false,
+            "title":"Next On Call For",
+            "description":"The teams to which this user is going to be on call for next."
+         }
+      },
+      "options":{
+         "showInSideBar":true
+      },
+      "isActive":true
+   },
+   {
+     "id": "opsgenie.v1.escalation",
+     "title": "OpsGenie Escalation Policy",
+     "description": "Blueprint defining an OpsGenie Escalation Policy.",
+     "icon": "opsgenie",
+     "schemaProperties": {
+       "type": "object",
+       "title": "policy properties",
+       "properties": {
+         "rules": {
+           "type": "string",
+           "format": "json",
+           "title": "Rules",
+           "description": "A JSON object describing the conditional rules this escalation follows to determine who and when to alert."
+         },
+         "repeat": {
+           "type": "string",
+           "format": "json",
+           "title": "Repeat",
+           "description": "A JSON object describing the conditions under which this escalation should re-evaluate the rules."
+         }
+       }
+     },
+     "referenceProperties": {},
+     "relations": {
+       "team": {
+         "value": "opsgenie.v1.team",
+         "array": false,
+         "title": "Responder (Team)",
+         "description": "The team to which this Escalation belongs."
+       }
+     },
+     "options": {
+       "propertiesGroups": {},
+       "showInSideBar": false
+     },
+     "isActive": true,
+     "isHideable": false
+   },
+   {
+      "id": "opsgenie.v1.incident",
+      "title": "OpsGenie Incident",
+      "description": "Blueprint defining an OpsGenie incident.",
+      "icon": "opsgenie",
+      "schemaProperties": {
+        "type": "object",
+        "title": "incident properties",
+        "properties": {
+          "tinyId": {
+            "type": "string",
+            "format": null,
+            "title": "TinyId",
+            "description": "TinyId as referenced in OpsGenie to provide a more sequential and human readable value."
           },
-          "title": "Active On-Call Schedules",
-          "description": "The name of the On-Call schedules that are currently active for the team",
-          "icon": "opsgenie"
-        },
-        "webUrl": {
-          "type": "string",
-          "title": "Team Dashboard",
-          "description": "The URL of the team's page in OpsGenie.",
-          "format": "url",
-          "icon": "opsgenie"
-        },
-        "apiUrl": {
-          "type": "string",
-          "title": "Team API URL",
-          "description": "The URL of the team's CRUD route in OpsGenie's API.",
-          "format": "url",
-          "icon": "opsgenie"
+          "status": {
+            "type": "string",
+            "format": null,
+            "title": "Status",
+            "description": "Latest status of the incident as visible in OpsGenie."
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At",
+            "description": "Describes when the incident was first declared in OpsGenie."
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At",
+            "description": "Describes when the incident was last updated in OpsGenie."
+          },
+          "priority": {
+            "type": "string",
+            "format": null,
+            "title": "Priority",
+            "description": "Latest priority assigned by responders in opsGenie to the incident.",
+            "enum":["P1", "P2", "P3", "P4", "P5"]
+          },
+          "webUrl": {
+            "type": "string",
+            "format": "url",
+            "title": "Web URL",
+            "description": "The URL of the user's page in OpsGenie."
+          }
         }
+      },
+      "referenceProperties": {},
+      "relations": {
+        "impactedServices": {
+          "value": "opsgenie.v1.service",
+          "array": true,
+          "title": "Impacted Services",
+          "description": "The services listed by responders as being impacted by this incident."
+        },
+        "responders": {
+          "value": "opsgenie.v1.team",
+          "array": true,
+          "title": "Responders (Teams)",
+          "description": "The teams listed at responders or to which listed users as responders belong."
+        }
+      },
+      "options": {
+        "showInSideBar": true
       }
-    },
-    "referenceProperties": {},
-    "relations": {},
-    "options": {
-      "showInSideBar": true
     }
-  },
-  {
-    "id": "opsgenie.v1.service",
-    "title": "OpsGenie Service",
-    "description": "Blueprint defining an OpsGenie service.",
-    "icon": "opsgenie",
-    "schemaProperties": {
-      "type": "object",
-      "title": "service properties",
-      "properties": {
-        "webUrl": {
-          "type": "string",
-          "title": "Service URL",
-          "description": "The URL of the service's page on OpsGenie.",
-          "format": "url",
-          "icon": "opsgenie"
-        },
-        "isExternal": {
-          "type": "boolean",
-          "format": null,
-          "title": "Is External?",
-          "description": "Describes if this Service is managed internally or by a third party."
-        }
-      }
-    },
-    "referenceProperties": {},
-    "relations": {
-      "team": {
-        "value": "opsgenie.v1.team",
-        "array": false,
-        "title": "Team",
-        "description": "The team that owns this service."
-      }
-    },
-    "options": {
-      "showInSideBar": true
-    },
-    "isActive": true
-  },
-  {
-    "id": "opsgenie.v1.user",
-    "title": "OpsGenie User",
-    "description": "Blueprint defining an OpsGenie user.",
-    "icon": "opsgenie",
-    "schemaProperties": {
-      "type": "object",
-      "title": "user properties",
-      "properties": {
-        "username": {
-          "type": "string",
-          "title": "Username",
-          "description": "The name of the user as listed in OpsGenie."
-        },
-        "role": {
-          "type": "string",
-          "title": "Role",
-          "description": "The role of the user as listed in OpsGenie."
-        },
-        "timeZone": {
-          "type": "string",
-          "title": "TimeZone",
-          "description": "The user's TimeZone as specified in OpsGenie."
-        },
-        "locale": {
-          "type": "string",
-          "title": "Locale",
-          "description": "The user's Locale as specified in OpsGenie."
-        },
-        "blocked": {
-          "type": "boolean",
-          "format": null,
-          "title": "Blocked?",
-          "description": "Flags whether or not the user is blocked in OpsGenie."
-        },
-        "verified": {
-          "type": "boolean",
-          "format": null,
-          "title": "Verified?",
-          "description": "Flags whether or not the user is verified in OpsGenie."
-        },
-        "createdAt": {
-          "type": "string",
-          "format": "date-time",
-          "title": "Create At",
-          "description": "Describes when the user was first created in OpsGenie."
-        },
-        "webUrl": {
-          "type": "string",
-          "format": "url",
-          "title": "Web URL",
-          "description": "The URL of the user's page in OpsGenie."
-        },
-        "currentlyOnCall": {
-          "type": "boolean",
-          "format": null,
-          "title": "Currently On Call?",
-          "description": "Whether the user is currently on-call and part of an active rotation's cycle."
-        },
-        "onCallDashboard": {
-          "type": "string",
-          "format": "url",
-          "title": "On Call Dashboard",
-          "description": "The user's on call schedule dashboard link."
-        },
-        "nextOnCallStart": {
-          "type": "string",
-          "format": "date-time",
-          "title": "Next OnCall Start",
-          "description": "The date and time at which user will start their next active rotation, taking all overrides into account."
-        },
-        "nextOnCallEnd": {
-          "type": "string",
-          "format": "date-time",
-          "title": "Next OnCall End",
-          "description": "The date and time at which user will end their next active rotation, taking all overrides into account."
-        }
-      }
-    },
-    "referenceProperties": {},
-    "relations": {
-      "teams": {
-        "value": "opsgenie.v1.team",
-        "array": true,
-        "title": "Teams",
-        "description": "The teams to which this user belongs."
-      },
-      "currentlyOnCallFor": {
-        "value": "opsgenie.v1.team",
-        "array": true,
-        "title": "Currently On Call For",
-        "description": "The teams to which this user is currently on call for."
-      },
-      "nextOnCallFor": {
-        "value": "opsgenie.v1.team",
-        "array": false,
-        "title": "Next On Call For",
-        "description": "The teams to which this user is going to be on call for next."
-      }
-    },
-    "options": {
-      "showInSideBar": true
-    },
-    "isActive": true
-  },
-  {
-    "id": "opsgenie.v1.escalation",
-    "title": "OpsGenie Escalation Policy",
-    "description": "Blueprint defining an OpsGenie Escalation Policy.",
-    "icon": "opsgenie",
-    "schemaProperties": {
-      "type": "object",
-      "title": "policy properties",
-      "properties": {
-        "rules": {
-          "type": "string",
-          "format": "json",
-          "title": "Rules",
-          "description": "A JSON object describing the conditional rules this escalation follows to determine who and when to alert."
-        },
-        "repeat": {
-          "type": "string",
-          "format": "json",
-          "title": "Repeat",
-          "description": "A JSON object describing the conditions under which this escalation should re-evaluate the rules."
-        }
-      }
-    },
-    "referenceProperties": {},
-    "relations": {
-      "team": {
-        "value": "opsgenie.v1.team",
-        "array": false,
-        "title": "Responder (Team)",
-        "description": "The team to which this Escalation belongs."
-      }
-    },
-    "options": {
-      "propertiesGroups": {},
-      "showInSideBar": false
-    },
-    "isActive": true,
-    "isHideable": false
-  },
-  {
-    "id": "opsgenie.v1.incident",
-    "title": "OpsGenie Incident",
-    "description": "Blueprint defining an OpsGenie incident.",
-    "icon": "opsgenie",
-    "schemaProperties": {
-      "type": "object",
-      "title": "incident properties",
-      "properties": {
-        "tinyId": {
-          "type": "string",
-          "format": null,
-          "title": "TinyId",
-          "description": "TinyId as referenced in OpsGenie to provide a more sequential and human readable value."
-        },
-        "status": {
-          "type": "string",
-          "format": null,
-          "title": "Status",
-          "description": "Latest status of the incident as visible in OpsGenie."
-        },
-        "createdAt": {
-          "type": "string",
-          "format": "date-time",
-          "title": "Created At",
-          "description": "Describes when the incident was first declared in OpsGenie."
-        },
-        "updatedAt": {
-          "type": "string",
-          "format": "date-time",
-          "title": "Updated At",
-          "description": "Describes when the incident was last updated in OpsGenie."
-        },
-        "priority": {
-          "type": "string",
-          "format": null,
-          "title": "Priority",
-          "description": "Latest priority assigned by responders in opsGenie to the incident.",
-          "enum": ["P1", "P2", "P3", "P4", "P5"]
-        },
-        "webUrl": {
-          "type": "string",
-          "format": "url",
-          "title": "Web URL",
-          "description": "The URL of the user's page in OpsGenie."
-        }
-      }
-    },
-    "referenceProperties": {},
-    "relations": {
-      "impactedServices": {
-        "value": "opsgenie.v1.service",
-        "array": true,
-        "title": "Impacted Services",
-        "description": "The services listed by responders as being impacted by this incident."
-      },
-      "responders": {
-        "value": "opsgenie.v1.team",
-        "array": true,
-        "title": "Responders (Teams)",
-        "description": "The teams listed at responders or to which listed users as responders belong."
-      }
-    },
-    "options": {
-      "showInSideBar": true
-    }
-  }
 ]

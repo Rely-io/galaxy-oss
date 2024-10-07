@@ -1,17 +1,16 @@
+import os
+
+import aiofiles
 import humps
 import pkg_resources
+import yaml
+from jinja2 import Environment, FileSystemLoader
 
 from galaxy.core.api import run_app
-from galaxy.core.galaxy import import_and_instantiate_integration, call_methods
-import aiofiles
-import os
-import yaml
-from jinja2 import FileSystemLoader, Environment
-
+from galaxy.core.galaxy import call_methods, import_and_instantiate_integration
 from galaxy.core.logging import setup_logger
 from galaxy.core.magneto import Magneto
 from galaxy.core.models import Config, ExecutionType
-
 from galaxy.core.utils import from_env, get_config_value
 
 
@@ -49,7 +48,7 @@ async def main(
         async with Magneto(config.rely.url, config.rely.token, logger=logger) as session:
             integration_config = await session.get_plugin(str(config.integration.id))
 
-        logger.debug(f"Config entity from magneto: {integration_config}")
+        logger.debug("Config entity from magneto: %r", integration_config)
         if integration_config["dataSource"].lower() != integration_type:
             logger.error(
                 f"Integration type mismatch. Expected {integration_type} but got {integration_config['dataSource']}"
@@ -60,12 +59,12 @@ async def main(
         if config_entity_properties is not None:
             config.integration.properties.update(config_entity_properties)
 
-        logger.debug(f"Config entity properties: {config.integration.properties}")
+        logger.debug("Config entity properties: %r", config.integration.properties)
         if integration_config is None:
             logger.error("Integration not found in magneto")
             raise Exception("Integration not found in magneto")
 
-    logger.debug(f"Galaxy run config: {config}")
+    logger.debug("Galaxy run config: %r", config)
     module_name = f"galaxy.integrations.{integration_type}.main"
     class_name = humps.pascalize(integration_type)  # Assumes class name is pascal case version of integration_type
 

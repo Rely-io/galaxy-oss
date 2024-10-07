@@ -1,0 +1,361 @@
+[
+  {
+    "id": "pagerduty.v1.team",
+    "title": "PagerDuty Team",
+    "description": "Blueprint representing a PagerDuty team in our software catalog",
+    "icon": "pagerduty",
+    "schemaProperties": {
+      "title": "PagerDuty Team Properties",
+      "type": "object",
+      "properties": {
+        "link": {
+          "type": "string",
+          "title": "Team URL",
+          "description": "The URL of the PagerDuty team",
+          "format": "url",
+          "icon": "pagerduty"
+        },
+        "summary": {
+          "type": "string",
+          "title": "Summary",
+          "description": "The summary of the PagerDuty team"
+        },
+        "defaultRole": {
+          "type": "string",
+          "title": "Default Role",
+          "description": "The default role of the PagerDuty team",
+          "enum": [
+            "manager",
+            "none"
+          ]
+        }
+      }
+    },
+    "isActive": true,
+    "options": {
+      "showInSideBar": true
+    },
+    "relations": {}
+  },
+  {
+    "id": "pagerduty.v1.user",
+    "title": "PagerDuty User",
+    "description": "Blueprint representing a PagerDuty user in our software catalog",
+    "icon": "pagerduty",
+    "schemaProperties": {
+      "title": "PagerDuty User Properties",
+      "type": "object",
+      "properties": {
+        "email": {
+          "type": "string",
+          "title": "Email",
+          "description": "The email address of the PagerDuty user",
+          "format": "email"
+        },
+        "timeZone": {
+          "type": "string",
+          "title": "Time Zone",
+          "description": "The time zone of the PagerDuty user"
+        },
+        "role": {
+          "type": "string",
+          "enum": [
+            "admin",
+            "limited_user",
+            "observer",
+            "owner",
+            "read_only_user",
+            "restricted_access",
+            "read_only_limited_user",
+            "user"
+          ],
+          "title": "Role",
+          "description": "The role of the PagerDuty user"
+        },
+        "jobTitle": {
+          "type": "string",
+          "title": "Job Title",
+          "description": "The job title of the PagerDuty user"
+        },
+        "link": {
+          "type": "string",
+          "title": "User URL",
+          "description": "The URL of the PagerDuty user",
+          "format": "url",
+          "icon": "pagerduty"
+        },
+        "currentlyOnCall": {
+          "type": "boolean",
+          "title": "Currently On Call?",
+          "description": "Whether the user is currently on-call and part of an active rotation's cycle."
+        },
+        "onCallSchedule": {
+          "type": "string",
+          "format": "url",
+          "title": "On Call Schedule",
+          "description": "The user's on-call schedule dashboard link."
+        },
+        "nextOnCallStart": {
+          "type": "string",
+          "format": "date-time",
+          "title": "Next OnCall Start",
+          "description": "The date and time at which user will start their next active rotation, taking all overrides into account."
+        },
+        "nextOnCallEnd": {
+          "type": "string",
+          "format": "date-time",
+          "title": "Next OnCall End",
+          "description": "The date and time at which user will end their next active rotation, taking all overrides into account."
+        }
+      }
+    },
+    "relations": {
+      "teams": {
+        "title": "Teams",
+        "value": "pagerduty.v1.team",
+        "description": "The teams associated with this user",
+        "array": true
+      }
+    },
+    "isHideable": false,
+    "isActive": true,
+    "options": {
+      "showInSideBar": true
+    }
+  },
+  {
+    "id": "pagerduty.v1.service",
+    "title": "PagerDuty Service",
+    "description": "Blueprint representing a PagerDuty service in our software catalog",
+    "icon": "pagerduty",
+    "schemaProperties": {
+      "title": "PagerDuty Service Properties",
+      "type": "object",
+      "properties": {
+        "lastIncident": {
+          "type": "string",
+          "title": "Last Incident",
+          "description": "The date/time when the most recent incident was created for this PagerDuty service",
+          "format": "date-time"
+        },
+        "status": {
+          "type": "string",
+          "title": "Status",
+          "description": "The status of the PagerDuty service",
+          "enum": [
+            "active",
+            "warning",
+            "critical",
+            "maintenance",
+            "disabled"
+          ]
+        },
+        "link": {
+          "type": "string",
+          "title": "Service URL",
+          "description": "The URL of the PagerDuty service",
+          "format": "url",
+          "icon": "pagerduty"
+        },
+        "resolveTimeout": {
+          "type": "integer",
+          "title": "Auto Resolve Incidents Timeout",
+          "description": "Time in seconds that an incident is automatically resolved if left open for that long"
+        },
+        "creationDate": {
+          "type": "string",
+          "format": "date-time",
+          "title": "Creation Date",
+          "description": "The date/time when this PagerDuty service was created"
+        },
+        "acknowledgementTimeout": {
+          "type": "integer",
+          "title": "Acknowledged Incidents Timeout",
+          "description": "Time in seconds that an incident changes to the Triggered State after being Acknowledged."
+        }
+      }
+    },
+    "relations": {
+      "teams": {
+        "title": "Teams",
+        "value": "pagerduty.v1.team",
+        "description": "The teams associated with this service",
+        "array": true
+      },
+      "escalationPolicy": {
+        "title": "Escalation Policy",
+        "value": "pagerduty.v1.escalation_policy",
+        "description": "The PagerDuty escalation policy associated with this service"
+      }
+    },
+    "isActive": true,
+    "options": {
+      "showInSideBar": true
+    }
+  },
+  {
+    "id": "pagerduty.v1.incident",
+    "title": "PagerDuty Incident",
+    "description": "Blueprint representing a PagerDuty incident in our software catalog",
+    "icon": "pagerduty",
+    "schemaProperties": {
+      "title": "PagerDuty Incident Properties",
+      "type": "object",
+      "properties": {
+        "incidentNumber": {
+          "type": "integer",
+          "title": "Incident Number",
+          "description": "The number of the PagerDuty incident"
+        },
+        "summary": {
+          "type": "string",
+          "title": "Incident Summary",
+          "description": "The summary of the PagerDuty incident"
+        },
+        "urgency": {
+          "type": "string",
+          "title": "Incident Urgency",
+          "description": "The urgency level of the PagerDuty incident"
+        },
+        "priority": {
+          "type": "string",
+          "title": "Priority",
+          "description": "Latest priority assigned by responders in PagerDuty to the incident."
+        },
+        "incidentType": {
+          "type": "string",
+          "title": "Incident Type",
+          "description": "The name of the Incident Type of the PagerDuty incident"
+        },
+        "link": {
+          "type": "string",
+          "title": "Incident URL",
+          "description": "The URL of the PagerDuty incident",
+          "format": "url",
+          "icon": "pagerduty"
+        },
+        "status": {
+          "type": "string",
+          "title": "Incident Status",
+          "description": "The status of the PagerDuty incident",
+          "enum": [
+            "triggered",
+            "annotated",
+            "acknowledged",
+            "reassigned",
+            "escalated",
+            "reopened",
+            "resolved"
+          ]
+        },
+        "assignedVia": {
+          "type": "string",
+          "title": "Assigned Via",
+          "description": "The method of assignment of the PagerDuty incident"
+        },
+        "createdAt": {
+          "type": "string",
+          "title": "Create At",
+          "description": "The creation timestamp of the PagerDuty incident",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "title": "Updated At",
+          "description": "The last updated timestamp of the PagerDuty incident",
+          "format": "date-time"
+        },
+        "resolvedAt": {
+          "type": "string",
+          "title": "Resolved At",
+          "description": "The resolution timestamp of the PagerDuty incident",
+          "format": "date-time"
+        },
+        "lastStatusChangedAt": {
+          "type": "string",
+          "format": "date-time",
+          "title": "Last Status Changed At",
+          "description": "The time the status of the incident last changed."
+        }
+      }
+    },
+    "isActive": true,
+    "options": {
+      "showInSideBar": true
+    },
+    "relations": {
+      "service": {
+        "title": "PagerDuty Service",
+        "value": "pagerduty.v1.service",
+        "description": "The PagerDuty service associated with this incident"
+      },
+      "teams": {
+        "title": "Teams",
+        "value": "pagerduty.v1.team",
+        "description": "The teams associated with this incident",
+        "array": true
+      },
+      "escalationPolicy": {
+        "title": "PagerDuty Escalation Policy",
+        "value": "pagerduty.v1.escalation_policy",
+        "description": "The PagerDuty escalation policy associated with this incident"
+      }
+    }
+  },
+  {
+    "id": "pagerduty.v1.escalation_policy",
+    "title": "PagerDuty Escalation Policy",
+    "description": "Blueprint representing a PagerDuty Escalation Policy in our software catalog",
+    "icon": "pagerduty",
+    "schemaProperties": {
+      "title": "PagerDuty Escalation Policy Properties",
+      "type": "object",
+      "properties": {
+        "link": {
+          "type": "string",
+          "title": "Escalation Policy URL",
+          "description": "The URL of the PagerDuty Escalation Policy",
+          "format": "url",
+          "icon": "pagerduty"
+        },
+        "summary": {
+          "type": "string",
+          "title": "Summary",
+          "description": "The summary of the PagerDuty escalation policy"
+        },
+        "onCallHandoffNotifications": {
+          "type": "string",
+          "title": "On Call Handoff Notifications",
+          "description": "The On Call Handoff Notifications of the PagerDuty escalation policy",
+          "enum": [
+            "if_has_services",
+            "always"
+          ]
+        },
+        "loops": {
+          "type": "integer",
+          "title": "Repeat Loops",
+          "description": "The number of times the escalation policy will repeat after reaching the end of its escalation."
+        },
+        "rules": {
+          "type": "string",
+          "format": "json",
+          "title": "Rules",
+          "description": "A JSON object describing the conditional rules this escalation follows to determine who and when to alert."
+        }
+      }
+    },
+    "isActive": true,
+    "options": {
+      "showInSideBar": true
+    },
+    "relations": {
+      "teams": {
+        "title": "Teams",
+        "value": "pagerduty.v1.team",
+        "description": "The PagerDuty teams associated with this escalation policy",
+        "array": true
+      }
+    }
+  }
+]

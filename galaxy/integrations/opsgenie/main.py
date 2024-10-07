@@ -1,11 +1,13 @@
+from types import TracebackType
+
 from galaxy.core.galaxy import Integration, register
 from galaxy.core.models import Config
 from galaxy.integrations.opsgenie.client import OpsgenieClient
 from galaxy.integrations.opsgenie.utils import (
-    map_users_to_teams,
     flatten_team_timeline,
-    get_user_on_call_teams,
     get_user_next_on_call_shift,
+    get_user_on_call_teams,
+    map_users_to_teams,
 )
 
 __all__ = ["Opsgenie"]
@@ -22,6 +24,13 @@ class Opsgenie(Integration):
         self.users = []
         self.escalations = []
         self.incidents = []
+
+    async def __aenter__(self) -> "Opsgenie":
+        await self.client.__aenter__()
+        return self
+
+    async def __aexit__(self, exc_type: type, exc: Exception, tb: TracebackType) -> None:
+        await self.client.__aexit__(exc_type, exc, tb)
 
     @register(_methods, group=1)
     async def team(self) -> list[dict]:
@@ -68,7 +77,7 @@ class Opsgenie(Integration):
         self.users = await self.client.get_users()
         teams_per_user = map_users_to_teams(self.teams)
         for user in self.users:
-            user["teams"] = teams_per_user.get(user["id"])
+            user["teams"] = teams_per_user.get(user["id"]) or []
             user["teamsOnCall"] = get_user_on_call_teams(user)
             user["nextOnCallShift"] = get_user_next_on_call_shift(user)
 

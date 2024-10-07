@@ -1,0 +1,20 @@
+rely:
+  token: "{{ env('RELY_API_TOKEN') }}"
+  url: "{{ env('RELY_API_URL') | default('https://magneto-api-dev.rely.io', true) }}"
+integration:
+  # The identifier of this integration instance.
+  id: "{{ env('RELY_INTEGRATION_ID') | default('00000', true) }}"
+  # The type of the integration.
+  type: "pagerduty"
+# The execution type of the integration.
+  executionType: "{{ env('RELY_INTEGRATION_EXECUTION_TYPE') | default('cronjob', true) }}"
+  # The configuration for the integration.
+  scheduledInterval: 60
+  defaultModelMappings:
+    pagerduty.v1.team: "team"
+    pagerduty.v1.service: "service"
+    pagerduty.v1.incident: "incident"
+  properties:
+    daysOfHistory: "{{ env('DAYS_OF_HISTORY') | default(30, true) | int }}"
+    url: "{{ env('RELY_PAGERDUTY_API_URL') | default('https://api.eu.pagerduty.com', true) }}"
+    apiKey: "{{ env('RELY_PAGERDUTY_API_KEY') }}"

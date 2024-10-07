@@ -1,13 +1,12 @@
 import json
 import re
-
 from collections import defaultdict
 
 import aiofiles
 import pkg_resources
+
 from galaxy.core.magneto import Magneto
 from galaxy.core.models import Config
-
 
 __all__ = ["get_relation_for_default_model_association", "collect_blueprints"]
 
@@ -60,21 +59,23 @@ async def collect_blueprints(config: Config, magneto_client: Magneto) -> list[di
                     for relation_key, relation in blueprint.get("relations").items()
                     if relation_key not in relations_to_remove[blueprint["id"]]
                 }
-    async with magneto_client as session:
-        blueprints = await session.insert_or_update_blueprint_bulk(blueprints=blueprints)
-    for blueprint_id in relations_to_create:
-        for relation in relations_to_create[blueprint_id]:
-            async with magneto_client as session:
-                await session.upsert_blueprint_relation(blueprint_id, relation)
 
-    # Need to iterate and remove "invalid" relations again since the relations might be here again if the blueprint
-    #   already had them on server side, but we want to ignore them for the current run
-    for blueprint in blueprints:
-        if relations_to_remove[blueprint.id]:
-            blueprint["relations"] = {
-                relation_key: relation
-                for relation_key, relation in blueprint.get("relations").items()
-                if relation_key not in relations_to_remove[blueprint["id"]]
-            }
+    if config.integration.dry_run is False:
+        async with magneto_client as session:
+            blueprints = await session.insert_or_update_blueprint_bulk(blueprints=blueprints)
+        for blueprint_id in relations_to_create:
+            for relation in relations_to_create[blueprint_id]:
+                async with magneto_client as session:
+                    await session.upsert_blueprint_relation(blueprint_id, relation)
+
+        # Need to iterate and remove "invalid" relations again since the relations might be here again if the blueprint
+        #   already had them on server side, but we want to ignore them for the current run
+        for blueprint in blueprints:
+            if relations_to_remove[blueprint.id]:
+                blueprint["relations"] = {
+                    relation_key: relation
+                    for relation_key, relation in blueprint.get("relations").items()
+                    if relation_key not in relations_to_remove[blueprint["id"]]
+                }
 
     return blueprints

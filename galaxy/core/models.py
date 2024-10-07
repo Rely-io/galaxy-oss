@@ -1,6 +1,7 @@
+from typing import Any, Literal
+
 import yaml
-from pydantic import BaseModel, Field, ConfigDict
-from typing import Dict, Any, Literal
+from pydantic import BaseModel, ConfigDict, Field
 
 __all__ = ["Config", "ExecutionType", "RelyConfig", "IntegrationConfig", "SchedulerJobStates"]
 
@@ -31,9 +32,9 @@ class IntegrationConfig(BaseModel):
     type: str = Field(..., alias="type")
     execution_type: Literal[ExecutionType.DAEMON, ExecutionType.CRONJOB] = Field(alias="executionType")
     scheduled_interval: int = Field(..., alias="scheduledInterval")
-    default_model_mappings: Dict[str, str] = Field(..., alias="defaultModelMappings")
+    default_model_mappings: dict[str, str] = Field(..., alias="defaultModelMappings")
     dry_run: bool = Field(False, alias="dryRun")
-    properties: Dict[str, Any] = Field(..., alias="properties")
+    properties: dict[str, Any] = Field(..., alias="properties")
 
 
 class Config(BaseModel):

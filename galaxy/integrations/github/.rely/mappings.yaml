@@ -48,7 +48,7 @@ resources:
       role: .role
     relations:
       teams:
-        value: '.teams // [] | map(tostring)'
+        value: '(.teams // []) | map(tostring)'
 
 - kind: pull_request
   mappings:
@@ -69,9 +69,9 @@ resources:
       repository:
         value: .context.repositoryId | tostring
       reviewers:
-        value: '.reviews.edges[].node.author.login // []'
+        value: '[.reviews.edges[].node.author.login] // []'
       assignees:
-        value: '.assignees.nodes[].login // []'
+        value: '[.assignees.nodes[].login] // []'
       creator:
         value: .author.login | tostring
 
@@ -168,3 +168,43 @@ resources:
     relations:
       workflowRun:
         value: .context.repository.name + "-" + (.run_id|tostring)
+
+- kind: environment
+  mappings:
+    id: .id | tostring
+    title: .name
+    blueprintId: '"github.v1.environment"'
+    description: '""'
+    properties:
+      link: .html_url
+      createdAt: .created_at
+      updatedAt: .updated_at
+    relations:
+      repository:
+        value: .context.repositoryId | tostring
+
+- kind: deployment
+  mappings:
+    id: .databaseId | tostring
+    title: '.context.repositoryName + ": (" + .environment  + ") " + (.databaseId | tostring)'
+    blueprintId: '"github.v1.deployment"'
+    description: .description
+    properties:
+      link: '.context.repositoryLink + "/deployments/" + .environment'
+      status: .statuses.nodes | sort_by(.createdAt) | last | .state
+      state: .state
+      createdAt: .createdAt
+      updatedAt: .updatedAt
+      commitDate: .commit.committedDate
+      commitSha: .commit.oid
+      environmentName: .environment
+      successful: 'if (.statuses.nodes | sort_by(.createdAt) | last | .state) == "SUCCESS" then true else false end'
+      task: .task
+      branch: .ref.name
+    relations:
+      repository:
+        value: .context.repositoryId | tostring
+      environment:
+        value: .context.environmentId | tostring
+      triggeredBy:
+        value: .creator.login

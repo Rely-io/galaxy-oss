@@ -2,26 +2,24 @@ import logging
 import traceback
 from typing import Any
 
-import aiohttp
-
 import magneto_api_client
+from magneto_api_client import BlueprintCreate, BlueprintRead, EntityUpdate, FlowUpdate
 
-from magneto_api_client import EntityUpdate, BlueprintCreate, BlueprintRead, FlowUpdate
-from tenacity import retry, stop_after_attempt, wait_random_exponential, before_sleep_log
-
+from galaxy.utils.itertools import chunks
+from galaxy.utils.requests import ContentTooLargeError, RetryPolicy, make_request, with_session
 
 __all__ = ["Magneto"]
 
 
 class Magneto:
     def __init__(self, magneto_url: str, magneto_token: str, logger: logging.Logger):
-        # TODO: remove this strip once the magneto env var can be updated to the url root. For compatibility with old
-        #  strip the /api/v1 from the end of the url if it exists
         self.magneto_url = magneto_url.rstrip("/api/v1")
         self.magneto_token = magneto_token
         self.logger = logger
         self.headers = {"Authorization": f"Bearer {magneto_token}", "Content-Type": "application/json"}
         self.session = None
+
+        self._bulk_chunk_size = 100
 
     async def __aenter__(self):
         self.session = magneto_api_client.ApiClient(
@@ -78,40 +76,48 @@ class Magneto:
                     "Exception when calling LegacyPluginsApi->get_plugin_api_v1_legacy_plugins_id_get: %s\n" % e
                 )
 
-    def split_entities_into_chunks(self, entities: list[dict], chunk_size: int) -> list[list[dict]]:
-        chunks = []
-        for i in range(0, len(entities), chunk_size):
-            chunks.append([entity_id for entity_id in entities[i : i + chunk_size]])
-
-        return chunks
-
-    @retry(
-        stop=stop_after_attempt(5),
-        wait=wait_random_exponential(min=1, max=60),
-        before_sleep=before_sleep_log(logging.getLogger("galaxy"), logging.WARNING),
-        reraise=True,
-    )
     async def insert_or_update_entities_bulk(
         self, entities: list[dict], update_only_properties_and_relations: bool = False, patch: bool = True
     ) -> list[dict]:
-        added = []
-
         url_path = "/api/v1/entities/bulk?unmappedProperties=ignore"
         if patch:
             url_path += "&patch=True"
         if update_only_properties_and_relations:
             url_path += "&updatePropertiesAndRelationsOnly=True"
 
-        for chunk in self.split_entities_into_chunks(entities, 99):
-            self.logger.info(f"Inserting {len(chunk)} entities to Rely API")
-            async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=30)) as session:
-                response = await session.request(
-                    "PUT", f"{self.magneto_url}{url_path}", headers=self.headers, json=chunk
-                )
-                if response.status // 100 != 2:
-                    raise Exception(f"Error inserting entities to Rely API. {await response.text()}")
-                else:
-                    added.extend(await response.json())
+        self.logger.info("Inserting %d entities to Rely API", len(entities))
+
+        entities_to_add = entities
+        added = []
+        missing = []
+        async with with_session(headers=self.headers) as session:
+            chunk_size = self._bulk_chunk_size
+            retry_policy = RetryPolicy(logger=self.logger)
+            while True:
+                for chunk in chunks(entities_to_add, chunk_size):
+                    try:
+                        response = await make_request(
+                            session, "PUT", f"{self.magneto_url}{url_path}", json=chunk, retry_policy=retry_policy
+                        )
+                        added.extend(response)
+                    except ContentTooLargeError:
+                        missing.extend(chunk)
+
+                if len(missing) == 0:
+                    break
+
+                if chunk_size < 1:
+                    break
+
+                self.logger.warning("Failed to insert %d entities to Rely API. Retrying...", len(missing))
+
+                chunk_size //= 2
+                entities_to_add = missing
+                missing = []
+
+        if missing:
+            self.logger.warning("Failed to insert %d entities to Rely API", len(missing))
+
         return added
 
     async def get_blueprint(self, blueprint_id: str) -> dict[str, Any]:

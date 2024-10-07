@@ -1,12 +1,11 @@
+import asyncio
+import re
 from typing import Any
 
 import aiofiles
 import jq
 import pkg_resources
 import yaml
-import asyncio
-import re
-
 
 __all__ = ["Mapper"]
 

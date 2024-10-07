@@ -1,681 +1,700 @@
 [
-  {
-    "id": "bitbucket.v1.workspace",
-    "title": "BitBucket Workspace",
-    "description": "Blueprint defining a BitBucket workspace.",
-    "icon": "bitbucket",
-    "schemaProperties": {
-      "type": "object",
-      "title": "workspace properties",
-      "properties": {
-        "slug": {
-          "type": "string",
-          "format": null,
-          "title": "Slug",
-          "description": "The slug of the workspace in BitBucket."
-        },
-        "is_private": {
-          "type": "boolean",
-          "format": null,
-          "title": "Is Private?",
-          "description": "Represents whether the workspace is open to piblic or not."
-        },
-        "is_privacy_enforced": {
-          "type": "boolean",
-          "format": null,
-          "title": "Is Privacy Enforced?",
-          "description": "Represents whether the workspace has privacy enforced or not in."
-        },
-        "created_on": {
-          "type": "string",
-          "format": "date-time",
-          "title": "Created On",
-          "description": "Date & Time at which the workspace was created."
-        },
-        "updated_on": {
-          "type": "string",
-          "format": "date-time",
-          "title": "Updated On",
-          "description": "Date & Time at which the workspace was last updated."
-        },
-        "links": {
-          "type": "array",
-          "format": "url",
-          "items": {
-            "type": "string",
-            "format": "url"
-          },
-          "title": "Links",
-          "description": "List of useful URLs for the Workspace."
-        },
-        "apiLinks": {
-          "type": "array",
-          "format": "url",
-          "items": {
-            "type": "string",
-            "format": "url"
-          },
-          "title": "API Links",
-          "description": "List of useful API URLs for the Pull Request."
-        }
-      }
-    },
-    "referenceProperties": {},
-    "relations": {}
-  },
-  {
-    "id": "bitbucket.v1.user",
-    "title": "BitBucket User",
-    "description": "Blueprint defining a BitBucket user.",
-    "icon": "bitbucket",
-    "schemaProperties": {
-      "type": "object",
-      "title": "user properties",
-      "properties": {
-        "account_id": {
-          "type": "string",
-          "format": null,
-          "title": "Account_id",
-          "description": "The user's account_id in BitBucket."
-        },
-        "nickname": {
-          "type": "string",
-          "format": null,
-          "title": "Nickname",
-          "description": "The user's nickname in BitBucket."
-        },
-        "workspace_permission": {
-          "type": "string",
-          "format": null,
-          "title": "Workspace Permission",
-          "description": "The user's permission level in the BitBucket workspace it belongs to."
-        },
-        "apiLinks": {
-          "type": "array",
-          "format": "url",
-          "items": {
-            "type": "string",
-            "format": "url"
-          },
-          "title": "API Links",
-          "description": "List of useful API URLs for the User."
-        }
-      }
-    },
-    "referenceProperties": {},
-    "relations": {
-      "workspace": {
-        "value": "bitbucket.v1.workspace",
-        "array": false,
-        "title": "Workspace",
-        "description": "The wokspace in which this user belongs."
-      }
-    }
-  },
-  {
-    "id": "bitbucket.v1.project",
-    "title": "BitBucket Project",
-    "description": "Blueprint defining a BitBucket project.",
-    "icon": "bitbucket",
-    "schemaProperties": {
-      "type": "object",
-      "title": "project properties",
-      "properties": {
-        "key": {
-          "type": "string",
-          "format": null,
-          "title": "Slug",
-          "description": "The key of the project in BitBucket."
-        },
-        "is_private": {
-          "type": "boolean",
-          "format": null,
-          "title": "IsPrivate?",
-          "description": "Represents whether the project is open to piblic or not."
-        },
-        "has_publicly_visible_repos": {
-          "type": "boolean",
-          "format": null,
-          "title": "Has Public Repos?",
-          "description": "Represents whether the project contains repositories open to the public or not."
-        },
-        "created_on": {
-          "type": "string",
-          "format": "date-time",
-          "title": "Created On",
-          "description": "Date & Time at which the project was created."
-        },
-        "updated_on": {
-          "type": "string",
-          "format": "date-time",
-          "title": "Updated On",
-          "description": "Date & Time at which the project was last updated."
-        },
-        "links": {
-          "type": "array",
-          "format": "url",
-          "items": {
-            "type": "string",
-            "format": "url"
-          },
-          "title": "Links",
-          "description": "List of useful URLs for the Project."
-        },
-        "apiLinks": {
-          "type": "array",
-          "format": "url",
-          "items": {
-            "type": "string",
-            "format": "url"
-          },
-          "title": "API Links",
-          "description": "List of useful API URLs for the Project."
-        }
-      }
-    },
-    "referenceProperties": {},
-    "relations": {
-      "workspace": {
-        "value": "bitbucket.v1.workspace",
-        "array": false,
-        "title": "Workspace",
-        "description": "The workspace to which this project belongs."
+   {
+      "id":"bitbucket.v1.workspace",
+      "title":"BitBucket Workspace",
+      "description":"Blueprint defining a BitBucket workspace.",
+      "icon":"bitbucket",
+      "schemaProperties":{
+         "type":"object",
+         "title":"workspace properties",
+         "properties":{
+            "slug":{
+               "type":"string",
+               "format":null,
+               "title":"Slug",
+               "description":"The slug of the workspace in BitBucket."
+            },
+            "is_private":{
+               "type":"boolean",
+               "format":null,
+               "title":"Is Private?",
+               "description":"Represents whether the workspace is open to piblic or not."
+            },
+            "is_privacy_enforced":{
+               "type":"boolean",
+               "format":null,
+               "title":"Is Privacy Enforced?",
+               "description":"Represents whether the workspace has privacy enforced or not in."
+            },
+            "created_on":{
+               "type":"string",
+               "format":"date-time",
+               "title":"Created On",
+               "description":"Date & Time at which the workspace was created."
+            },
+            "updated_on":{
+               "type":"string",
+               "format":"date-time",
+               "title":"Updated On",
+               "description":"Date & Time at which the workspace was last updated."
+            },
+            "links":{
+               "type":"array",
+               "format":"url",
+               "items":{
+                  "type":"string",
+                  "format":"url"
+               },
+               "title":"Links",
+               "description":"List of useful URLs for the Workspace."
+            },
+            "apiLinks":{
+               "type":"array",
+               "format":"url",
+               "items":{
+                  "type":"string",
+                  "format":"url"
+               },
+               "title":"API Links",
+               "description":"List of useful API URLs for the Pull Request."
+            }
+         }
       },
-      "reviewers": {
-        "value": "bitbucket.v1.user",
-        "array": true,
-        "title": "Reviewers",
-        "description": "The users assigned as Reviewers of this project."
-      }
-    }
-  },
-  {
-    "id": "bitbucket.v1.repository",
-    "title": "BitBucket Repository",
-    "description": "Blueprint defining a BitBucket repository.",
-    "icon": "bitbucket",
-    "schemaProperties": {
-      "type": "object",
-      "title": "repository properties",
-      "properties": {
-        "slug": {
-          "type": "string",
-          "format": null,
-          "title": "Slug",
-          "description": "The slug of the repository in BitBucket."
-        },
-        "readme": {
-          "type": "string",
-          "format": "markdown",
-          "title": "README",
-          "description": "The README.md content of the repository in BitBucket."
-        },
-        "full_name": {
-          "type": "string",
-          "format": null,
-          "title": "Full Name",
-          "description": "The full name of the repository in BitBucket."
-        },
-        "is_private": {
-          "type": "boolean",
-          "format": null,
-          "title": "IsPrivate?",
-          "description": "Represents whether the repository is open to the public or not."
-        },
-        "created_on": {
-          "type": "string",
-          "format": "date-time",
-          "title": "Created On",
-          "description": "Date & Time at which the repository was created."
-        },
-        "updated_on": {
-          "type": "string",
-          "format": "date-time",
-          "title": "Updated On",
-          "description": "Date & Time at which the repository was last updated."
-        },
-        "webUrl": {
-          "type": "string",
-          "format": "url",
-          "title": "WebUrl",
-          "description": "Link to the repository details in BitBucket."
-        },
-        "apiLinks": {
-          "type": "array",
-          "format": "url",
-          "items": {
-            "type": "string",
-            "format": "url"
-          },
-          "title": "API Links",
-          "description": "List of useful API URLs for the Repository."
-        },
-        "fork_policy": {
-          "type": "string",
-          "format": null,
-          "title": "Fork Policy",
-          "description": "The fork policy of the repository in BitBucket."
-        },
-        "size": {
-          "type": "number",
-          "format": null,
-          "title": "Size",
-          "description": "The size of the repository in Github (using their unit)."
-        },
-        "language": {
-          "type": "string",
-          "format": null,
-          "title": "Language",
-          "description": "The main coding language of the repository in BitBucket."
-        },
-        "mainbranch": {
-          "type": "string",
-          "format": null,
-          "title": "Main Branch",
-          "description": "The name of the main branch of the repository in BitBucket."
-        },
-        "default_merge_strategy": {
-          "type": "boolean",
-          "format": null,
-          "title": "Default-merge strategy?",
-          "description": "Represents whether the repository is implements a default-merge strategy or not."
-        }
-      }
-    },
-    "referenceProperties": {},
-    "relations": {
-      "workspace": {
-        "value": "bitbucket.v1.workspace",
-        "array": false,
-        "title": "Workspace",
-        "description": "The workspace to which this repository belongs."
+      "referenceProperties":{
+
       },
-      "project": {
-        "value": "bitbucket.v1.project",
-        "array": false,
-        "title": "Project",
-        "description": "The project to which this repository belongs."
+      "relations":{
+
       }
-    }
-  },
-  {
-    "id": "bitbucket.v1.pullrequest",
-    "title": "BitBucket Pull Request",
-    "description": "Blueprint defining a BitBucket pullrequest.",
-    "icon": "bitbucket",
-    "schemaProperties": {
-      "type": "object",
-      "title": "pullrequest properties",
-      "properties": {
-        "state": {
-          "type": "string",
-          "format": null,
-          "title": "State",
-          "description": "The current state of the pull request. It can be OPEN, MERGED, DECLINED or SUPERSEDED."
-        },
-        "summary": {
-          "type": "string",
-          "format": "markdown",
-          "title": "Summary",
-          "description": "The full content of the Pull Request."
-        },
-        "merge_commit": {
-          "type": "string",
-          "format": null,
-          "title": "Merge Commit",
-          "description": "The hash of the commit behind the merge (if merged)."
-        },
-        "task_count": {
-          "type": "number",
-          "format": null,
-          "title": "Tasks Count",
-          "description": "The number of open tasks for a specific pull request."
-        },
-        "comment_count": {
-          "type": "number",
-          "format": null,
-          "title": "Comments Count",
-          "description": "The number of comments for a specific pull request."
-        },
-        "close_source_branch": {
-          "type": "boolean",
-          "format": null,
-          "title": "Close source branch?",
-          "description": "A boolean flag indicating if merging the pull request closes the source branch."
-        },
-        "reason": {
-          "type": "string",
-          "format": "markdown",
-          "title": "Reason",
-          "description": "Explains why a pull request was declined. This field is only applicable to pull requests in rejected state."
-        },
-        "created_on": {
-          "type": "string",
-          "format": "date-time",
-          "title": "Created On",
-          "description": "Date & Time at which the pullrequest was created."
-        },
-        "updated_on": {
-          "type": "string",
-          "format": "date-time",
-          "title": "Updated On",
-          "description": "Date & Time at which the pullrequest was last updated."
-        },
-        "sourceBranch": {
-          "type": "string",
-          "format": null,
-          "title": "Source Branch",
-          "description": "The name of the source branch for this pull request."
-        },
-        "sourceCommit": {
-          "type": "string",
-          "format": null,
-          "title": "Source Commit",
-          "description": "The hash of the source commit for this pull request."
-        },
-        "destinationBranch": {
-          "type": "string",
-          "format": null,
-          "title": "Destination Branch",
-          "description": "The name of the destination branch for this pull request."
-        },
-        "destinationCommit": {
-          "type": "string",
-          "format": null,
-          "title": "Destination Commit",
-          "description": "The hash of the destination commit for this pull request."
-        },
-        "webUrl": {
-          "type": "string",
-          "format": "url",
-          "title": "Link",
-          "description": "Link to the Pipeline's page in Bitbucket."
-        },
-        "apiLinks": {
-          "type": "array",
-          "format": "url",
-          "items": {
-            "type": "string",
-            "format": "url"
-          },
-          "title": "API Links",
-          "description": "List of useful API URLs for the Pull Request."
-        }
-      }
-    },
-    "referenceProperties": {},
-    "relations": {
-      "author": {
-        "value": "bitbucket.v1.user",
-        "array": false,
-        "title": "Author",
-        "description": "The user who created this pullrequest."
+   },
+   {
+      "id":"bitbucket.v1.user",
+      "title":"BitBucket User",
+      "description":"Blueprint defining a BitBucket user.",
+      "icon":"bitbucket",
+      "schemaProperties":{
+         "type":"object",
+         "title":"user properties",
+         "properties":{
+            "account_id":{
+               "type":"string",
+               "format":null,
+               "title":"Account_id",
+               "description":"The user's account_id in BitBucket."
+            },
+            "nickname":{
+               "type":"string",
+               "format":null,
+               "title":"Nickname",
+               "description":"The user's nickname in BitBucket."
+            },
+            "workspace_permission":{
+               "type":"string",
+               "format":null,
+               "title":"Workspace Permission",
+               "description":"The user's permission level in the BitBucket workspace it belongs to."
+            },
+            "apiLinks":{
+               "type":"array",
+               "format":"url",
+               "items":{
+                  "type":"string",
+                  "format":"url"
+               },
+               "title":"API Links",
+               "description":"List of useful API URLs for the User."
+            }
+         }
       },
-      "closedBy": {
-        "value": "bitbucket.v1.user",
-        "array": false,
-        "title": "Closed By",
-        "description": "The user who closed (merged or declined) this pullrequest."
+      "referenceProperties":{
+
       },
-      "repository": {
-        "value": "bitbucket.v1.repository",
-        "array": false,
-        "title": "Repository",
-        "description": "The repository to which this pull request belongs."
+      "relations":{
+         "workspace":{
+            "value":"bitbucket.v1.workspace",
+            "array":false,
+            "title":"Workspace",
+            "description":"The wokspace in which this user belongs."
+         }
       }
-    }
-  },
-  {
-    "id": "bitbucket.v1.pipeline",
-    "title": "BitBucket Pipeline",
-    "description": "Blueprint defining a BitBucket pipeline.",
-    "icon": "bitbucket",
-    "schemaProperties": {
-      "type": "object",
-      "title": "pipeline properties",
-      "properties": {
-        "state": {
-          "type": "string",
-          "format": null,
-          "title": "State",
-          "description": "The current state of the pipeline."
-        },
-        "status": {
-          "type": "string",
-          "format": null,
-          "title": "Status",
-          "description": "The current status of the pipeline."
-        },
-        "successful": {
-          "type": "boolean",
-          "format": null,
-          "title": "Successful?",
-          "description": "A boolean flag indicating if the pipeline has finished successfully."
-        },
-        "first_successful": {
-          "type": "boolean",
-          "format": null,
-          "title": "First Successful?",
-          "description": "Whether the pipeline ran end to end successfully and at first try. false does not imply failure, if a step requires a manual validation it will still count as false."
-        },
-        "build_number": {
-          "type": "number",
-          "format": null,
-          "title": "Build Number",
-          "description": "The build number for this pipeline, auto-incremented at each execution."
-        },
-        "created_on": {
-          "type": "string",
-          "format": "date-time",
-          "title": "Created On",
-          "description": "Date & Time at which this pipeline was executed."
-        },
-        "completed_on": {
-          "type": "string",
-          "format": "date-time",
-          "title": "Completed On",
-          "description": "Date & Time at which this pipeline finished."
-        },
-        "commit": {
-          "type": "string",
-          "format": null,
-          "title": "Commit",
-          "description": "The hash of the commit linked to this pipeline run."
-        },
-        "branch": {
-          "type": "string",
-          "format": null,
-          "title": "Branch",
-          "description": "The branch linked to this pipeline run."
-        },
-        "trigger_type": {
-          "type": "string",
-          "format": null,
-          "title": "Trigger Type",
-          "description": "The type of trigger behind this pipeline execution (e.g. manual, cron, etc.)"
-        },
-        "duration_in_seconds": {
-          "type": "number",
-          "format": null,
-          "title": "Duration (s)",
-          "description": "The duration (in seconds) of the pipeline's execution."
-        },
-        "build_seconds_used": {
-          "type": "number",
-          "format": null,
-          "title": "Build Seconds used",
-          "description": "The amount of 'build seconds' used in BitBucket's billing system."
-        },
-        "expired": {
-          "type": "boolean",
-          "format": null,
-          "title": "Expired?",
-          "description": "A boolean flag indicating if the pipeline has expired or not."
-        },
-        "webUrl": {
-          "type": "string",
-          "format": "url",
-          "title": "Link",
-          "description": "Link to the Pipeline's page in Bitbucket."
-        },
-        "apiLinks": {
-          "type": "array",
-          "format": "url",
-          "items": {
-            "type": "string",
-            "format": "url"
-          },
-          "title": "API Links",
-          "description": "List of useful API URLs for the Pull Request."
-        }
-      }
-    },
-    "referenceProperties": {},
-    "relations": {
-      "creator": {
-        "value": "bitbucket.v1.user",
-        "array": false,
-        "title": "Creator",
-        "description": "The user who created this pipeline execution."
+   },
+   {
+      "id":"bitbucket.v1.project",
+      "title":"BitBucket Project",
+      "description":"Blueprint defining a BitBucket project.",
+      "icon":"bitbucket",
+      "schemaProperties":{
+         "type":"object",
+         "title":"project properties",
+         "properties":{
+            "key":{
+               "type":"string",
+               "format":null,
+               "title":"Slug",
+               "description":"The key of the project in BitBucket."
+            },
+            "is_private":{
+               "type":"boolean",
+               "format":null,
+               "title":"IsPrivate?",
+               "description":"Represents whether the project is open to piblic or not."
+            },
+            "has_publicly_visible_repos":{
+               "type":"boolean",
+               "format":null,
+               "title":"Has Public Repos?",
+               "description":"Represents whether the project contains repositories open to the public or not."
+            },
+            "created_on":{
+               "type":"string",
+               "format":"date-time",
+               "title":"Created On",
+               "description":"Date & Time at which the project was created."
+            },
+            "updated_on":{
+               "type":"string",
+               "format":"date-time",
+               "title":"Updated On",
+               "description":"Date & Time at which the project was last updated."
+            },
+            "links":{
+               "type":"array",
+               "format":"url",
+               "items":{
+                  "type":"string",
+                  "format":"url"
+               },
+               "title":"Links",
+               "description":"List of useful URLs for the Project."
+            },
+            "apiLinks":{
+               "type":"array",
+               "format":"url",
+               "items":{
+                  "type":"string",
+                  "format":"url"
+               },
+               "title":"API Links",
+               "description":"List of useful API URLs for the Project."
+            }
+         }
       },
-      "repository": {
-        "value": "bitbucket.v1.repository",
-        "array": false,
-        "title": "Repository",
-        "description": "The repository to which this pipeline belongs."
-      }
-    }
-  },
-  {
-    "id": "bitbucket.v1.environment",
-    "title": "BitBucket Environment",
-    "description": "Blueprint defining a BitBucket environment.",
-    "icon": "bitbucket",
-    "schemaProperties": {
-      "type": "object",
-      "title": "environment properties",
-      "properties": {
-        "slug": {
-          "type": "string",
-          "format": null,
-          "title": "Slug",
-          "description": "The environment's slug in BitBucket."
-        },
-        "type": {
-          "type": "string",
-          "format": null,
-          "title": "Type",
-          "description": "The environment's type in BitBucket."
-        },
-        "rank": {
-          "type": "number",
-          "format": null,
-          "title": "Rank",
-          "description": "The rank within the promotion chain within which this environment sits"
-        },
-        "category": {
-          "type": "string",
-          "format": null,
-          "title": "Category",
-          "description": "The category this environment belongs to (e.g. test, staging, production)."
-        },
-        "webUrl": {
-          "type": "string",
-          "format": "url",
-          "title": "Link",
-          "description": "Link to the envionment's page in BitBucket."
-        }
-      }
-    },
-    "referenceProperties": {},
-    "relations": {
-      "repository": {
-        "value": "bitbucket.v1.repository",
-        "array": false,
-        "title": "Repository",
-        "description": "The repository to which this environment belongs."
-      }
-    }
-  },
-  {
-    "id": "bitbucket.v1.deployment",
-    "title": "BitBucket Deployment",
-    "description": "Blueprint defining a BitBucket deployment.",
-    "icon": "bitbucket",
-    "schemaProperties": {
-      "type": "object",
-      "title": "deployment properties",
-      "properties": {
-        "state": {
-          "type": "string",
-          "format": null,
-          "title": "State",
-          "description": "The deployment's latest state in BitBucket."
-        },
-        "status": {
-          "type": "string",
-          "format": null,
-          "title": "Status",
-          "description": "The current status of the pipeline."
-        },
-        "deployment_type": {
-          "type": "string",
-          "format": null,
-          "title": "Deployment Type",
-          "description": "Indicates the category for this deployment (e.g. Release)."
-        },
-        "created_on": {
-          "type": "string",
-          "format": "date-time",
-          "title": "Created On",
-          "description": "Date & Time at which this deployment was executed."
-        },
-        "updated_on": {
-          "type": "string",
-          "format": "date-time",
-          "title": "Updated On",
-          "description": "Date & Time at which this deployment was last updated."
-        },
-        "commit": {
-          "type": "string",
-          "format": null,
-          "title": "Commit",
-          "description": "The hash of the commit linked to this pipeline run."
-        },
-        "number": {
-          "type": "number",
-          "format": null,
-          "title": "Number",
-          "description": "the auto-incremented position of this deployment within its pipeline"
-        },
-        "webUrl": {
-          "type": "string",
-          "format": "url",
-          "title": "WebUrl",
-          "description": "Link to the deployment details in BitBucket."
-        }
-      }
-    },
-    "referenceProperties": {},
-    "relations": {
-      "pipeline": {
-        "value": "bitbucket.v1.pipeline",
-        "array": false,
-        "title": "Pipeline",
-        "description": "The pipeline in which this deployment belongs."
+      "referenceProperties":{
+
       },
-      "environment": {
-        "value": "bitbucket.v1.environment",
-        "array": false,
-        "title": "Environment",
-        "description": "The environment targeted by this deployment."
-      },
-      "repository": {
-        "value": "bitbucket.v1.repository",
-        "array": false,
-        "title": "Repository",
-        "description": "The Repository associated with the deployment."
+      "relations":{
+         "workspace":{
+            "value":"bitbucket.v1.workspace",
+            "array":false,
+            "title":"Workspace",
+            "description":"The workspace to which this project belongs."
+         },
+         "reviewers":{
+            "value":"bitbucket.v1.user",
+            "array":true,
+            "title":"Reviewers",
+            "description":"The users assigned as Reviewers of this project."
+         }
       }
-    }
-  }
+   },
+   {
+      "id":"bitbucket.v1.repository",
+      "title":"BitBucket Repository",
+      "description":"Blueprint defining a BitBucket repository.",
+      "icon":"bitbucket",
+      "schemaProperties":{
+         "type":"object",
+         "title":"repository properties",
+         "properties":{
+            "slug":{
+               "type":"string",
+               "format":null,
+               "title":"Slug",
+               "description":"The slug of the repository in BitBucket."
+            },
+            "readme":{
+               "type":"string",
+               "format": "markdown",
+               "title":"README",
+               "description":"The README.md content of the repository in BitBucket."
+            },
+            "full_name":{
+               "type":"string",
+               "format":null,
+               "title":"Full Name",
+               "description":"The full name of the repository in BitBucket."
+            },
+            "is_private":{
+               "type":"boolean",
+               "format":null,
+               "title":"IsPrivate?",
+               "description":"Represents whether the repository is open to the public or not."
+            },
+            "created_on":{
+               "type":"string",
+               "format":"date-time",
+               "title":"Created On",
+               "description":"Date & Time at which the repository was created."
+            },
+            "updated_on":{
+               "type":"string",
+               "format":"date-time",
+               "title":"Updated On",
+               "description":"Date & Time at which the repository was last updated."
+            },
+            "webUrl":{
+               "type":"string",
+               "format":"url",
+               "title":"WebUrl",
+               "description":"Link to the repository details in BitBucket."
+            },
+            "apiLinks":{
+               "type":"array",
+               "format":"url",
+               "items":{
+                  "type":"string",
+                  "format":"url"
+               },
+               "title":"API Links",
+               "description":"List of useful API URLs for the Repository."
+            },
+            "fork_policy":{
+               "type":"string",
+               "format":null,
+               "title":"Fork Policy",
+               "description":"The fork policy of the repository in BitBucket."
+            },
+            "size":{
+               "type":"number",
+               "format":null,
+               "title":"Size",
+               "description":"The size of the repository in Github (using their unit)."
+            },
+            "language":{
+               "type":"string",
+               "format":null,
+               "title":"Language",
+               "description":"The main coding language of the repository in BitBucket."
+            },
+            "mainbranch":{
+               "type":"string",
+               "format":null,
+               "title":"Main Branch",
+               "description":"The name of the main branch of the repository in BitBucket."
+            },
+            "default_merge_strategy":{
+               "type":"boolean",
+               "format":null,
+               "title":"Default-merge strategy?",
+               "description":"Represents whether the repository is implements a default-merge strategy or not."
+            }
+         }
+      },
+      "referenceProperties":{
+
+      },
+      "relations":{
+         "workspace":{
+            "value":"bitbucket.v1.workspace",
+            "array":false,
+            "title":"Workspace",
+            "description":"The workspace to which this repository belongs."
+         },
+         "project":{
+            "value":"bitbucket.v1.project",
+            "array":false,
+            "title":"Project",
+            "description":"The project to which this repository belongs."
+         }
+      }
+   },
+   {
+      "id":"bitbucket.v1.pullrequest",
+      "title":"BitBucket Pull Request",
+      "description":"Blueprint defining a BitBucket pullrequest.",
+      "icon":"bitbucket",
+      "schemaProperties":{
+         "type":"object",
+         "title":"pullrequest properties",
+         "properties":{
+            "state":{
+               "type":"string",
+               "format":null,
+               "title":"State",
+               "description":"The current state of the pull request. It can be OPEN, MERGED, DECLINED or SUPERSEDED."
+            },
+            "summary":{
+               "type":"string",
+               "format":"markdown",
+               "title":"Summary",
+               "description":"The full content of the Pull Request."
+            },
+            "merge_commit":{
+               "type":"string",
+               "format":null,
+               "title":"Merge Commit",
+               "description":"The hash of the commit behind the merge (if merged)."
+            },
+            "task_count":{
+               "type":"number",
+               "format":null,
+               "title":"Tasks Count",
+               "description":"The number of open tasks for a specific pull request."
+            },
+            "comment_count":{
+               "type":"number",
+               "format":null,
+               "title":"Comments Count",
+               "description":"The number of comments for a specific pull request."
+            },
+            "close_source_branch":{
+               "type":"boolean",
+               "format":null,
+               "title":"Close source branch?",
+               "description":"A boolean flag indicating if merging the pull request closes the source branch."
+            },
+            "reason":{
+               "type":"string",
+               "format":"markdown",
+               "title":"Reason",
+               "description":"Explains why a pull request was declined. This field is only applicable to pull requests in rejected state."
+            },
+            "created_on":{
+               "type":"string",
+               "format":"date-time",
+               "title":"Created On",
+               "description":"Date & Time at which the pullrequest was created."
+            },
+            "updated_on":{
+               "type":"string",
+               "format":"date-time",
+               "title":"Updated On",
+               "description":"Date & Time at which the pullrequest was last updated."
+            },
+            "sourceBranch":{
+               "type":"string",
+               "format":null,
+               "title":"Source Branch",
+               "description":"The name of the source branch for this pull request."
+            },
+            "sourceCommit":{
+               "type":"string",
+               "format":null,
+               "title":"Source Commit",
+               "description":"The hash of the source commit for this pull request."
+            },
+            "destinationBranch":{
+               "type":"string",
+               "format":null,
+               "title":"Destination Branch",
+               "description":"The name of the destination branch for this pull request."
+            },
+            "destinationCommit":{
+               "type":"string",
+               "format":null,
+               "title":"Destination Commit",
+               "description":"The hash of the destination commit for this pull request."
+            },
+            "webUrl":{
+               "type":"string",
+               "format":"url",
+               "title":"Link",
+               "description":"Link to the Pipeline's page in Bitbucket."
+            },
+            "apiLinks":{
+               "type":"array",
+               "format":"url",
+               "items":{
+                  "type":"string",
+                  "format":"url"
+               },
+               "title":"API Links",
+               "description":"List of useful API URLs for the Pull Request."
+            }
+         }
+      },
+      "referenceProperties":{
+
+      },
+      "relations":{
+         "author":{
+            "value":"bitbucket.v1.user",
+            "array":false,
+            "title":"Author",
+            "description":"The user who created this pullrequest."
+         },
+         "closedBy":{
+            "value":"bitbucket.v1.user",
+            "array":false,
+            "title":"Closed By",
+            "description":"The user who closed (merged or declined) this pullrequest."
+         },
+         "repository":{
+            "value":"bitbucket.v1.repository",
+            "array":false,
+            "title":"Repository",
+            "description":"The repository to which this pull request belongs."
+         }
+      }
+   },
+   {
+      "id":"bitbucket.v1.pipeline",
+      "title":"BitBucket Pipeline",
+      "description":"Blueprint defining a BitBucket pipeline.",
+      "icon":"bitbucket",
+      "schemaProperties":{
+         "type":"object",
+         "title":"pipeline properties",
+         "properties":{
+            "state":{
+               "type":"string",
+               "format":null,
+               "title":"State",
+               "description":"The current state of the pipeline."
+            },
+            "status":{
+               "type":"string",
+               "format":null,
+               "title":"Status",
+               "description":"The current status of the pipeline."
+            },
+            "successful":{
+               "type":"boolean",
+               "format":null,
+               "title":"Successful?",
+               "description":"A boolean flag indicating if the pipeline has finished successfully."
+            },
+            "first_successful":{
+               "type":"boolean",
+               "format":null,
+               "title":"First Successful?",
+               "description":"Whether the pipeline ran end to end successfully and at first try. false does not imply failure, if a step requires a manual validation it will still count as false."
+            },
+            "build_number":{
+               "type":"number",
+               "format":null,
+               "title":"Build Number",
+               "description":"The build number for this pipeline, auto-incremented at each execution."
+            },
+            "created_on":{
+               "type":"string",
+               "format":"date-time",
+               "title":"Created On",
+               "description":"Date & Time at which this pipeline was executed."
+            },
+            "completed_on":{
+               "type":"string",
+               "format":"date-time",
+               "title":"Completed On",
+               "description":"Date & Time at which this pipeline finished."
+            },
+            "commit":{
+               "type":"string",
+               "format":null,
+               "title":"Commit",
+               "description":"The hash of the commit linked to this pipeline run."
+            },
+            "branch":{
+               "type":"string",
+               "format":null,
+               "title":"Branch",
+               "description":"The branch linked to this pipeline run."
+            },
+            "trigger_type":{
+               "type":"string",
+               "format":null,
+               "title":"Trigger Type",
+               "description":"The type of trigger behind this pipeline execution (e.g. manual, cron, etc.)"
+            },
+            "duration_in_seconds":{
+               "type":"number",
+               "format":null,
+               "title":"Duration (s)",
+               "description":"The duration (in seconds) of the pipeline's execution."
+            },
+            "build_seconds_used":{
+               "type":"number",
+               "format":null,
+               "title":"Build Seconds used",
+               "description":"The amount of 'build seconds' used in BitBucket's billing system."
+            },
+            "expired":{
+               "type":"boolean",
+               "format":null,
+               "title":"Expired?",
+               "description":"A boolean flag indicating if the pipeline has expired or not."
+            },
+            "webUrl":{
+               "type":"string",
+               "format":"url",
+               "title":"Link",
+               "description":"Link to the Pipeline's page in Bitbucket."
+            },
+            "apiLinks":{
+               "type":"array",
+               "format":"url",
+               "items":{
+                  "type":"string",
+                  "format":"url"
+               },
+               "title":"API Links",
+               "description":"List of useful API URLs for the Pull Request."
+            }
+
+         }
+      },
+      "referenceProperties":{
+
+      },
+      "relations":{
+         "creator":{
+            "value":"bitbucket.v1.user",
+            "array":false,
+            "title":"Creator",
+            "description":"The user who created this pipeline execution."
+         },
+         "repository":{
+            "value":"bitbucket.v1.repository",
+            "array":false,
+            "title":"Repository",
+            "description":"The repository to which this pipeline belongs."
+         }
+      }
+   },
+   {
+      "id":"bitbucket.v1.environment",
+      "title":"BitBucket Environment",
+      "description":"Blueprint defining a BitBucket environment.",
+      "icon":"bitbucket",
+      "schemaProperties":{
+         "type":"object",
+         "title":"environment properties",
+         "properties":{
+            "slug":{
+               "type":"string",
+               "format":null,
+               "title":"Slug",
+               "description":"The environment's slug in BitBucket."
+            },
+            "type":{
+               "type":"string",
+               "format":null,
+               "title":"Type",
+               "description":"The environment's type in BitBucket."
+            },
+            "rank":{
+               "type":"number",
+               "format":null,
+               "title":"Rank",
+               "description":"The rank within the promotion chain within which this environment sits"
+            },
+            "category":{
+               "type":"string",
+               "format":null,
+               "title":"Category",
+               "description":"The category this environment belongs to (e.g. test, staging, production)."
+            },
+            "webUrl":{
+               "type":"string",
+               "format":"url",
+               "title":"Link",
+               "description":"Link to the envionment's page in BitBucket."
+            }
+         }
+      },
+      "referenceProperties":{
+
+      },
+      "relations":{
+         "repository":{
+            "value":"bitbucket.v1.repository",
+            "array":false,
+            "title":"Repository",
+            "description":"The repository to which this environment belongs."
+         }
+      }
+   },
+   {
+      "id":"bitbucket.v1.deployment",
+      "title":"BitBucket Deployment",
+      "description":"Blueprint defining a BitBucket deployment.",
+      "icon":"bitbucket",
+      "schemaProperties":{
+         "type":"object",
+         "title":"deployment properties",
+         "properties":{
+            "state":{
+               "type":"string",
+               "format":null,
+               "title":"State",
+               "description":"The deployment's latest state in BitBucket."
+            },
+            "status":{
+               "type":"string",
+               "format":null,
+               "title":"Status",
+               "description":"The current status of the pipeline."
+            },
+            "deployment_type":{
+               "type":"string",
+               "format":null,
+               "title":"Deployment Type",
+               "description":"Indicates the category for this deployment (e.g. Release)."
+            },
+            "created_on":{
+               "type":"string",
+               "format":"date-time",
+               "title":"Created On",
+               "description":"Date & Time at which this deployment was executed."
+            },
+            "updated_on":{
+               "type":"string",
+               "format":"date-time",
+               "title":"Updated On",
+               "description":"Date & Time at which this deployment was last updated."
+            },
+            "commit":{
+               "type":"string",
+               "format":null,
+               "title":"Commit",
+               "description":"The hash of the commit linked to this pipeline run."
+            },
+            "number":{
+               "type":"number",
+               "format":null,
+               "title":"Number",
+               "description":"the auto-incremented position of this deployment within its pipeline"
+            },
+            "webUrl":{
+               "type":"string",
+               "format":"url",
+               "title":"WebUrl",
+               "description":"Link to the deployment details in BitBucket."
+            }
+         }
+      },
+      "referenceProperties":{
+
+      },
+      "relations":{
+         "pipeline":{
+            "value":"bitbucket.v1.pipeline",
+            "array":false,
+            "title":"Pipeline",
+            "description":"The pipeline in which this deployment belongs."
+         },
+         "environment":{
+            "value":"bitbucket.v1.environment",
+            "array":false,
+            "title":"Environment",
+            "description":"The environment targeted by this deployment."
+         },
+         "repository":{
+            "value":"bitbucket.v1.repository",
+            "array":false,
+            "title":"Repository",
+            "description":"The Repository associated with the deployment."
+         }
+      }
+   }
 ]

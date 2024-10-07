@@ -1,0 +1,35 @@
+resources:
+  - kind: project
+    mappings:
+      blueprintId: '"sonarqube.v1.project"'
+      id: '"sonarqube_project_" + .project.key'
+      title: .project.name
+      description: '""'
+      properties:
+        lastAnalysisDate: .project.lastAnalysisDate | strptime("%Y-%m-%dT%H:%M:%S%z") | todateiso8601
+        lastAnalysisStatus: .branch.status.qualityGateStatus
+        numberOfBugs: .metrics.bugs | tonumber
+        numberOfCodeSmells: .metrics.code_smells | tonumber
+        numberOfVulnerabilities: .metrics.vulnerabilities | tonumber
+        numberOfHotSpots: .metrics.security_hotspots | tonumber
+        numberOfDuplications: .metrics.duplicated_files | tonumber
+        coverage: .metrics.coverage | tonumber
+        mainBranch: .branch.name
+
+  - kind: issue
+    mappings:
+      blueprintId: '"sonarqube.v1.issue"'
+      id: .key
+      title: '.project + "-" + .key[:8]'
+      description: '""'
+      properties:
+        type: .type
+        severity: .severity
+        message: .message
+        status: .status
+        author: .author
+        tags: .tags
+        createdAt: .creationDate | strptime("%Y-%m-%dT%H:%M:%S%z") | todateiso8601
+      relations:
+        project:
+          value: '"sonarqube_project_" + .project'
