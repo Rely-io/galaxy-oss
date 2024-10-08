@@ -12,5 +12,5 @@ integration:
   defaultModelMappings:
     sonarqube.v1.project: "service"
   properties:
-    apiToken: "{{ env('RELY_INTEGRATION_SONARQUBE_TOKEN') }}"
-    serverUrl: "{{ env('RELY_INTEGRATION_SONARQUBE_URL') }}"
+    apiToken: "{{ env('RELY_INTEGRATION_SONARQUBE_TOKEN') | default('', true) }}"
+    serverUrl: "{{ env('RELY_INTEGRATION_SONARQUBE_URL') | default('', true) }}"
