@@ -15,3 +15,6 @@ integration:
     opsgenie.v1.incident: "incident"
   properties:
     daysOfHistory: "{{ env('DAYS_OF_HISTORY') | default(30, true) | int }}"
+    tenantApiUrl: "{{ env('RELY_OPSGENIE_TENANT_URL') | default('https://api.opsgenie.com', true) }}"
+    appBaseUrl: "{{ env('RELY_OPSGENIE_APP_BASE_URL') }}"
+    secretToken: "{{ env('RELY_OPSGENIE_SECRET_TOKEN') }}"

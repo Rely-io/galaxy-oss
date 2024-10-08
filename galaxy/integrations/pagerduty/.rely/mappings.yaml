@@ -8,6 +8,7 @@ resources:
       properties:
         link: .html_url
         summary: .summary
+        onCallSchedules: '[.schedules[] | .name]'
         defaultRole: .default_role
 
   - kind: user

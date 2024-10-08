@@ -20,6 +20,15 @@
           "title": "Summary",
           "description": "The summary of the PagerDuty team"
         },
+        "onCallSchedules": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "title": "Active On-Call Schedules",
+          "description": "The name of the On-Call schedules that are currently active for the team",
+          "icon": "pagerduty"
+        },
         "defaultRole": {
           "type": "string",
           "title": "Default Role",
@@ -239,13 +248,10 @@
           "title": "Incident Status",
           "description": "The status of the PagerDuty incident",
           "enum": [
-            "triggered",
-            "annotated",
-            "acknowledged",
-            "reassigned",
-            "escalated",
-            "reopened",
-            "resolved"
+            "Active",
+            "Acknowledged",
+            "Resolved",
+            "Open"
           ]
         },
         "assignedVia": {

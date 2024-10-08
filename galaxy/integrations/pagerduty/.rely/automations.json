@@ -1,1 +1,364 @@
-[]
+[
+  {
+    "id": "rely.pagerduty.v1.team-to-team",
+    "title": "Pagerduty Team to a Generic Team",
+    "description": "This automation creates a generic team from an PagerDuty team",
+    "isActive": true,
+    "order": 0,
+    "type": "automation",
+    "arguments": {
+      "sourceBlueprintId": "pagerduty.v1.team",
+      "targetBlueprintId": "team"
+    },
+    "secrets": {},
+    "triggers": [
+      {
+        "type": "onEvent",
+        "event": {
+          "resource": "entity",
+          "action": [
+            "create",
+            "update"
+          ]
+        },
+        "conditions": [
+          {
+            "field": "data.blueprintId",
+            "operator": "eq",
+            "value": "{{ arguments.sourceBlueprintId }}"
+          }
+        ]
+      }
+    ],
+    "actions": [
+      {
+        "type": "fetchFieldsFromResources",
+        "args": {
+          "resourceType": "entity",
+          "fields": [
+            "title"
+          ],
+          "conditions": [
+            {
+              "field": "blueprintId",
+              "operator": "eq",
+              "value": "pagerduty.v1.user"
+            },
+            {
+              "field": "properties/currentlyOnCall",
+              "operator": "eq",
+              "value": true
+            },
+            {
+              "field": "relations/teams/value",
+              "operator": "contains",
+              "value": "{{ data.id }}"
+            }
+          ],
+          "stopFlowIfNotFound": false
+        },
+        "id": "fetch_oncall"
+      },
+      {
+        "type": "fetchResource",
+        "args": {
+          "conditions": [
+            {
+              "field": "blueprintId",
+              "value": "pagerduty.v1.escalation_policy",
+              "operator": "eq"
+            },
+            {
+              "field": "relations/teams/value",
+              "operator": "contains",
+              "value": "{{ data.id }}"
+            }
+          ],
+          "resourceType": "entity",
+          "stopFlowIfNotFound": false
+        },
+        "id": "fetch_escalation_policy"
+      },
+      {
+        "type": "upsertResource",
+        "args": {
+          "resourceType": "entity",
+          "createSuggestion": true,
+          "data": {
+            "id": "{{ data.id | string }}.{{ arguments.targetBlueprintId }}",
+            "title": "{{ data.title }}",
+            "description": "{{ data.description }}",
+            "blueprintId": "{{ arguments.targetBlueprintId }}",
+            "properties": {
+              "incidentManagementLink": "{{ data.properties.link if data.properties.link else none }}",
+              "currentOnCalls": "{{ (actions.fetch_oncall.output.title | tojson) if actions.fetch_oncall else [] }}",
+              "escalationPolicies": "{{ [actions.fetch_escalation_policy.output.properties.link] if actions.fetch_escalation_policy else [] }}",
+              "activeOnCallSchedules": "{{ data.properties.onCallSchedules }}"
+            },
+            "relations": {
+              "PagerDutyTeam": {
+                "value": "{{ data.id | string }}"
+              }
+            }
+          }
+        }
+      }
+    ],
+    "tags": [
+      {
+        "key": "default",
+        "value": "true"
+      },
+      {
+        "key": "owner",
+        "value": "rely"
+      }
+    ]
+  },
+  {
+    "id": "rely.pagerduty.v1.service-to-service",
+    "title": "Pagerduty Service to Service",
+    "description": "This automation creates a service from an Pagerduty Service",
+    "isActive": true,
+    "type": "automation",
+    "arguments": {
+      "sourceBlueprintId": "pagerduty.v1.service",
+      "targetBlueprintId": "service"
+    },
+    "triggers": [
+      {
+        "type": "onEvent",
+        "event": {
+          "resource": "entity",
+          "action": [
+            "create",
+            "update"
+          ]
+        },
+        "conditions": [
+          {
+            "field": "data.blueprintId",
+            "operator": "eq",
+            "value": "{{ arguments.sourceBlueprintId }}"
+          }
+        ]
+      }
+    ],
+    "actions": [
+      {
+        "type": "fetchFieldsFromResources",
+        "args": {
+          "resourceType": "entity",
+          "fields": [
+            "title"
+          ],
+          "conditions": [
+            {
+              "field": "blueprintId",
+              "operator": "eq",
+              "value": "pagerduty.v1.user"
+            },
+            {
+              "field": "properties/currentlyOnCall",
+              "operator": "eq",
+              "value": true
+            },
+            {
+              "field": "relations/teams/value",
+              "operator": "contains",
+              "value": "{{ data.relations.teams.value }}"
+            }
+          ],
+          "stopFlowIfNotFound": false
+        },
+        "conditions": [
+          {
+            "field": "data.relations.teams.value",
+            "operator": "neq",
+            "value": null
+          }
+        ],
+        "id": "fetch_oncall"
+      },
+      {
+        "type": "fetchResource",
+        "args": {
+          "conditions": [
+            {
+              "field": "blueprintId",
+              "value": "pagerduty.v1.escalation_policy",
+              "operator": "eq"
+            },
+            {
+              "field": "id",
+              "operator": "eq",
+              "value": "{{ data.relations.escalationPolicy.value }}"
+            }
+          ],
+          "resourceType": "entity",
+          "stopFlowIfNotFound": false
+        },
+        "id": "fetch_escalation_policy"
+      },
+      {
+        "type": "fetchResource",
+        "args": {
+          "conditions": [
+            {
+              "field": "blueprintId",
+              "value": "pagerduty.v1.team",
+              "operator": "eq"
+            },
+            {
+              "field": "id",
+              "operator": "in",
+              "value": "{{ data.relations.teams.value | join(\",\") }}"
+            }
+          ],
+          "resourceType": "entity",
+          "stopFlowIfNotFound": false
+        },
+        "conditions": [
+          {
+            "field": "data.relations.teams.value",
+            "operator": "neq",
+            "value": null
+          }
+        ],
+        "id": "fetch_pagerduty_teams"
+      },
+      {
+        "type": "upsertResource",
+        "args": {
+          "resourceType": "entity",
+          "createSuggestion": true,
+          "data": {
+            "id": "{{ data.id | string }}.{{ arguments.targetBlueprintId }}",
+            "title": "{{ data.title }}",
+            "description": "{{ data.description }}",
+            "blueprintId": "{{ arguments.targetBlueprintId }}",
+            "properties": {
+              "incidentManagementLink": "{{ data.properties.link if data.properties.link else none }}",
+              "currentOnCalls": "{{ (actions.fetch_oncall.output.title | tojson) if actions.fetch_oncall else [] }}",
+              "onCallScheduleLink": "{{ (actions.fetch_pagerduty_teams.output.properties.link | tojson) if actions.fetch_pagerduty_teams else none }}",
+              "activeOnCallSchedules": "{{ (actions.fetch_pagerduty_teams.output.properties.onCallSchedules | tojson) if actions.fetch_pagerduty_teams else [] }}",
+              "escalationPolicies": "{{ [actions.fetch_escalation_policy.output.properties.link] if actions.fetch_escalation_policy else [] }}"
+            },
+            "relations": {
+              "PagerDutyService": {
+                "value": "{{ data.id | string }}"
+              }
+            }
+          }
+        }
+      }
+    ],
+    "tags": [
+      {
+        "key": "default",
+        "value": "true"
+      },
+      {
+        "key": "owner",
+        "value": "rely"
+      }
+    ]
+  },
+  {
+    "id": "rely.pagerduty.v1.incident-to-incident",
+    "title": "PagerDutyIncident Incident to a Generic Incident",
+    "description": "This automation creates a generic incident from an Pagerduty incident",
+    "isActive": true,
+    "order": 0,
+    "type": "automation",
+    "arguments": {
+      "sourceBlueprintId": "pagerduty.v1.incident",
+      "targetBlueprintId": "incident"
+    },
+    "secrets": {},
+    "triggers": [
+      {
+        "type": "onEvent",
+        "event": {
+          "resource": "entity",
+          "action": [
+            "create",
+            "update"
+          ]
+        },
+        "conditions": [
+          {
+            "field": "data.blueprintId",
+            "operator": "eq",
+            "value": "{{ arguments.sourceBlueprintId }}"
+          }
+        ]
+      }
+    ],
+    "actions": [
+      {
+        "type": "fetchEntitiesBySource",
+        "args": {
+          "targetBlueprintId": "service",
+          "sourceBlueprintId": "pagerduty.v1.service",
+          "entityIds": "{{ (data.relations.service.value if data.relations.service else []) | tojson }}",
+          "stopFlowIfNotFound": false
+        },
+        "id": "fetch_services"
+      },
+      {
+        "type": "fetchEntitiesBySource",
+        "args": {
+          "targetBlueprintId": "team",
+          "sourceBlueprintId": "pagerduty.v1.team",
+          "entityIds": "{{ (data.relations.teams.value if data.relations.teams else []) | tojson }}",
+          "stopFlowIfNotFound": false
+        },
+        "id": "fetch_teams"
+      },
+      {
+        "type": "upsertResource",
+        "args": {
+          "resourceType": "entity",
+          "createSuggestion": false,
+          "data": {
+            "id": "{{ data.id | string }}.{{ arguments.targetBlueprintId }}",
+            "title": "{{ data.title }}",
+            "description": "{{ data.description }}",
+            "blueprintId": "{{ arguments.targetBlueprintId }}",
+            "properties": {
+              "source": "PagerDuty",
+              "link": "{{ data.properties.link if data.properties.link else none }}",
+              "status": "{{ data.properties.status if data.properties.status else none }}",
+              "severity": "{{ data.properties.priority if data.properties.priority else none }}",
+              "createdAt": "{{ data.properties.createdAt if data.properties.createdAt else none }}",
+              "updatedAt": "{{ data.properties.updatedAt if data.properties.updatedAt else none }}",
+              "closedAt": "{{ data.properties.resolvedAt if data.properties.resolvedAt else none }}"
+            },
+            "relations": {
+              "PagerDutyIncident": {
+                "value": "{{ data.id }}"
+              },
+              "impactedServices": {
+                "value": "{{ (actions.fetch_services.output.ids if actions.fetch_services else []) | tojson }}"
+              },
+              "responders": {
+                "value": "{{ (actions.fetch_teams.output.ids if actions.fetch_teams else []) | tojson }}"
+              }
+            }
+          }
+        }
+      }
+    ],
+    "tags": [
+      {
+        "key": "default",
+        "value": "true"
+      },
+      {
+        "key": "owner",
+        "value": "rely"
+      }
+    ]
+  }
+]

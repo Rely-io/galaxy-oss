@@ -12,11 +12,18 @@ class Pagerduty(Integration):
     def __init__(self, config: Config):
         super().__init__(config)
         self.client = PagerdutyClient(self.config, self.logger)
+        # mapping states from pagerduty to rely
+        self.state_mapping = {"triggered": "Active", "acknowledged": "Acknowledged", "resolved": "Resolved"}
 
     @register(_methods, group=1)
     async def teams(self) -> list[dict]:
         # self.on_calls = await self.client.get_on_calls()
         teams = await self.client.get_teams()
+        for team in teams:
+            team["schedules"] = await self.client.get_schedules(
+                params={"exclude[]": ["users", "teams", "escalation_policies"], "team_ids[]": [team.get("id")]}
+            )
+
         teams_mapped = await self.mapper.process("team", teams, context={})
         self.logger.info(f"Found {len(teams_mapped)} teams")
 
@@ -81,6 +88,9 @@ class Pagerduty(Integration):
     @register(_methods, group=3)
     async def incidents(self) -> list[dict]:
         incidents = await self.client.get_incidents()
+        for incident in incidents:
+            incident["status"] = self.state_mapping.get(incident["status"], "Open")
+
         mapped_incidents = await self.mapper.process("incident", incidents, context={})
         self.logger.info(f"Found {len(mapped_incidents)} incidents")
 
