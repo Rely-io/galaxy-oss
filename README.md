@@ -60,12 +60,14 @@ And now you have obtained the plugin token to use during installation.
    kubectl create secret generic relyio-galaxy-api-token --namespace rely-galaxy --from-literal=API_TOKEN="YOUR-PLUGIN-TOKEN"
    ```
 
-3. Create a `.env` file with your environment variables for the Galaxy framework (example [`env.example`](env.example)):
+3. Create a `.env` file with your environment variables for the Galaxy framework:
 
    ```dotenv
    RELY_INTEGRATION_TYPE=<the name of the integration, ex: gitlab>
    RELY_INTEGRATION_ID=<go to rely app and get the rely integration installation id>
    ```
+
+    > Find examples of .env files for all Rely.io supported plugins in `examples/env` folder
 
 4. Create a Kubernetes secret using the `.env` file:
 
