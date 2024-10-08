@@ -30,9 +30,9 @@ class RequestError(Exception):
 
     message: str
     response_content: Any
-    headers: dict[str, str] | None
     method: str
     url: str
+    headers: dict[str, str] | None = None
 
     def __str__(self) -> str:
         return self.message
