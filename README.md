@@ -7,50 +7,90 @@ into the Rely data model.
 
 # Installation
 
+## Pre-requisites
+
+The plugin you'll be connecting to must already exist in your Rely.io organization account.
+
+### Creating the plugin
+
+In your Rely application, go to Portal Builder > Plugins and select "Add Data Source". Select the tool you'll be using and tick the "Is your plugin self hosted?" option. Fill the required information and submit.
+
+### Obtaining the plugin token
+
+The plugin token connects your plugin to our API and allows authenticated communication to happen between the two.
+
+There are 2 ways to do this.
+
+#### In app
+
+Select "View details" on the plugin you're using and move to the "Self-hosted instructions" tab. You'll notice there's a command to create a Kubernetes secret that already makes use of your token. You may extract the token from here or simply use the command directly in step 2 of the Helm install detailed bellow.
+
+#### Programmatically
+
+Firstly obtain a personal long lived token by going to your organization's Settings and clicking "Generate an API key". This key will be used to communicate with our API. 
+
+Select "View details" on the plugin you're using and copy the plugin's ID.
+
+Now in a terminal, make an API call to our API replacing the variables with the obtained values
+
+  ```bash
+    curl --request GET --url https://magneto.rely.io/api/v1/legacy/plugins/{PLUGIN_ID}/token --header 'Authorization: Bearer {API_KEY}'
+  ```
+
+And now you have obtained the plugin token to use during installation.
+
 ## Helm
 
-1. Create a Kubernetes secret with your API token:
+### Fresh Install
+
+1. Create a Kubernetes namespace (alternatively, you may skip this step and use a different workspace in step 2)
 
    ```bash
-   kubectl create secret generic relyio-galaxy-api-token --namespace rely-galaxy --from-literal=API_TOKEN="YOUR-API-TOKEN"
+   kubectl create namespace rely-galaxy
    ```
 
-2. Create a `.env` file with your environment variables for the Galaxy framework (example [`env.example`](env.example)):
+2. Create a Kubernetes secret with your plugin token:
+
+   ```bash
+   kubectl create secret generic relyio-galaxy-api-token --namespace rely-galaxy --from-literal=API_TOKEN="YOUR-PLUGIN-TOKEN"
+   ```   
+
+3. Create a `.env` file with your environment variables for the Galaxy framework (example [`env.example`](env.example)):
 
    ```dotenv
    RELY_INTEGRATION_TYPE=<the name of the integration, ex: gitlab>
    RELY_INTEGRATION_ID=<go to rely app and get the rely integration installation id>
    ```
 
-3. Create a Kubernetes secret using the `.env` file:
+4. Create a Kubernetes secret using the `.env` file:
 
    ```bash
    kubectl create secret generic relyio-galaxy-env --from-env-file=.env --namespace rely-galaxy
    ```
 
-4. Install the **Rely.io Galaxy Framework** helm chart :
+5. Install the **Rely.io Galaxy Framework** helm chart :
 
    ```bash
    helm upgrade --install relyio-galaxy oci://registry-1.docker.io/devrelyio/galaxy-helm -n rely-galaxy
    ```
 
-## Helm Upgrade
+### Upgrade
 
-### To the latest version
+#### To the latest version
 
 ```bash
 helm upgrade relyio-galaxy oci://registry-1.docker.io/devrelyio/galaxy-helm -n rely-galaxy
 ```
 
-### To a specific version
+#### To a specific version
 
 ```bash
 helm upgrade relyio-galaxy oci://registry-1.docker.io/devrelyio/galaxy-helm -n rely-galaxy --version 1.0.0
 ```
 
-## Helm Configuration
+### Configuration Update
 
-### Update environment variables
+#### Environment variables
 
 - Update the `relyio-galaxy-env` secret with any variables you need:
 
@@ -60,6 +100,23 @@ helm upgrade relyio-galaxy oci://registry-1.docker.io/devrelyio/galaxy-helm -n r
           "RELY_INTEGRATION_ID": "'"$(echo -n '<your_rely_integration_id>' | base64)"'"
       }}'
   ```
+
+## Docker
+
+You can simply run the framework by:
+
+```bash
+docker run --env-file .env devrelyio/galaxy:latest
+```
+
+The content of the env file is as follows:
+
+```dotenv
+RELY_INTEGRATION_TYPE=<the name of the integration, ex: gitlab>
+RELY_API_URL=https://magneto.rely.io/
+RELY_API_TOKEN=<go to rely app and get the token for the plugin installation>
+RELY_INTEGRATION_ID=<go to rely app and get the rely integration installation id>
+```
 
 # Development
 
@@ -99,23 +156,9 @@ integration:
 You can also set the environment variables, you can find all the environment variables for the framework and each of
 the integrations in the [`env.example`](env.example) file.
 
-Once you choose how to configure the framework and have all the configs needed for the integration, you need to deploy the
-docker image in a runtime. You can simply run the framework by:
+Once you choose how to configure the framework and have all the configs needed for the integration, you need to deploy the docker image.
 
-```bash
-docker run --env-file .env devrelyio/galaxy:latest
-```
-
-The content of the env file is as follows:
-
-```dotenv
-RELY_INTEGRATION_TYPE=<the name of the integration, ex: gitlab>
-RELY_API_URL=https://magneto.rely.io/
-RELY_API_TOKEN=<go to rely app and get the token for the plugin installation>
-RELY_INTEGRATION_ID=<go to rely app and get the rely integration installation id>
-```
-
-When you run the integration it will first load config file either the one provided in the config params or the default one.
+When you run the integration it will first a load config file - either the one provided in the config params or the default one.
 Then environment variables will be loaded and a env substitution is done against the config file.
 Finally, it will load the integration configuration from the Rely API and then it will run the integration.
 If you want to run the integration in dry-run mode you can pass the `--dry-run` flag to the galaxy command and it will not
