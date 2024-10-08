@@ -36,7 +36,11 @@
             "title": "{{ data.title }}",
             "description": "{{ data.description }}",
             "blueprintId": "{{ arguments.targetBlueprintId }}",
-            "properties": {},
+            "properties": {
+              "codeCoverage": "{{ data.properties.coverage }}",
+              "mainBranch": "{{ data.properties.mainBranch }}",
+              "openVulnerabilities": "{{ data.properties.numberOfVulnerabilities }}"
+            },
             "relations": {
               "SonarQubeProject": {
                 "value": "{{ data.id | string }}"

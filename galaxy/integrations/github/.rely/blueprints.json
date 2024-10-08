@@ -1,730 +1,728 @@
 [
-   {
-      "id":"github.v1.repository",
-      "title":"Github Repository",
-      "description":"Blueprint defining a GitHub repository",
-      "icon":"github",
-      "schemaProperties":{
-         "title":"blueprint properties",
-         "type":"object",
-         "properties":{
-            "link":{
-               "type":"string",
-               "title":"Link",
-               "format":"url",
-               "description":"The URL of the GitHub repository."
-            },
-            "githubOwnerName":{
-               "type":"string",
-               "title":"Github Owner Name",
-               "format":"text",
-               "description":"The name of the user or organization that has administrative control over a repository."
-            },
-            "githubOwnerId":{
-               "type":"string",
-               "title":"Github Owner ID",
-               "format":"text",
-               "description":"The if of the user or organization that has administrative control over a repository."
-            },
-            "isPrivate":{
-               "type":"boolean",
-               "title":"Private Repository?",
-               "description":"Is the repository private"
-            },
-            "isTemplate":{
-               "type":"boolean",
-               "title":"Template Repository?",
-               "description":"Is the repository a template"
-            },
-            "visibility":{
-               "type":"string",
-               "title":"Visibility",
-               "description":""
-            },
-            "createdAt":{
-               "type":"string",
-               "format":"date-time",
-               "title":"Created At",
-               "description":"The creation date of the repository."
-            },
-            "updatedAt":{
-               "type":"string",
-               "format":"date-time",
-               "title":"Updated At",
-               "description":"The last update date of the repository."
-            },
-            "defaultBranch":{
-               "type":"string",
-               "title":"Default Branch",
-               "description":"Repository default branch"
-            },
-            "languages":{
-               "type":"array",
-               "title":"Languages"
-            },
-            "primaryLanguage":{
-               "type":"string",
-               "title":"Primary Language",
-               "description":"Repository Primary Language"
-            },
-            "codeOwners":{
-               "type":"string",
-               "title":"Code Owners",
-               "format":"markdown",
-               "description":"Repository Code Owners"
-            },
-            "readme":{
-               "type":"string",
-               "title":"Repository README",
-               "format":"markdown",
-               "description":"The README file of the repository in markdown format"
-            },
-            "openPullRequestsCount":{
-               "type":"integer",
-               "title":"Open Pull Requests Count",
-               "description":"Repository Open Pull Requests"
-            },
-            "openIssues":{
-               "type":"integer",
-               "title":"Open Issues Count",
-               "description":"Repository Open Issues Count"
-            }
-         },
-         "relations":{
-
-         }
-      },
-      "isHideable":false
-   },
-   {
-      "id":"github.v1.team",
-      "title":"Github Team",
-      "description":"Blueprint defining a GitHub team, detailing its members, repositories, and permissions within an organization.",
-      "icon":"github",
-      "schemaProperties":{
-         "title":"team properties",
-         "type":"object",
-         "properties":{
-            "url":{
-               "type":"string",
-               "title":"Team URL",
-               "description":"The URL of the team's page on GitHub.",
-               "format":"url"
-            },
-            "repositoryCount":{
-               "type":"number",
-               "title":"Repository Count",
-               "description":"The number of repositories the team has access to or manages."
-            },
-            "membersCount":{
-               "type":"number",
-               "title":"Members Count",
-               "description":"The number of members in the team."
-            }
-         }
-      },
-      "relations":{
-         "repositories":{
-            "array":true,
-            "value":"github.v1.repository",
-            "title":"Repositories",
-            "description":"The repositories that the team is working on or has access to."
-         }
-      },
-      "isHideable":false
-   },
-   {
-      "id":"github.v1.teammember",
-      "title":"Github Team Member",
-      "description":"Blueprint defining a member of a GitHub team, including their role within the team.",
-      "icon":"github",
-      "schemaProperties":{
-         "title":"team member properties",
-         "type":"object",
-         "properties":{
-            "email":{
-               "type":"string",
-               "title":"Email",
-               "description":"The email address of the member, if publicly available."
-            },
-            "username":{
-               "type":"string",
-               "title":"Username",
-               "description":"The GitHub username of the member."
-            },
-            "role":{
-               "type":"string",
-               "title":"Role",
-               "description":"The role of the member within the team (e.g., maintainer, member)."
-            }
-         }
-      },
-      "isHideable":false,
-      "relations":{
-         "teams":{
-            "array":true,
-            "value":"github.v1.team",
-            "title":"Teams",
-            "description":"The team this member is part of"
-         }
+  {
+    "id": "github.v1.repository",
+    "title": "Github Repository",
+    "description": "Blueprint defining a GitHub repository",
+    "icon": "github",
+    "schemaProperties": {
+      "title": "blueprint properties",
+      "type": "object",
+      "properties": {
+        "link": {
+          "type": "string",
+          "title": "Link",
+          "format": "url",
+          "description": "The URL of the GitHub repository."
+        },
+        "githubOwnerName": {
+          "type": "string",
+          "title": "Github Owner Name",
+          "format": "text",
+          "description": "The name of the user or organization that has administrative control over a repository."
+        },
+        "githubOwnerId": {
+          "type": "string",
+          "title": "Github Owner ID",
+          "format": "text",
+          "description": "The if of the user or organization that has administrative control over a repository."
+        },
+        "isPrivate": {
+          "type": "boolean",
+          "title": "Private Repository?",
+          "description": "Is the repository private"
+        },
+        "isTemplate": {
+          "type": "boolean",
+          "title": "Template Repository?",
+          "description": "Is the repository a template"
+        },
+        "visibility": {
+          "type": "string",
+          "title": "Visibility",
+          "description": ""
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "title": "Created At",
+          "description": "The creation date of the repository."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "title": "Updated At",
+          "description": "The last update date of the repository."
+        },
+        "defaultBranch": {
+          "type": "string",
+          "title": "Default Branch",
+          "description": "Repository default branch"
+        },
+        "languages": {
+          "type": "array",
+          "title": "Languages"
+        },
+        "primaryLanguage": {
+          "type": "string",
+          "title": "Primary Language",
+          "description": "Repository Primary Language"
+        },
+        "codeOwners": {
+          "type": "string",
+          "title": "Code Owners",
+          "format": "markdown",
+          "description": "Repository Code Owners"
+        },
+        "readme": {
+          "type": "string",
+          "title": "Repository README",
+          "format": "markdown",
+          "description": "The README file of the repository in markdown format"
+        },
+        "openPullRequestsCount": {
+          "type": "integer",
+          "title": "Open Pull Requests Count",
+          "description": "Repository Open Pull Requests"
+        },
+        "openIssues": {
+          "type": "integer",
+          "title": "Open Issues Count",
+          "description": "Repository Open Issues Count"
+        }
       }
-   },
-   {
-      "id":"github.v1.pullrequest",
-      "title":"Github Pull Request",
-      "description":"Blueprint defining a GitHub pull request",
-      "icon":"github",
-      "schemaProperties":{
-         "title":"blueprint properties",
-         "type":"object",
-         "properties":{
-            "link":{
-               "type":"string",
-               "title":"Link",
-               "format":"url",
-               "description":"The URL link to the GitHub pull request."
-            },
-            "summary":{
-               "type":"string",
-               "title":"Summary",
-               "format":"markdown",
-               "description":"A markdown description of the pull request."
-            },
-            "createdAt":{
-               "type":"string",
-               "format":"date-time",
-               "title":"Created At",
-               "description":"The created date of the pull request."
-            },
-            "updatedAt":{
-               "type":"string",
-               "format":"date-time",
-               "title":"Updated At",
-               "description":"The last update date of the pull request."
-            },
-            "closedAt":{
-               "type":"string",
-               "format":"date-time",
-               "title":"Closed At",
-               "description":"The closing date of the pull request."
-            },
-            "mergedAt":{
-               "type":"string",
-               "format":"date-time",
-               "title":"Merged At",
-               "description":"The merge date of the pull request."
-            },
-            "status":{
-               "type":"string",
-               "title":"Status",
-               "description":"The current status of the pull request."
-            }
-         }
-      },
-      "relations":{
-         "repository":{
-            "value":"github.v1.repository",
-            "title":"Repository"
-         },
-         "creator":{
-            "value":"github.v1.teammember",
-            "title":"Creator",
-            "description":"The creator of the pull request."
-         },
-         "assignees":{
-            "value":"github.v1.teammember",
-            "title":"Assignees",
-            "description":"The list of assignees responsible for the pull-request",
-            "array":true
-         },
-         "reviewers":{
-            "value":"github.v1.teammember",
-            "title":"Reviewers",
-            "description":"The list of reviewers responsible for the pull-request",
-            "array":true
-         }
+    },
+    "relations": {},
+    "isHideable": false
+  },
+  {
+    "id": "github.v1.team",
+    "title": "Github Team",
+    "description": "Blueprint defining a GitHub team, detailing its members, repositories, and permissions within an organization.",
+    "icon": "github",
+    "schemaProperties": {
+      "title": "team properties",
+      "type": "object",
+      "properties": {
+        "url": {
+          "type": "string",
+          "title": "Team URL",
+          "description": "The URL of the team's page on GitHub.",
+          "format": "url"
+        },
+        "repositoryCount": {
+          "type": "number",
+          "title": "Repository Count",
+          "description": "The number of repositories the team has access to or manages."
+        },
+        "membersCount": {
+          "type": "number",
+          "title": "Members Count",
+          "description": "The number of members in the team."
+        }
       }
-   },
-   {
-      "id":"github.v1.issue",
-      "title":"Github Issue",
-      "description":"Blueprint defining a GitHub issue",
-      "icon":"github",
-      "schemaProperties":{
-         "title":"blueprint properties",
-         "type":"object",
-         "properties":{
-            "link":{
-               "type":"string",
-               "title":"Link",
-               "format":"url",
-               "description":"The URL link to the GitHub issue."
-            },
-            "summary":{
-               "type":"string",
-               "title":"Summary",
-               "format":"markdown",
-               "description":"A markdown description of the issue."
-            },
-            "createdAt":{
-               "type":"string",
-               "format":"date-time",
-               "title":"Created At",
-               "description":"The creation date of the issue."
-            },
-            "closedAt":{
-               "type":"string",
-               "format":"date-time",
-               "title":"Closed At",
-               "description":"The closing date of the issue."
-            },
-            "updatedAt":{
-               "type":"string",
-               "format":"date-time",
-               "title":"Updated At",
-               "description":"The last update date of the issue."
-            },
-            "status":{
-               "type":"string",
-               "title":"Status",
-               "description":"The current status of the issue."
-            },
-            "issueNumber":{
-               "type":"integer",
-               "title":"Issue Number",
-               "description":"The unique number assigned to the issue."
-            },
-            "labels":{
-               "type":"array",
-               "items":{
-                  "type":"object",
-                  "properties":{
-                     "Key":{
-                        "type":"string",
-                        "title":"Key"
-                     },
-                     "Value":{
-                        "type":"string",
-                        "title":"Value"
-                     }
-                  }
-               },
-               "title":"Labels",
-               "description":"Labels associated with the issue for categorization."
-            }
-         }
-      },
-      "relations":{
-         "repository":{
-            "value":"github.v1.repository",
-            "title":"Repository"
-         },
-         "creator":{
-            "value":"github.v1.teammember",
-            "title":"Creator",
-            "description":"The creator of the pull request."
-         },
-         "assignees":{
-            "value":"github.v1.teammember",
-            "title":"Assignees",
-            "description":"The list of assignees responsible for the pull-request",
-            "array":true
-         }
+    },
+    "relations": {
+      "repositories": {
+        "array": true,
+        "value": "github.v1.repository",
+        "title": "Repositories",
+        "description": "The repositories that the team is working on or has access to."
       }
-   },
-   {
-      "id":"github.v1.workflow",
-      "title":"Github Workflow",
-      "description":"Blueprint defining a GitHub Workflow",
-      "icon":"github",
-      "schemaProperties":{
-         "title":"Blueprint properties",
-         "type":"object",
-         "properties":{
-            "link":{
-               "type":"string",
-               "title":"Link",
-               "format":"url",
-               "description":"The URL link to the GitHub workflow."
-            },
-            "configLink":{
-               "type":"string",
-               "title":"Yaml File Link",
-               "format":"url",
-               "description":"The URL link to the GitHub workflow YAML configuration file."
-            },
-            "path":{
-               "type":"string",
-               "title":"Path",
-               "description":"The file path to the workflow in the repository."
-            },
-            "status":{
-               "type":"string",
-               "title":"Status",
-               "description":"The current status of the workflow."
-            },
-            "createdAt":{
-               "type":"string",
-               "format":"date-time",
-               "title":"Created At",
-               "description":"The creation date of the workflow."
-            },
-            "updatedAt":{
-               "type":"string",
-               "format":"date-time",
-               "title":"Updated At",
-               "description":"The last update date of the workflow."
-            },
-            "deletedAt":{
-               "type":"string",
-               "format":"date-time",
-               "title":"Deleted At",
-               "description":"The deletion date of the workflow, if applicable."
-            }
-         }
-      },
-      "relations":{
-         "repository":{
-            "value":"github.v1.repository",
-            "title":"Repository"
-         }
+    },
+    "isHideable": false
+  },
+  {
+    "id": "github.v1.teammember",
+    "title": "Github Team Member",
+    "description": "Blueprint defining a member of a GitHub team, including their role within the team.",
+    "icon": "github",
+    "schemaProperties": {
+      "title": "team member properties",
+      "type": "object",
+      "properties": {
+        "email": {
+          "type": "string",
+          "title": "Email",
+          "description": "The email address of the member, if publicly available."
+        },
+        "username": {
+          "type": "string",
+          "title": "Username",
+          "description": "The GitHub username of the member."
+        },
+        "role": {
+          "type": "string",
+          "title": "Role",
+          "description": "The role of the member within the team (e.g., maintainer, member)."
+        }
       }
-   },
-   {
-      "id":"github.v1.workflowrun",
-      "title":"Github Workflow Run",
-      "description":"Blueprint defining a GitHub Workflow Run",
-      "icon":"github",
-      "schemaProperties":{
-         "title":"Blueprint properties",
-         "type":"object",
-         "properties":{
-            "link":{
-               "type":"string",
-               "title":"Link",
-               "format":"url",
-               "description":"The URL link to the GitHub workflow run."
-            },
-            "workflowLink":{
-               "type":"string",
-               "title":"Workflow Link",
-               "format":"url",
-               "description":"The URL link to the GitHub workflow."
-            },
-            "artifactsLink":{
-               "type":"string",
-               "title":"Workflow Link",
-               "format":"url",
-               "description":"The URL link to th artifacts of the GitHub workflow."
-            },
-            "logsLink":{
-               "type":"string",
-               "title":"Workflow Link",
-               "format":"url",
-               "description":"The URL link to the logs of the GitHub Workflow Run."
-            },
-            "jobsLink":{
-               "type":"string",
-               "title":"Jobs Link",
-               "format":"url",
-               "description":"The URL link to the Jobs of the GitHub workflow Run."
-            },
-            "status":{
-               "type":"string",
-               "title":"Status",
-               "description":"The current status of the workflow run."
-            },
-            "conclusion":{
-               "type":"string",
-               "title":"Conclusion",
-               "description":"The conclusion status of the workflow run."
-            },
-            "runStartedAt":{
-               "type":"string",
-               "format":"date-time",
-               "title":"Run Started At",
-               "description":"The start date and time of the workflow run."
-            },
-            "createdAt":{
-               "type":"string",
-               "format":"date-time",
-               "title":"Created At",
-               "description":"The creation date of the workflow run."
-            },
-            "updatedAt":{
-               "type":"string",
-               "format":"date-time",
-               "title":"Updated At",
-               "description":"The last update date of the workflow run."
-            },
-            "branch":{
-               "type":"string",
-               "title":"Branch",
-               "description":"The branch of the repository that the workflow ran in."
-            },
-            "commitSHA":{
-               "type":"string",
-               "title":"Commit SHA",
-               "description":"The commit hash of the repository that the workflow ran in."
-            },
-            "event":{
-               "type":"string",
-               "title":"Event",
-               "description":"The event associated with the workflow run."
-            },
-            "runNumber":{
-               "type":"integer",
-               "title":"Run Number",
-               "description":"The unique number assigned to the workflow run."
-            },
-            "runAttempts":{
-               "type":"integer",
-               "title":"Run Attempts",
-               "description":"The number of attempts for the workflow run."
-            }
-         }
-      },
-      "relations":{
-         "repository":{
-            "value":"github.v1.repository",
-            "title":"Repository"
-         },
-         "workflows":{
-            "value":"github.v1.workflow",
-            "title":"Workflow"
-         },
-         "triggeringActor":{
-            "value":"github.v1.teammember",
-            "title":"Triggering Actor",
-            "description":"Triggered By"
-         }
+    },
+    "isHideable": false,
+    "relations": {
+      "teams": {
+        "array": true,
+        "value": "github.v1.team",
+        "title": "Teams",
+        "description": "The team this member is part of"
       }
-   },
-   {
-      "id":"github.v1.workflowjob",
-      "title":"Github Workflow Job",
-      "description":"Blueprint defining a GitHub Workflow Job",
-      "icon":"github",
-      "schemaProperties":{
-         "title":"Blueprint properties",
-         "type":"object",
-         "properties":{
-            "link":{
-               "type":"string",
-               "format":"url",
-               "title":"Link",
-               "description":"The URL link to the GitHub workflow job."
-            },
-            "startedAt":{
-               "type":"string",
-               "format":"date-time",
-               "title":"Created At",
-               "description":"The creation date of the workflow job."
-            },
-            "completedAt":{
-               "type":"string",
-               "format":"date-time",
-               "title":"Run Started At",
-               "description":"The start date and time of the workflow job."
-            },
-            "createdAt":{
-               "type":"string",
-               "format":"date-time",
-               "title":"Run Created At",
-               "description":"The created date and time of the workflow job."
-            },
-            "status":{
-               "type":"string",
-               "title":"Status",
-               "description":"The current status of the workflow job.",
-               "enum":[
-                  "success",
-                  "failure",
-                  "cancelled",
-                  "skipped",
-                  "completed",
-                  "in_progress",
-                  "waiting",
-                  "queued"
-               ]
-            },
-            "runAttempt":{
-               "type":"integer",
-               "title":"Run Attempt",
-               "description":"The current run attempt of the workflow job."
-            },
-            "steps":{
-               "type":"array",
-               "title":"Steps",
-               "items":{
-                  "type":"object"
-               }
-            },
-            "labels":{
-               "type":"array",
-               "title":"Labels",
-               "items":{
-                  "type":"string"
-               }
-            },
-            "conclusion":{
-               "type":"string",
-               "title":"Conclusion",
-               "description":"The conclusion of the workflow job.",
-               "enum":[
-                  "success",
-                  "failure",
-                  "cancelled",
-                  "skipped",
-                  "unknown"
-               ]
-            }
-         }
-      },
-      "relations":{
-         "workflowRun":{
-            "value":"github.v1.workflowrun",
-            "title":"The workflow run this job belongs to."
-         },
-         "owner":{
-            "value":"github.v1.team",
-            "title":"Repository Team",
-            "description":"The repository owner team."
-         }
+    }
+  },
+  {
+    "id": "github.v1.pullrequest",
+    "title": "Github Pull Request",
+    "description": "Blueprint defining a GitHub pull request",
+    "icon": "github",
+    "schemaProperties": {
+      "title": "blueprint properties",
+      "type": "object",
+      "properties": {
+        "link": {
+          "type": "string",
+          "title": "Link",
+          "format": "url",
+          "description": "The URL link to the GitHub pull request."
+        },
+        "summary": {
+          "type": "string",
+          "title": "Summary",
+          "format": "markdown",
+          "description": "A markdown description of the pull request."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "title": "Created At",
+          "description": "The created date of the pull request."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "title": "Updated At",
+          "description": "The last update date of the pull request."
+        },
+        "closedAt": {
+          "type": "string",
+          "format": "date-time",
+          "title": "Closed At",
+          "description": "The closing date of the pull request."
+        },
+        "mergedAt": {
+          "type": "string",
+          "format": "date-time",
+          "title": "Merged At",
+          "description": "The merge date of the pull request."
+        },
+        "status": {
+          "type": "string",
+          "title": "Status",
+          "description": "The current status of the pull request."
+        }
       }
-   },
-   {
-      "id":"github.v1.environment",
-      "title":"Github Environment",
-      "description":"Blueprint defining a Github Environment",
-      "icon":"github",
-      "schemaProperties":{
-         "title":"Blueprint properties",
-         "type":"object",
-         "properties":{
-            "url":{
-               "type":"string",
-               "title":"Link",
-               "description":"The URL link to the GitLab merge request.",
-               "format":"url"
-            },
-            "createdAt":{
-               "title":"Created At",
-               "description":"The timestamp when the environment was created",
-               "type":"string",
-               "format":"date-time"
-            },
-            "updatedAt":{
-               "title":"Updated At",
-               "description":"The timestamp when the the environment was last updated",
-               "type":"string",
-               "format":"date-time"
-            }
-         }
+    },
+    "relations": {
+      "repository": {
+        "value": "github.v1.repository",
+        "title": "Repository"
       },
-      "relations":{
-         "repository":{
-            "value":"github.v1.repository",
-            "title":"Repository",
-            "description":"The project this environment belongs to",
-            "array":false
-         }
-      }
-   },
-   {
-      "id":"github.v1.deployment",
-      "title":"Github Deployment",
-      "description":"Blueprint defining a Github Deployment",
-      "icon":"github",
-      "schemaProperties":{
-         "title":"Blueprint properties",
-         "type":"object",
-         "properties":{
-            "status":{
-               "type":"string",
-               "format":null,
-               "title":"Status",
-               "description":"The current status of the deployment."
-            },
-            "state":{
-               "type":"string",
-               "format":null,
-               "title":"State",
-               "description":"The current state of the deployment."
-            },
-            "createdAt":{
-               "type":"string",
-               "format":"date-time",
-               "title":"Created At",
-               "description":"Date & Time at which this deployment was executed."
-            },
-            "updatedAt":{
-               "type":"string",
-               "format":"date-time",
-               "title":"Updated At",
-               "description":"Date & Time at which this deployment was last updated."
-            },
-            "link":{
-               "type":"string",
-               "format":"url",
-               "title":"Link",
-               "description":"Link to the deployment page in Github."
-            },
-            "commitSha":{
-               "type":"string",
-               "format":null,
-               "title":"Commit SHA",
-               "description":"The hash of the commit the deployment targeted."
-            },
-            "commitDate":{
-               "type":"string",
-               "format":"date-time",
-               "title":"Commit Date",
-               "description":"The date of the commit mentioned in the deployment."
-            },
-            "environmentName":{
-               "type":"string",
-               "format":null,
-               "title":"Environment Name",
-               "description":"Envirronment Name of the deployment."
-            },
-            "task":{
-               "type":"string",
-               "format":null,
-               "title":"Task",
-               "description":""
-            },
-            "successful":{
-               "type":"boolean",
-               "title":"Successful?",
-               "description":"A boolean flag indicating if the deployment has finished successfully."
-            },
-            "branch":{
-               "type":"string",
-               "title":"Branch",
-               "description":"Branch the deployment ran in"
-            }
-         }
+      "creator": {
+        "value": "github.v1.teammember",
+        "title": "Creator",
+        "description": "The creator of the pull request."
       },
-      "relations":{
-         "repository":{
-            "value":"github.v1.repository",
-            "title":"Repository",
-            "description":"The project this deployment belongs to",
-            "array":false
-         },
-         "triggeredBy":{
-            "value":"github.v1.teammember",
-            "title":"Triggered By",
-            "description":"The user that triggered this deployment",
-            "array":false
-         },
-         "environment":{
-            "value":"github.v1.environment",
-            "title":"Environment",
-            "description":"The environment this deployment updated",
-            "array":false
-         }
+      "assignees": {
+        "value": "github.v1.teammember",
+        "title": "Assignees",
+        "description": "The list of assignees responsible for the pull-request",
+        "array": true
+      },
+      "reviewers": {
+        "value": "github.v1.teammember",
+        "title": "Reviewers",
+        "description": "The list of reviewers responsible for the pull-request",
+        "array": true
       }
-   }
+    }
+  },
+  {
+    "id": "github.v1.issue",
+    "title": "Github Issue",
+    "description": "Blueprint defining a GitHub issue",
+    "icon": "github",
+    "schemaProperties": {
+      "title": "blueprint properties",
+      "type": "object",
+      "properties": {
+        "link": {
+          "type": "string",
+          "title": "Link",
+          "format": "url",
+          "description": "The URL link to the GitHub issue."
+        },
+        "summary": {
+          "type": "string",
+          "title": "Summary",
+          "format": "markdown",
+          "description": "A markdown description of the issue."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "title": "Created At",
+          "description": "The creation date of the issue."
+        },
+        "closedAt": {
+          "type": "string",
+          "format": "date-time",
+          "title": "Closed At",
+          "description": "The closing date of the issue."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "title": "Updated At",
+          "description": "The last update date of the issue."
+        },
+        "status": {
+          "type": "string",
+          "title": "Status",
+          "description": "The current status of the issue."
+        },
+        "issueNumber": {
+          "type": "integer",
+          "title": "Issue Number",
+          "description": "The unique number assigned to the issue."
+        },
+        "labels": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "Key": {
+                "type": "string",
+                "title": "Key"
+              },
+              "Value": {
+                "type": "string",
+                "title": "Value"
+              }
+            }
+          },
+          "title": "Labels",
+          "description": "Labels associated with the issue for categorization."
+        }
+      }
+    },
+    "relations": {
+      "repository": {
+        "value": "github.v1.repository",
+        "title": "Repository"
+      },
+      "creator": {
+        "value": "github.v1.teammember",
+        "title": "Creator",
+        "description": "The creator of the pull request."
+      },
+      "assignees": {
+        "value": "github.v1.teammember",
+        "title": "Assignees",
+        "description": "The list of assignees responsible for the pull-request",
+        "array": true
+      }
+    }
+  },
+  {
+    "id": "github.v1.workflow",
+    "title": "Github Workflow",
+    "description": "Blueprint defining a GitHub Workflow",
+    "icon": "github",
+    "schemaProperties": {
+      "title": "Blueprint properties",
+      "type": "object",
+      "properties": {
+        "link": {
+          "type": "string",
+          "title": "Link",
+          "format": "url",
+          "description": "The URL link to the GitHub workflow."
+        },
+        "configLink": {
+          "type": "string",
+          "title": "Yaml File Link",
+          "format": "url",
+          "description": "The URL link to the GitHub workflow YAML configuration file."
+        },
+        "path": {
+          "type": "string",
+          "title": "Path",
+          "description": "The file path to the workflow in the repository."
+        },
+        "status": {
+          "type": "string",
+          "title": "Status",
+          "description": "The current status of the workflow."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "title": "Created At",
+          "description": "The creation date of the workflow."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "title": "Updated At",
+          "description": "The last update date of the workflow."
+        },
+        "deletedAt": {
+          "type": "string",
+          "format": "date-time",
+          "title": "Deleted At",
+          "description": "The deletion date of the workflow, if applicable."
+        }
+      }
+    },
+    "relations": {
+      "repository": {
+        "value": "github.v1.repository",
+        "title": "Repository"
+      }
+    }
+  },
+  {
+    "id": "github.v1.workflowrun",
+    "title": "Github Workflow Run",
+    "description": "Blueprint defining a GitHub Workflow Run",
+    "icon": "github",
+    "schemaProperties": {
+      "title": "Blueprint properties",
+      "type": "object",
+      "properties": {
+        "link": {
+          "type": "string",
+          "title": "Link",
+          "format": "url",
+          "description": "The URL link to the GitHub workflow run."
+        },
+        "workflowLink": {
+          "type": "string",
+          "title": "Workflow Link",
+          "format": "url",
+          "description": "The URL link to the GitHub workflow."
+        },
+        "artifactsLink": {
+          "type": "string",
+          "title": "Workflow Link",
+          "format": "url",
+          "description": "The URL link to th artifacts of the GitHub workflow."
+        },
+        "logsLink": {
+          "type": "string",
+          "title": "Workflow Link",
+          "format": "url",
+          "description": "The URL link to the logs of the GitHub Workflow Run."
+        },
+        "jobsLink": {
+          "type": "string",
+          "title": "Jobs Link",
+          "format": "url",
+          "description": "The URL link to the Jobs of the GitHub workflow Run."
+        },
+        "status": {
+          "type": "string",
+          "title": "Status",
+          "description": "The current status of the workflow run."
+        },
+        "conclusion": {
+          "type": "string",
+          "title": "Conclusion",
+          "description": "The conclusion status of the workflow run."
+        },
+        "runStartedAt": {
+          "type": "string",
+          "format": "date-time",
+          "title": "Run Started At",
+          "description": "The start date and time of the workflow run."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "title": "Created At",
+          "description": "The creation date of the workflow run."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "title": "Updated At",
+          "description": "The last update date of the workflow run."
+        },
+        "branch": {
+          "type": "string",
+          "title": "Branch",
+          "description": "The branch of the repository that the workflow ran in."
+        },
+        "commitSHA": {
+          "type": "string",
+          "title": "Commit SHA",
+          "description": "The commit hash of the repository that the workflow ran in."
+        },
+        "event": {
+          "type": "string",
+          "title": "Event",
+          "description": "The event associated with the workflow run."
+        },
+        "runNumber": {
+          "type": "integer",
+          "title": "Run Number",
+          "description": "The unique number assigned to the workflow run."
+        },
+        "runAttempts": {
+          "type": "integer",
+          "title": "Run Attempts",
+          "description": "The number of attempts for the workflow run."
+        }
+      }
+    },
+    "relations": {
+      "repository": {
+        "value": "github.v1.repository",
+        "title": "Repository"
+      },
+      "workflows": {
+        "value": "github.v1.workflow",
+        "title": "Workflow"
+      },
+      "triggeringActor": {
+        "value": "github.v1.teammember",
+        "title": "Triggering Actor",
+        "description": "Triggered By"
+      }
+    }
+  },
+  {
+    "id": "github.v1.workflowjob",
+    "title": "Github Workflow Job",
+    "description": "Blueprint defining a GitHub Workflow Job",
+    "icon": "github",
+    "schemaProperties": {
+      "title": "Blueprint properties",
+      "type": "object",
+      "properties": {
+        "link": {
+          "type": "string",
+          "format": "url",
+          "title": "Link",
+          "description": "The URL link to the GitHub workflow job."
+        },
+        "startedAt": {
+          "type": "string",
+          "format": "date-time",
+          "title": "Created At",
+          "description": "The creation date of the workflow job."
+        },
+        "completedAt": {
+          "type": "string",
+          "format": "date-time",
+          "title": "Run Started At",
+          "description": "The start date and time of the workflow job."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "title": "Run Created At",
+          "description": "The created date and time of the workflow job."
+        },
+        "status": {
+          "type": "string",
+          "title": "Status",
+          "description": "The current status of the workflow job.",
+          "enum": [
+            "success",
+            "failure",
+            "cancelled",
+            "skipped",
+            "completed",
+            "in_progress",
+            "waiting",
+            "queued"
+          ]
+        },
+        "runAttempt": {
+          "type": "integer",
+          "title": "Run Attempt",
+          "description": "The current run attempt of the workflow job."
+        },
+        "steps": {
+          "type": "array",
+          "title": "Steps",
+          "items": {
+            "type": "object"
+          }
+        },
+        "labels": {
+          "type": "array",
+          "title": "Labels",
+          "items": {
+            "type": "string"
+          }
+        },
+        "conclusion": {
+          "type": "string",
+          "title": "Conclusion",
+          "description": "The conclusion of the workflow job.",
+          "enum": [
+            "success",
+            "failure",
+            "cancelled",
+            "skipped",
+            "unknown"
+          ]
+        }
+      }
+    },
+    "relations": {
+      "workflowRun": {
+        "value": "github.v1.workflowrun",
+        "title": "The workflow run this job belongs to."
+      },
+      "owner": {
+        "value": "github.v1.team",
+        "title": "Repository Team",
+        "description": "The repository owner team."
+      }
+    }
+  },
+  {
+    "id": "github.v1.environment",
+    "title": "Github Environment",
+    "description": "Blueprint defining a Github Environment",
+    "icon": "github",
+    "schemaProperties": {
+      "title": "Blueprint properties",
+      "type": "object",
+      "properties": {
+        "url": {
+          "type": "string",
+          "title": "Link",
+          "description": "The URL link to the GitLab merge request.",
+          "format": "url"
+        },
+        "createdAt": {
+          "title": "Created At",
+          "description": "The timestamp when the environment was created",
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "title": "Updated At",
+          "description": "The timestamp when the the environment was last updated",
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "relations": {
+      "repository": {
+        "value": "github.v1.repository",
+        "title": "Repository",
+        "description": "The project this environment belongs to",
+        "array": false
+      }
+    }
+  },
+  {
+    "id": "github.v1.deployment",
+    "title": "Github Deployment",
+    "description": "Blueprint defining a Github Deployment",
+    "icon": "github",
+    "schemaProperties": {
+      "title": "Blueprint properties",
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "string",
+          "format": null,
+          "title": "Status",
+          "description": "The current status of the deployment."
+        },
+        "state": {
+          "type": "string",
+          "format": null,
+          "title": "State",
+          "description": "The current state of the deployment."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "title": "Created At",
+          "description": "Date & Time at which this deployment was executed."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "title": "Updated At",
+          "description": "Date & Time at which this deployment was last updated."
+        },
+        "link": {
+          "type": "string",
+          "format": "url",
+          "title": "Link",
+          "description": "Link to the deployment page in Github."
+        },
+        "commitSha": {
+          "type": "string",
+          "format": null,
+          "title": "Commit SHA",
+          "description": "The hash of the commit the deployment targeted."
+        },
+        "commitDate": {
+          "type": "string",
+          "format": "date-time",
+          "title": "Commit Date",
+          "description": "The date of the commit mentioned in the deployment."
+        },
+        "environmentName": {
+          "type": "string",
+          "format": null,
+          "title": "Environment Name",
+          "description": "Environment Name of the deployment."
+        },
+        "task": {
+          "type": "string",
+          "format": null,
+          "title": "Task",
+          "description": ""
+        },
+        "successful": {
+          "type": "boolean",
+          "title": "Successful?",
+          "description": "A boolean flag indicating if the deployment has finished successfully."
+        },
+        "branch": {
+          "type": "string",
+          "title": "Branch",
+          "description": "Branch the deployment ran in"
+        }
+      }
+    },
+    "relations": {
+      "repository": {
+        "value": "github.v1.repository",
+        "title": "Repository",
+        "description": "The project this deployment belongs to",
+        "array": false
+      },
+      "triggeredBy": {
+        "value": "github.v1.teammember",
+        "title": "Triggered By",
+        "description": "The user that triggered this deployment",
+        "array": false
+      },
+      "environment": {
+        "value": "github.v1.environment",
+        "title": "Environment",
+        "description": "The environment this deployment updated",
+        "array": false
+      }
+    }
+  }
 ]
