@@ -59,7 +59,7 @@ async def main(
         if config_entity_properties is not None:
             for key, value in config_entity_properties.items():
                 # Only set the property if it doesn't already exist
-                if config.integration.properties.get(key, None) is None:
+                if not config.integration.properties.get(key):
                     config.integration.properties[key] = value
 
         logger.debug("Config entity properties: %r", config.integration.properties)

@@ -20,6 +20,6 @@ integration:
   properties:
     appId: "{{ env('RELY_INTEGRATION_GITHUB_APP_ID') }}"
     appPrivateKey: "{{ env('RELY_INTEGRATION_GITHUB_APP_PRIVATE_KEY') }}"
-    installationId: "{{ env('RELY_INTEGRATION_GITHUB_INSTALLATION_ID') }}"
+    installationId: "{{ env('RELY_INTEGRATION_GITHUB_INSTALLATION_ID') | default('', true) }}"
     url: "{{ env('RELY_INTEGRATION_GITHUB_URL') | default('https://api.github.com', true)  }}"
     daysOfHistory: "{{ env('DAYS_OF_HISTORY') | default(30, true) | int }}"
