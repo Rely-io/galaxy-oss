@@ -4,6 +4,7 @@ from typing import Any
 
 import magneto_api_client
 from magneto_api_client import BlueprintCreate, BlueprintRead, EntityUpdate, FlowUpdate
+from magneto_api_client.exceptions import BadRequestException, NotFoundException
 
 from galaxy.utils.itertools import chunks
 from galaxy.utils.requests import ContentTooLargeError, RetryPolicy, make_request, with_session
@@ -148,20 +149,27 @@ class Magneto:
             except Exception as e:
                 raise Exception("Exception when calling insert_or_update_blueprint_bulk: %s\n" % e)
 
-    async def upsert_blueprint_relation(self, blueprint_id: str, relation_data: dict) -> None:
+    async def upsert_blueprint_relation(
+        self, blueprint_id: str, relation_data: dict, *, raise_if_blueprint_not_found: bool = True
+    ) -> None:
         async with self.session as api_client:
             api_instance = magneto_api_client.BlueprintsApi(api_client)
             try:
                 await api_instance.create_blueprint_relations_api_v1_blueprints_id_relations_post(
                     blueprint_id, relation_data
                 )
+            except NotFoundException:
+                if not raise_if_blueprint_not_found:
+                    return
+                raise Exception("Exception when calling upsert_blueprint_relation: Blueprint not found\n")
             except Exception as e:
                 if "already has a relation with key" in str(e):
                     return
-                else:
-                    raise Exception("Exception when calling upsert_blueprint_relation: %s\n" % e)
+                raise Exception("Exception when calling upsert_blueprint_relation: %s\n" % e)
 
-    async def upsert_automation(self, flow: dict, trigger: bool = False) -> dict | None:
+    async def upsert_automation(
+        self, flow: dict, trigger: bool = False, *, raise_if_blueprint_not_found: bool = True
+    ) -> dict | None:
         async with self.session as api_client:
             api_instance = magneto_api_client.FlowsApi(api_client)
             try:
@@ -169,5 +177,13 @@ class Magneto:
                     flow["id"], FlowUpdate.from_dict(flow), trigger=trigger
                 )
                 return api_response.to_dict()
+            except BadRequestException as e:
+                if (
+                    not raise_if_blueprint_not_found
+                    and e.body.startswith('{"detail":"Automation error: Blueprint with id ')
+                    and e.body.endswith(' not found"}')
+                ):
+                    return
+                raise Exception("Exception when calling FlowsApi->upsert_flow_api_v1_flows_id_put: %s\n" % e)
             except Exception as e:
                 raise Exception("Exception when calling FlowsApi->upsert_flow_api_v1_flows_id_put: %s\n" % e)

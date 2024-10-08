@@ -135,7 +135,8 @@ async def call_methods(instance, config: Config) -> None:
             for automation in automations:
                 logger.debug("Upserting automation: %r", automation)
                 async with magneto_client as magneto:
-                    await magneto.upsert_automation(automation)
+                    # If automation has errors due to missing blueprints, lets skip it
+                    await magneto.upsert_automation(automation, raise_if_blueprint_not_found=False)
     except Exception as e:
         if config.integration.dry_run is False:
             async with magneto_client as magneto:

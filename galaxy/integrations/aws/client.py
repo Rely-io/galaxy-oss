@@ -1,11 +1,12 @@
-import logging
-import boto3
-import json
 import asyncio
+import json
+import logging
+from concurrent.futures import ThreadPoolExecutor, as_completed
+
+import boto3
+from tenacity import retry, stop_after_attempt, wait_random_exponential
 
 from galaxy.core.models import Config
-from concurrent.futures import ThreadPoolExecutor, as_completed
-from tenacity import retry, stop_after_attempt, wait_random_exponential
 
 __all__ = ["AwsClient"]
 
@@ -24,10 +25,22 @@ class AwsClient:
 
         self.account_id = config.integration.properties["accountId"]
 
-        access_key = json.loads(config.integration.properties["accessKey"])
-        self.aws_session = boto3.Session(
-            aws_access_key_id=access_key["AccessKeyId"], aws_secret_access_key=access_key["SecretAccessKey"]
-        )
+        # access_key = json.loads(config.integration.properties["accessKey"])
+        access_key = config.integration.properties["accessKey"]
+        if isinstance(access_key, str):
+            access_key = json.loads(access_key)
+        if not isinstance(access_key, dict):
+            raise Exception("Access key has invalid format")
+
+        access_key_id = access_key.get("AccessKeyId")
+        if not access_key_id:
+            raise Exception("Missing AccessKeyId")
+
+        access_key_secret = access_key.get("SecretAccessKey")
+        if not access_key_secret:
+            raise Exception("Missing SecretAccessKey")
+
+        self.aws_session = boto3.Session(aws_access_key_id=access_key_id, aws_secret_access_key=access_key_secret)
 
     async def get_regions(self, base_region) -> list[dict]:
         return self.aws_session.client("ec2", region_name=base_region).describe_regions()["Regions"]

@@ -66,7 +66,8 @@ async def collect_blueprints(config: Config, magneto_client: Magneto) -> list[di
         for blueprint_id in relations_to_create:
             for relation in relations_to_create[blueprint_id]:
                 async with magneto_client as session:
-                    await session.upsert_blueprint_relation(blueprint_id, relation)
+                    # If blueprint is not found then lets just ignore it and proceed
+                    await session.upsert_blueprint_relation(blueprint_id, relation, raise_if_blueprint_not_found=False)
 
         # Need to iterate and remove "invalid" relations again since the relations might be here again if the blueprint
         #   already had them on server side, but we want to ignore them for the current run

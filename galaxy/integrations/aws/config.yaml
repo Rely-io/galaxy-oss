@@ -6,7 +6,7 @@ integration:
   id: "{{ env('RELY_INTEGRATION_ID') }}"
   # The type of the integration.
   type: "aws"
-# The execution type of the integration.
+  # The execution type of the integration.
   executionType: "{{ env('RELY_INTEGRATION_EXECUTION_TYPE') | default('cronjob', true)  }}"
   scheduledInterval: 60
   defaultModelMappings:

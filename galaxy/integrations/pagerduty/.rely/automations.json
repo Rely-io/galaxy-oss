@@ -18,7 +18,8 @@
           "resource": "entity",
           "action": [
             "create",
-            "update"
+            "update",
+            "addedAsSource"
           ]
         },
         "conditions": [
@@ -57,6 +58,13 @@
           ],
           "stopFlowIfNotFound": false
         },
+        "conditions": [
+          {
+            "field": "event.action",
+            "operator": "neq",
+            "value": "addedAsSource"
+          }
+        ],
         "id": "fetch_oncall"
       },
       {
@@ -77,6 +85,13 @@
           "resourceType": "entity",
           "stopFlowIfNotFound": false
         },
+        "conditions": [
+          {
+            "field": "event.action",
+            "operator": "neq",
+            "value": "addedAsSource"
+          }
+        ],
         "id": "fetch_escalation_policy"
       },
       {
@@ -101,7 +116,45 @@
               }
             }
           }
-        }
+        },
+        "conditions": [
+          {
+            "field": "event.action",
+            "operator": "neq",
+            "value": "addedAsSource"
+          }
+        ]
+      },
+      {
+        "id": "trigger_pagerduty_team_chain_automation",
+        "type": "triggerAutomations",
+        "title": "Trigger Automations for Pagerduty Post Team Import",
+        "args": {
+          "automationIds": [
+            "rely.pagerduty.v1.incident-to-incident"
+          ],
+          "entities": {
+            "conditions": [
+              {
+                "field": "blueprintId",
+                "operator": "in",
+                "value": "pagerduty.v1.incident"
+              },
+              {
+                "field": "relations/teams/value",
+                "operator": "contains",
+                "value": "{{ data.id }}"
+              }
+            ]
+          }
+        },
+        "conditions": [
+          {
+            "field": "event.action",
+            "operator": "eq",
+            "value": "addedAsSource"
+          }
+        ]
       }
     ],
     "tags": [
@@ -132,7 +185,8 @@
           "resource": "entity",
           "action": [
             "create",
-            "update"
+            "update",
+            "addedAsSource"
           ]
         },
         "conditions": [
@@ -173,6 +227,11 @@
         },
         "conditions": [
           {
+            "field": "event.action",
+            "operator": "neq",
+            "value": "addedAsSource"
+          },
+          {
             "field": "data.relations.teams.value",
             "operator": "neq",
             "value": null
@@ -198,6 +257,13 @@
           "resourceType": "entity",
           "stopFlowIfNotFound": false
         },
+        "conditions": [
+          {
+            "field": "event.action",
+            "operator": "neq",
+            "value": "addedAsSource"
+          }
+        ],
         "id": "fetch_escalation_policy"
       },
       {
@@ -223,6 +289,11 @@
             "field": "data.relations.teams.value",
             "operator": "neq",
             "value": null
+          },
+          {
+            "field": "event.action",
+            "operator": "neq",
+            "value": "addedAsSource"
           }
         ],
         "id": "fetch_pagerduty_teams"
@@ -250,7 +321,45 @@
               }
             }
           }
-        }
+        },
+        "conditions": [
+          {
+            "field": "event.action",
+            "operator": "neq",
+            "value": "addedAsSource"
+          }
+        ]
+      },
+      {
+        "id": "trigger_pagerduty_service_chain_automation",
+        "type": "triggerAutomations",
+        "title": "Trigger Automations for Pagerduty Post Service Import",
+        "args": {
+          "automationIds": [
+            "rely.pagerduty.v1.incident-to-incident"
+          ],
+          "entities": {
+            "conditions": [
+              {
+                "field": "blueprintId",
+                "operator": "in",
+                "value": "pagerduty.v1.incident"
+              },
+              {
+                "field": "relations/service/value",
+                "operator": "eq",
+                "value": "{{ data.id }}"
+              }
+            ]
+          }
+        },
+        "conditions": [
+          {
+            "field": "event.action",
+            "operator": "eq",
+            "value": "addedAsSource"
+          }
+        ]
       }
     ],
     "tags": [
