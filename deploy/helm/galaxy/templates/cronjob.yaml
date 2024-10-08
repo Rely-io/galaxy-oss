@@ -1,9 +1,9 @@
 # templates/cronjob.yaml
-
+{{- $release_name := .Release.Name -}}
 apiVersion: batch/v1
 kind: CronJob
 metadata:
-  name: {{ .Release.Name }}-cronjob
+  name: {{ $release_name }}-cronjob
 spec:
   schedule: "{{ .Values.schedule }}"
   jobTemplate:
@@ -14,23 +14,23 @@ spec:
           - name: cronjob
             image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
             env:
-{{- range .Values.env }}
-{{- if .secret }}
-            - name: {{ .name }}
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Release.Name }}-secret
-                  key: {{ .name }}
-{{- else }}
-            - name: {{ .name }}
-              value: {{ .value | quote }}
-{{- end }}
-{{- end }}
+            {{- range .Values.env }}
+            {{- if .secret }}
+              - name: {{ .name }}
+                valueFrom:
+                  secretKeyRef:
+                    name: {{ $release_name }}-secret
+                    key: {{ .name }}
+            {{- else }}
+              - name: {{ .name }}
+                value: {{ .value | quote }}
+            {{- end }}
+            {{- end }}
             volumeMounts:
             - name: config-volume
               mountPath: /config
           volumes:
           - name: config-volume
             configMap:
-              name: {{ .Release.Name }}-config
+              name: {{ $release_name }}-config
           restartPolicy: OnFailure

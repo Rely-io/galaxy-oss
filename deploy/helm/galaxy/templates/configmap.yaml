@@ -13,4 +13,4 @@ data:
       executionType: {{ .Values.config.integration.executionType }}
       scheduledInterval: {{ .Values.config.integration.scheduledInterval }}
       properties:
-{{ toYaml .Values.config.integration.properties | indent 8 }}
+        {{- toYaml .Values.config.integration.properties | indent 8 }}
