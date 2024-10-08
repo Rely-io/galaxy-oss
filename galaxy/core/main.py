@@ -58,8 +58,12 @@ async def main(
         config_entity_properties = integration_config.get("properties", None)
         if config_entity_properties is not None:
             for key, value in config_entity_properties.items():
-                # Only set the property if it doesn't already exist
-                if not config.integration.properties.get(key):
+                # Only set the property if it doesn't already exist or is empty
+                if not config.integration.properties.get(key) or (
+                    # This OR is to handle the scenario of a nested dict with keys but no values
+                    isinstance(config.integration.properties[key], dict)
+                    and not all(config.integration.properties[key].values())
+                ):
                     config.integration.properties[key] = value
 
         logger.debug("Config entity properties: %r", config.integration.properties)

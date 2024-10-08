@@ -6,7 +6,7 @@ integration:
   id: "{{ env('RELY_INTEGRATION_ID') }}"
   # The type of the integration.
   type: "opsgenie"
-# The execution type of the integration.
+  # The execution type of the integration.
   executionType: "{{ env('RELY_INTEGRATION_EXECUTION_TYPE') | default('cronjob', true)  }}"
   scheduledInterval: 60
   defaultModelMappings:
@@ -16,5 +16,5 @@ integration:
   properties:
     daysOfHistory: "{{ env('DAYS_OF_HISTORY') | default(30, true) | int }}"
     tenantApiUrl: "{{ env('RELY_OPSGENIE_TENANT_URL') | default('https://api.opsgenie.com', true) }}"
-    appBaseUrl: "{{ env('RELY_OPSGENIE_APP_BASE_URL') }}"
-    secretToken: "{{ env('RELY_OPSGENIE_SECRET_TOKEN') }}"
+    appBaseUrl: "{{ env('RELY_OPSGENIE_APP_BASE_URL') | default('', true) }}"
+    secretToken: "{{ env('RELY_OPSGENIE_SECRET_TOKEN') | default('', true) }}"

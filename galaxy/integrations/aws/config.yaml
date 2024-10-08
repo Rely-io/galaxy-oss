@@ -17,7 +17,7 @@ integration:
     aws.v1.rds_db_instance: "cloud_resource"
     aws.v1.s3_bucket: "cloud_resource"
   properties:
-    accountId: "{{ env('RELY_AWS_ACCOUNT_ID') }}"
+    accountId: "{{ env('RELY_AWS_ACCOUNT_ID') | default('', true) }}"
     accessKey:
-      AccessKeyId: "{{ env('RELY_AWS_ACCESS_KEY_ID') }}"
-      SecretAccessKey: "{{ env('RELY_AWS_ACCESS_KEY_SECRET') }}"
+      AccessKeyId: "{{ env('RELY_AWS_ACCESS_KEY_ID') | default('', true) }}"
+      SecretAccessKey: "{{ env('RELY_AWS_ACCESS_KEY_SECRET') | default('', true) }}"

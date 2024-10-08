@@ -6,7 +6,7 @@ integration:
   id: "{{ env('RELY_INTEGRATION_ID') | default('00000', true) }}"
   # The type of the integration.
   type: "pagerduty"
-# The execution type of the integration.
+  # The execution type of the integration.
   executionType: "{{ env('RELY_INTEGRATION_EXECUTION_TYPE') | default('cronjob', true) }}"
   # The configuration for the integration.
   scheduledInterval: 60
@@ -17,4 +17,4 @@ integration:
   properties:
     daysOfHistory: "{{ env('DAYS_OF_HISTORY') | default(30, true) | int }}"
     url: "{{ env('RELY_PAGERDUTY_API_URL') | default('https://api.eu.pagerduty.com', true) }}"
-    apiKey: "{{ env('RELY_PAGERDUTY_API_KEY') }}"
+    apiKey: "{{ env('RELY_PAGERDUTY_API_KEY') | default('', true) }}"

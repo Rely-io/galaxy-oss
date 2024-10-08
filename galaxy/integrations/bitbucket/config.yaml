@@ -6,7 +6,7 @@ integration:
   id: "{{ env('RELY_INTEGRATION_ID') }}"
   # The type of the integration.
   type: "bitbucket"
-# The execution type of the integration.
+  # The execution type of the integration.
   executionType: "{{ env('RELY_INTEGRATION_EXECUTION_TYPE') | default('cronjob', true)  }}"
   scheduledInterval: 60
   defaultModelMappings:
@@ -17,5 +17,5 @@ integration:
     bitbucket.v1.pipeline: "deployment"
   properties:
     daysOfHistory: "{{ env('DAYS_OF_HISTORY') | default(30, true) | int }}"
-    clientId: "{{ env('RELY_BITBUCKET_APP_CLIENT_ID')  }}"
-    clientSecret: "{{ env('RELY_BITBUCKET_APP_CLIENT_SECRET')  }}"
+    clientId: "{{ env('RELY_BITBUCKET_APP_CLIENT_ID') | default('', true) }}"
+    clientSecret: "{{ env('RELY_BITBUCKET_APP_CLIENT_SECRET') | default('', true) }}"

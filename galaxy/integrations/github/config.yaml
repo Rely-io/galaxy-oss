@@ -18,8 +18,8 @@ integration:
     "github.v1.deployment": "deployment"
     "github.v1.workflowrun": "deployment"
   properties:
-    appId: "{{ env('RELY_INTEGRATION_GITHUB_APP_ID') }}"
-    appPrivateKey: "{{ env('RELY_INTEGRATION_GITHUB_APP_PRIVATE_KEY') }}"
+    appId: "{{ env('RELY_INTEGRATION_GITHUB_APP_ID') | default('', true) }}"
+    appPrivateKey: "{{ env('RELY_INTEGRATION_GITHUB_APP_PRIVATE_KEY') | default('', true) }}"
     installationId: "{{ env('RELY_INTEGRATION_GITHUB_INSTALLATION_ID') | default('', true) }}"
     url: "{{ env('RELY_INTEGRATION_GITHUB_URL') | default('https://api.github.com', true)  }}"
     daysOfHistory: "{{ env('DAYS_OF_HISTORY') | default(30, true) | int }}"

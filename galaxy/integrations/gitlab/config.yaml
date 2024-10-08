@@ -6,7 +6,7 @@ integration:
   id: "{{ env('RELY_INTEGRATION_ID') }}"
   # The type of the integration.
   type: "gitlab"
-# The execution type of the integration.
+  # The execution type of the integration.
   executionType: "{{ env('RELY_INTEGRATION_EXECUTION_TYPE') | default('cronjob', true)  }}"
   scheduledInterval: 60
   defaultModelMappings:
@@ -19,6 +19,6 @@ integration:
     gitlab.v1.issue: "issue"
   properties:
     daysOfHistory: "{{ env('DAYS_OF_HISTORY') | default(30, true) | int }}"
-    organization: "{{ env('RELY_INTEGRATION_GITLAB_ORGANIZATION') }}"
-    secretToken: "{{ env('RELY_INTEGRATION_GITLAB_SECRET_TOKEN') }}"
+    organization: "{{ env('RELY_INTEGRATION_GITLAB_ORGANIZATION') | default('', true) }}"
+    secretToken: "{{ env('RELY_INTEGRATION_GITLAB_SECRET_TOKEN') | default('', true) }}"
     url: "{{ env('RELY_INTEGRATION_GITLAB_URL') | default('https://gitlab.com/api', true)  }}"

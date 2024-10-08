@@ -25,7 +25,6 @@ class AwsClient:
 
         self.account_id = config.integration.properties["accountId"]
 
-        # access_key = json.loads(config.integration.properties["accessKey"])
         access_key = config.integration.properties["accessKey"]
         if isinstance(access_key, str):
             access_key = json.loads(access_key)
