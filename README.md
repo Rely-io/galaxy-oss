@@ -127,7 +127,62 @@ RELY_INTEGRATION_ID=<go to rely app and get the rely integration installation id
 
 Interested in contributing? Great!
 
-Start by reviewing our contribution guidelines, then contact us at support@rely.io for assistance in getting started.
+Start by reading our [contribution guidelines](CONTRIBUTING.md) and then follow the steps below:
+
+1. Install  the galaxy cli as described above.
+2. Run the scaffold  command to create a new plugin.
+
+```bash
+galaxy scaffold -i <integration_name>
+```
+
+This will create all the base files and wire the integration to the framework. After you have the initial structure you can start coding the integration
+by adding the necessary code to collect the data from the api of the integration `client.py` file, the `main.py` file and the `routes.py` file.
+You can also add the necessary blueprints, automations and mappings inside the `rely.io` folder.
+
+Once you have all the files in place, you can run the validate the integration by running the command below:
+
+```bash
+make validate
+```
+
+If you want to test the integration, you can run the command below:
+
+```bash
+make test
+```
+
+If all the validation and test pass, you can run the integration by running the command below:
+
+```bash
+make run
+```
+
+Or to run the integration in debug mode:
+
+```bash
+make run-debug
+```
+
+Don't forget to add the necessary configs to the `.env` file as described above.
+
+If you want instead of using make run the framework using the cli you first need to install the new version by running:
+
+```bash
+make
+```
+
+and then you can run the framework by running making sure that your .env has the right configuration needed for the integration:
+
+```bash
+galaxy run
+```
+
+or you can run also run the galaxy in dry-run mode to see the output of the integration without sending the data to Rely:
+
+```bash
+galaxy run --dry-run
+```
 
 ### License
 
