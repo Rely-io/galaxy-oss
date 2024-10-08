@@ -46,6 +46,7 @@ setuptools    = "^70.3.0"
 tenacity      = "^8.5.0"
 toml          = "^0.10.2"
 uvicorn       = "^0.30.3"
+boto3 = "^1.35.35"
 
 [tool.poetry.group.dev.dependencies]
 aioresponses = ">=0.7.6"
