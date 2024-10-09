@@ -29,8 +29,11 @@ async def run_app(methods, config):
     app.state.mapper = Mapper(config.integration.type)
     app.state.magneto_client = Magneto(config.rely.url, config.rely.token, logger=logger)
     app.state.logger = logger
-    module = importlib.import_module(f"galaxy.integrations.{config.integration.type}.routes")
-    app.include_router(module.router)
+    try:
+        module = importlib.import_module(f"galaxy.integrations.{config.integration.type}.routes")
+        app.include_router(module.router)
+    except ModuleNotFoundError:
+        logger.warning(f"Integration type {config.integration.type} routes not found")
 
     job_defaults = {"coalesce": False, "max_instances": 1, "misfire_grace_time": None}
     job_stores = {"default": MemoryJobStore()}

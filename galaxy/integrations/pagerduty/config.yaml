@@ -9,7 +9,7 @@ integration:
   # The execution type of the integration.
   executionType: "{{ env('RELY_INTEGRATION_EXECUTION_TYPE') | default('cronjob', true) }}"
   # The configuration for the integration.
-  scheduledInterval: 60
+  scheduledInterval: "{{ env('RELY_INTEGRATION_DAEMON_INTERVAL') | default(60, true) | int  }}"
   defaultModelMappings:
     pagerduty.v1.team: "team"
     pagerduty.v1.service: "service"

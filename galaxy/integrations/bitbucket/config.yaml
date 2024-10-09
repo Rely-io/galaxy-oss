@@ -8,7 +8,7 @@ integration:
   type: "bitbucket"
   # The execution type of the integration.
   executionType: "{{ env('RELY_INTEGRATION_EXECUTION_TYPE') | default('cronjob', true)  }}"
-  scheduledInterval: 60
+  scheduledInterval: "{{ env('RELY_INTEGRATION_DAEMON_INTERVAL') | default(60, true) | int  }}"
   defaultModelMappings:
     bitbucket.v1.repository: "service"
     bitbucket.v1.pullrequest: "pull_request"
