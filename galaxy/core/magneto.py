@@ -1,5 +1,6 @@
 import logging
 import traceback
+from collections import Counter
 from typing import Any
 
 import magneto_api_client
@@ -7,7 +8,13 @@ from magneto_api_client import BlueprintCreate, BlueprintRead, EntityUpdate, Flo
 from magneto_api_client.exceptions import BadRequestException, NotFoundException
 
 from galaxy.utils.itertools import chunks
-from galaxy.utils.requests import ContentTooLargeError, RetryPolicy, make_request, with_session
+from galaxy.utils.requests import (
+    ContentTooLargeError,
+    RetryPolicy,
+    UnprocessableEntityError,
+    make_request,
+    with_session,
+)
 
 __all__ = ["Magneto"]
 
@@ -91,6 +98,9 @@ class Magneto:
         entities_to_add = entities
         added = []
         missing = []
+
+        errors_counter = Counter()
+
         async with with_session(headers=self.headers) as session:
             chunk_size = self._bulk_chunk_size
             retry_policy = RetryPolicy(logger=self.logger)
@@ -101,13 +111,21 @@ class Magneto:
                             session, "PUT", f"{self.magneto_url}{url_path}", json=chunk, retry_policy=retry_policy
                         )
                         added.extend(response)
-                    except ContentTooLargeError:
+                    except (ContentTooLargeError, UnprocessableEntityError) as e:
+                        if chunk_size <= 1:
+                            errors_counter[e.status] += 1
+                            self.logger.debug(
+                                "Failed to insert entity %r to Rely API: %r (entity: %r)",
+                                chunk[0].get("id"),
+                                e,
+                                chunk[0],
+                            )
                         missing.extend(chunk)
 
                 if len(missing) == 0:
                     break
 
-                if chunk_size < 1:
+                if chunk_size <= 1:
                     break
 
                 self.logger.warning("Failed to insert %d entities to Rely API. Retrying...", len(missing))
@@ -116,8 +134,10 @@ class Magneto:
                 entities_to_add = missing
                 missing = []
 
-        if missing:
-            self.logger.warning("Failed to insert %d entities to Rely API", len(missing))
+        for error_status, errors_count in errors_counter.items():
+            self.logger.warning(
+                "Failed to insert %d entities to Rely API with status code %d", errors_count, error_status
+            )
 
         return added
 
