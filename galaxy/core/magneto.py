@@ -159,6 +159,7 @@ class Magneto:
                     blueprint_id, relation_data
                 )
             except NotFoundException:
+                self.logger.warning("Update skipped for blueprint '%s': Blueprint not found." % blueprint_id)
                 if not raise_if_blueprint_not_found:
                     return
                 raise Exception("Exception when calling upsert_blueprint_relation: Blueprint not found\n")
@@ -183,6 +184,7 @@ class Magneto:
                     and e.body.startswith('{"detail":"Automation error: Blueprint with id ')
                     and e.body.endswith(' not found"}')
                 ):
+                    self.logger.warning("Skipped automation update for '%s': Blueprint not found." % flow["id"])
                     return
                 raise Exception("Exception when calling FlowsApi->upsert_flow_api_v1_flows_id_put: %s\n" % e)
             except Exception as e:
