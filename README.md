@@ -123,6 +123,7 @@ RELY_INTEGRATION_TYPE=<the name of the integration, ex: gitlab>
 RELY_API_URL=https://magneto.rely.io/
 RELY_API_TOKEN=<go to rely app and get the token for the plugin installation>
 RELY_INTEGRATION_ID=<go to rely app and get the rely integration installation id>
+RELY_INTEGRATION_EXECUTION_TYPE=daemon         # This will ensure your Docker container will run continuously
 ```
 
 ### Contributing
