@@ -1,32 +1,48 @@
 image:
-  repository: oci://registry-1.docker.io/devrelyio/galaxy
+  repository: devrelyio/galaxy
+  pullPolicy: IfNotPresent
   tag: ""
 
-schedule: "*/5 * * * *"
+schedule: "*/59 * * * *" # Every 59 minutes
 
 env:
-  - name: RELY_API_TOKEN
-    value: ""
-    secret: true
-  - name: RELY_API_URL
-    value: ""
-    secret: true
-  - name: RELY_INTEGRATION_ID
-    value: ""
-    secret: false
+  # The following environment variables are required to run this container
+  # more environment variables can be added here as required for each integration
+  RELY_API_TOKEN:
+  RELY_API_URL:
+  RELY_INTEGRATION_ID:
+  RELY_INTEGRATION_TYPE:
 
-config:
-  rely:
-    token: "{{ env('RELY_API_TOKEN') }}"
-    url: "{{ env('RELY_API_URL') }}"
-  integration:
-    id: "{{ env('RELY_INTEGRATION_ID') }}"
-    type: "gitlab"
-    executionType: "cronjob"
-    scheduledInterval: 60
-    properties:
-      token: "{{ env('RELY_INTEGRATION_GITLAB_TOKEN') }}"
-      url: "https://gitlab.com/api/graphql"
-      customProperty1: "value1"
-      customProperty2: "value2"
-      anotherProperty: "value3"
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: false
+  # Automatically mount a ServiceAccount's API credentials?
+  automount: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+podAnnotations: {}
+podLabels: {}
+
+podSecurityContext: {}
+  # fsGroup: 2000
+
+securityContext: {}
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+  # runAsNonRoot: true
+  # runAsUser: 1000
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
