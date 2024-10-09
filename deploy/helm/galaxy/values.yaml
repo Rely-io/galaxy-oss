@@ -12,6 +12,9 @@ env:
   RELY_API_URL:
   RELY_INTEGRATION_ID:
   RELY_INTEGRATION_TYPE:
+  RELY_INTEGRATION_EXECUTION_TYPE: cronjob
+  # RELY_INTEGRATION_EXECUTION_TYPE: daemon
+  # RELY_INTEGRATION_DAEMON_INTERVAL: 60
 
 nameOverride: ""
 fullnameOverride: ""
@@ -40,6 +43,21 @@ securityContext: {}
   # readOnlyRootFilesystem: true
   # runAsNonRoot: true
   # runAsUser: 1000
+
+resources: {}
+
+# Additional volumes on the output Deployment definition.
+volumes: []
+# - name: foo
+#   secret:
+#     secretName: mysecret
+#     optional: false
+
+# Additional volumeMounts on the output Deployment definition.
+volumeMounts: []
+# - name: foo
+#   mountPath: "/etc/foo"
+#   readOnly: true
 
 nodeSelector: {}
 
