@@ -1,41 +1,58 @@
 image:
+  # repository -- Image to use for deploying the application
   repository: devrelyio/galaxy
+  # -- Pull policy for the image
   pullPolicy: IfNotPresent
+  # -- Tag to use for deploying the application
   tag: ""
 
+# schedule -- Configure the Schedule for the cronjob
+# -- This is a cron expression that defines the schedule for the cronjob
 schedule: "*/59 * * * *" # Every 59 minutes
 
 env:
   # The following environment variables are required to run this container
   # more environment variables can be added here as required for each integration
+  # RELY_API_TOKEN -- The API token for the Rely API
   RELY_API_TOKEN:
-  RELY_API_URL:
+  # RELY_API_URL -- The URL for the Rely API
+  RELY_API_URL: https://magneto.rely.io/
+  # RELY_INTEGRATION_ID -- The identifier of this integration instance
   RELY_INTEGRATION_ID:
+  # RELY_INTEGRATION_TYPE -- The type of the integration
   RELY_INTEGRATION_TYPE:
-  RELY_INTEGRATION_EXECUTION_TYPE: cronjob
+  # RELY_INTEGRATION_EXECUTION_TYPE -- The execution type of the integration
   # RELY_INTEGRATION_EXECUTION_TYPE: daemon
-  # RELY_INTEGRATION_DAEMON_INTERVAL: 60
+  RELY_INTEGRATION_EXECUTION_TYPE: cronjob
+  # RELY_INTEGRATION_DAEMON_INTERVAL -- The interval at which the integration should run
+  RELY_INTEGRATION_DAEMON_INTERVAL: 60
 
+# nameOverride -- Override the name of the chart
 nameOverride: ""
+# fullnameOverride -- Override the fullname of the chart
 fullnameOverride: ""
 
 serviceAccount:
-  # Specifies whether a service account should be created
+  # create -- Specifies whether a service account should be created
   create: false
-  # Automatically mount a ServiceAccount's API credentials?
+  # automount -- Automatically mount a ServiceAccount's API credentials?
   automount: true
-  # Annotations to add to the service account
+  # annotations -- Annotations to add to the service account
   annotations: {}
-  # The name of the service account to use.
-  # If not set and create is true, a name is generated using the fullname template
+  # name -- The name of the service account to use.
+  # -- If not set and create is true, a name is generated using the fullname template
   name: ""
 
+# podAnnotations -- The annotations to add to the pod
 podAnnotations: {}
+# podLabels -- The labels to instances of the pod
 podLabels: {}
 
+# podSecurityContext -- The security context for the pod
 podSecurityContext: {}
   # fsGroup: 2000
 
+# securityContext -- The security context for the container
 securityContext: {}
   # capabilities:
   #   drop:
@@ -44,23 +61,27 @@ securityContext: {}
   # runAsNonRoot: true
   # runAsUser: 1000
 
+# resources -- The resource requests and limits for the containers
 resources: {}
 
-# Additional volumes on the output Deployment definition.
+# volumes -- Additional volumes on the output Deployment definition.
 volumes: []
 # - name: foo
 #   secret:
 #     secretName: mysecret
 #     optional: false
 
-# Additional volumeMounts on the output Deployment definition.
+# volumeMounts -- Additional volumeMounts on the output Deployment definition.
 volumeMounts: []
 # - name: foo
 #   mountPath: "/etc/foo"
 #   readOnly: true
 
+# nodeSelector -- Node labels for pod assignment
 nodeSelector: {}
 
+# tolerations -- Toleration labels for pod assignment
 tolerations: []
 
+# affinity -- Affinity settings for pod assignment
 affinity: {}
