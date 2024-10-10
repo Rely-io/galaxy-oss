@@ -38,9 +38,9 @@ Select *"View details"* on the plugin you're using and copy the plugin's ID.
 
 Now in a terminal, make an API call to our API replacing the variables with the obtained values
 
-  ```bash
-    curl --request GET --url https://magneto.rely.io/api/v1/legacy/plugins/{PLUGIN_ID}/token --header 'Authorization: Bearer {API_KEY}'
-  ```
+```bash
+  curl --request GET --url https://magneto.rely.io/api/v1/legacy/plugins/{PLUGIN_ID}/token --header 'Authorization: Bearer {API_KEY}'
+```
 
 And now you have obtained the plugin token to use during installation.
 
@@ -54,59 +54,106 @@ And now you have obtained the plugin token to use during installation.
    kubectl create namespace rely-galaxy
    ```
 
-2. Create a Kubernetes secret with your plugin token:
+2. Create a `my_values.yaml` file (name isn't important) with the variables we need to setup on the chart, example below:
+
+   ```yaml
+   env:
+     RELY_API_TOKEN: the_rely_api_token
+     RELY_API_URL: https://magneto.rely.io
+     RELY_INTEGRATION_ID: "1234567"
+     RELY_INTEGRATION_TYPE: pagerduty
+
+   ```
+
+3. Install the **Rely.io Galaxy Framework** helm chart:
 
    ```bash
-   kubectl create secret generic relyio-galaxy-api-token --namespace rely-galaxy --from-literal=API_TOKEN="YOUR-PLUGIN-TOKEN"
+   helm upgrade --install -f my_values.yaml \
+     relyio-galaxy \
+     oci://registry-1.docker.io/devrelyio/galaxy-helm \
+     -n rely-galaxy
    ```
 
-3. Create a `.env` file with your environment variables for the Galaxy framework:
+  INFO: Instead of creating a yaml file, you can also pass the values directly in the command line:
 
-   ```dotenv
-   RELY_INTEGRATION_TYPE=<the name of the integration, ex: gitlab>
-   RELY_INTEGRATION_ID=<go to rely app and get the rely integration installation id>
-   ```
-
-    > Find examples of .env files for all Rely.io supported plugins in `examples/env` folder
-
-4. Create a Kubernetes secret using the `.env` file:
-
-   ```bash
-   kubectl create secret generic relyio-galaxy-env --from-env-file=.env --namespace rely-galaxy
-   ```
-
-5. Install the **Rely.io Galaxy Framework** helm chart :
-
-   ```bash
-   helm upgrade --install relyio-galaxy oci://registry-1.docker.io/devrelyio/galaxy-helm -n rely-galaxy
-   ```
+  ```bash
+  helm upgrade --install relyio-galaxy \
+    --set env.RELY_API_TOKEN=the_rely_api_token \
+    --set env.RELY_API_URL=https://magneto.rely.io \
+    --set env.RELY_INTEGRATION_ID=1234567 \
+    --set env.RELY_INTEGRATION_TYPE=pagerduty \
+    oci://registry-1.docker.io/devrelyio/galaxy-helm \
+    -n rely-galaxy
+  ```
 
 #### Upgrade
 
 ##### To the latest version
 
 ```bash
-helm upgrade relyio-galaxy oci://registry-1.docker.io/devrelyio/galaxy-helm -n rely-galaxy
+helm upgrade -f my_values.yaml \
+  relyio-galaxy \
+  oci://registry-1.docker.io/devrelyio/galaxy-helm \
+  -n rely-galaxy
+```
+
+or
+
+```bash
+helm upgrade relyio-galaxy \
+    --set env.RELY_API_TOKEN=the_rely_api_token \
+    --set env.RELY_API_URL=https://magneto.rely.io \
+    --set env.RELY_INTEGRATION_ID=1234567 \
+    --set env.RELY_INTEGRATION_TYPE=pagerduty \
+    oci://registry-1.docker.io/devrelyio/galaxy-helm \
+    -n rely-galaxy
 ```
 
 ##### To a specific version
 
 ```bash
-helm upgrade relyio-galaxy oci://registry-1.docker.io/devrelyio/galaxy-helm -n rely-galaxy --version 1.0.0
+helm upgrade -f my_values.yaml \
+  relyio-galaxy \
+  oci://registry-1.docker.io/devrelyio/galaxy-helm \
+  -n rely-galaxy \
+  --version 1.0.0
+```
+or
+
+```bash
+helm upgrade relyio-galaxy \
+    --set env.RELY_API_TOKEN=the_rely_api_token \
+    --set env.RELY_API_URL=https://magneto.rely.io \
+    --set env.RELY_INTEGRATION_ID=1234567 \
+    --set env.RELY_INTEGRATION_TYPE=pagerduty \
+    oci://registry-1.docker.io/devrelyio/galaxy-helm \
+    -n rely-galaxy \
+    --version 1.0.0
 ```
 
-#### Configuration Update
+#### Configuration
 
-##### Environment variables
+##### Required variables
 
-  Update the `relyio-galaxy-env` secret with any variables you need:
+Helm chart requires the following values to be set or it will fail to install:
 
-  ```bash
-  kubectl patch secret relyio-galaxy-env --namespace rely-galaxy --patch '{
-      "data": {
-          "RELY_INTEGRATION_ID": "'"$(echo -n '<your_rely_integration_id>' | base64)"'"
-      }}'
-  ```
+- `env.RELY_API_URL`: The rely api url, ex: https://magneto.rely.io/
+- `env.RELY_API_TOKEN`: Go to rely app and get the token for the plugin installation
+- `env.RELY_INTEGRATION_TYPE`: The name of the integration, ex: gitlab
+- `env.RELY_INTEGRATION_ID`: Go to rely app and get the rely integration installation id
+
+These are the minimum values that need to be set for the framework to work. You can also set other values that are in the [`values.yaml`](deploy/helm/galaxy/values.yaml) file.
+
+Additionally, you can set the following values:
+
+- `env.RELY_INTEGRATION_EXECUTION_TYPE`: The execution type of the integration. The default value is `cronjob`. If you want to run the integration in daemon mode you need to set this value to `daemon`.
+- `env.RELY_INTEGRATION_DAEMON_INTERVAL`: The interval in minutes that the integration will run in daemon mode. The default value is `60`.
+- `schedule`: The cronjob schedule for the integration. The default value is `59 * * * *`.
+
+<br/>
+
+> **NOTE** <br/>
+> Depending on the integration you are using you might need to set other values. You can find the values needed for each integration in its own documentation.
 
 ### Docker
 

@@ -1,32 +1,89 @@
 image:
-  repository: oci://registry-1.docker.io/devrelyio/galaxy
+  # repository -- Image to use for deploying the application
+  repository: devrelyio/galaxy
+  # -- Pull policy for the image
+  pullPolicy: IfNotPresent
+  # -- Tag to use for deploying the application
   tag: ""
 
-schedule: "*/5 * * * *"
+# schedule -- Configure the Schedule for the cronjob
+# -- This is a cron expression that defines the schedule for the cronjob
+schedule: "*/59 * * * *" # Every 59 minutes
 
+# -- Environment variables to be set in the container
 env:
-  - name: RELY_API_TOKEN
-    value: ""
-    secret: true
-  - name: RELY_API_URL
-    value: ""
-    secret: true
-  - name: RELY_INTEGRATION_ID
-    value: ""
-    secret: false
+  # The following environment variables are required to run this container
+  # more environment variables can be added here as required for each integration
+  # env.RELY_API_TOKEN -- The API token for the Rely API
+  RELY_API_TOKEN:
+  # env.RELY_API_URL -- The URL for the Rely API
+  RELY_API_URL: https://magneto.rely.io/
+  # env.RELY_INTEGRATION_ID -- The identifier of this integration instance
+  RELY_INTEGRATION_ID:
+  # env.RELY_INTEGRATION_TYPE -- The type of the integration
+  RELY_INTEGRATION_TYPE:
+  # env.RELY_INTEGRATION_EXECUTION_TYPE -- The execution type of the integration
+  # can be either cronjob or daemon
+  RELY_INTEGRATION_EXECUTION_TYPE: cronjob
+  # env.RELY_INTEGRATION_DAEMON_INTERVAL -- The interval in minutes at which the integration should run
+  # only required if the execution type is daemon
+  RELY_INTEGRATION_DAEMON_INTERVAL: 60
 
-config:
-  rely:
-    token: "{{ env('RELY_API_TOKEN') }}"
-    url: "{{ env('RELY_API_URL') }}"
-  integration:
-    id: "{{ env('RELY_INTEGRATION_ID') }}"
-    type: "gitlab"
-    executionType: "cronjob"
-    scheduledInterval: 60
-    properties:
-      token: "{{ env('RELY_INTEGRATION_GITLAB_TOKEN') }}"
-      url: "https://gitlab.com/api/graphql"
-      customProperty1: "value1"
-      customProperty2: "value2"
-      anotherProperty: "value3"
+# nameOverride -- Override the name of the chart
+nameOverride: ""
+# fullnameOverride -- Override the fullname of the chart
+fullnameOverride: ""
+
+serviceAccount:
+  # serviceAccount.create -- Specifies whether a service account should be created
+  create: false
+  # serviceAccount.automount -- Automatically mount a ServiceAccount's API credentials?
+  automount: true
+  # serviceAccount.annotations -- Annotations to add to the service account
+  annotations: {}
+  # serviceAccount.name -- The name of the service account to use.
+  # -- If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+# podAnnotations -- The annotations to add to the pod
+podAnnotations: {}
+# podLabels -- The labels to instances of the pod
+podLabels: {}
+
+# podSecurityContext -- The security context for the pod
+podSecurityContext: {}
+  # fsGroup: 2000
+
+# securityContext -- The security context for the container
+securityContext: {}
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+  # runAsNonRoot: true
+  # runAsUser: 1000
+
+# resources -- The resource requests and limits for the containers
+resources: {}
+
+# volumes -- Additional volumes on the output Deployment definition.
+volumes: []
+# - name: foo
+#   secret:
+#     secretName: mysecret
+#     optional: false
+
+# volumeMounts -- Additional volumeMounts on the output Deployment definition.
+volumeMounts: []
+# - name: foo
+#   mountPath: "/etc/foo"
+#   readOnly: true
+
+# nodeSelector -- Node labels for pod assignment
+nodeSelector: {}
+
+# tolerations -- Toleration labels for pod assignment
+tolerations: []
+
+# affinity -- Affinity settings for pod assignment
+affinity: {}

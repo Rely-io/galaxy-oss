@@ -1,36 +1,57 @@
-# templates/cronjob.yaml
-
+{{- $exec_mode := default "cronjob" .Values.env.RELY_INTEGRATION_EXECUTION_TYPE }}
+{{- if eq $exec_mode "cronjob" }}
+---
 apiVersion: batch/v1
 kind: CronJob
 metadata:
-  name: {{ .Release.Name }}-cronjob
+  name: {{ include "galaxy-helm.fullname" . }}
+  labels:
+    {{- include "galaxy-helm.labels" . | nindent 4 }}
 spec:
   schedule: "{{ .Values.schedule }}"
+  successfulJobsHistoryLimit: 5
+  failedJobsHistoryLimit: 5
   jobTemplate:
     spec:
       template:
+        metadata:
+          {{- with .Values.podAnnotations }}
+          annotations:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          labels:
+            {{- include "galaxy-helm.labels" . | nindent 12 }}
+            {{- with .Values.podLabels }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
         spec:
+          serviceAccountName: {{ include "galaxy-helm.serviceAccountName" . }}
+          {{- with .Values.podSecurityContext }}
+          securityContext:
+            {{- toYaml . | nindent 10 }}
+          {{- end }}
           containers:
-          - name: cronjob
-            image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
-            env:
-{{- range .Values.env }}
-{{- if .secret }}
-            - name: {{ .name }}
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Release.Name }}-secret
-                  key: {{ .name }}
-{{- else }}
-            - name: {{ .name }}
-              value: {{ .value | quote }}
-{{- end }}
-{{- end }}
-            volumeMounts:
-            - name: config-volume
-              mountPath: /config
-          volumes:
-          - name: config-volume
-            configMap:
-              name: {{ .Release.Name }}-config
+          - name: {{ .Chart.Name }}
+            {{- with .Values.securityContext }}
+            securityContext:
+              {{- toYaml . | nindent 14 }}
+            {{- end }}
+            image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+            imagePullPolicy: {{ .Values.image.pullPolicy }}
+            envFrom:
+              - secretRef:
+                  name: {{ include "galaxy-helm.fullname" . }}
           restartPolicy: OnFailure
+          {{- with .Values.nodeSelector }}
+          nodeSelector:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.affinity }}
+          affinity:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.tolerations }}
+          tolerations:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+{{- end }}

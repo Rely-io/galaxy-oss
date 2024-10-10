@@ -8,7 +8,7 @@ integration:
   executionType: "{{ env('RELY_INTEGRATION_EXECUTION_TYPE') | default('cronjob', true) }}"
 
   # The configuration for the integration.
-  scheduledInterval: 60
+  scheduledInterval: "{{ env('RELY_INTEGRATION_DAEMON_INTERVAL') | default(60, true) | int  }}"
   defaultModelMappings:
     sonarqube.v1.project: "service"
   properties:
