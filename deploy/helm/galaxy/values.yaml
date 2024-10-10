@@ -10,21 +10,23 @@ image:
 # -- This is a cron expression that defines the schedule for the cronjob
 schedule: "*/59 * * * *" # Every 59 minutes
 
+# -- Environment variables to be set in the container
 env:
   # The following environment variables are required to run this container
   # more environment variables can be added here as required for each integration
-  # RELY_API_TOKEN -- The API token for the Rely API
+  # env.RELY_API_TOKEN -- The API token for the Rely API
   RELY_API_TOKEN:
-  # RELY_API_URL -- The URL for the Rely API
+  # env.RELY_API_URL -- The URL for the Rely API
   RELY_API_URL: https://magneto.rely.io/
-  # RELY_INTEGRATION_ID -- The identifier of this integration instance
+  # env.RELY_INTEGRATION_ID -- The identifier of this integration instance
   RELY_INTEGRATION_ID:
-  # RELY_INTEGRATION_TYPE -- The type of the integration
+  # env.RELY_INTEGRATION_TYPE -- The type of the integration
   RELY_INTEGRATION_TYPE:
-  # RELY_INTEGRATION_EXECUTION_TYPE -- The execution type of the integration
-  # RELY_INTEGRATION_EXECUTION_TYPE: daemon
+  # env.RELY_INTEGRATION_EXECUTION_TYPE -- The execution type of the integration
+  # can be either cronjob or daemon
   RELY_INTEGRATION_EXECUTION_TYPE: cronjob
-  # RELY_INTEGRATION_DAEMON_INTERVAL -- The interval at which the integration should run
+  # env.RELY_INTEGRATION_DAEMON_INTERVAL -- The interval in minutes at which the integration should run
+  # only required if the execution type is daemon
   RELY_INTEGRATION_DAEMON_INTERVAL: 60
 
 # nameOverride -- Override the name of the chart
@@ -33,13 +35,13 @@ nameOverride: ""
 fullnameOverride: ""
 
 serviceAccount:
-  # create -- Specifies whether a service account should be created
+  # serviceAccount.create -- Specifies whether a service account should be created
   create: false
-  # automount -- Automatically mount a ServiceAccount's API credentials?
+  # serviceAccount.automount -- Automatically mount a ServiceAccount's API credentials?
   automount: true
-  # annotations -- Annotations to add to the service account
+  # serviceAccount.annotations -- Annotations to add to the service account
   annotations: {}
-  # name -- The name of the service account to use.
+  # serviceAccount.name -- The name of the service account to use.
   # -- If not set and create is true, a name is generated using the fullname template
   name: ""
 
