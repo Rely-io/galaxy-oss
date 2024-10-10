@@ -21,7 +21,7 @@ from tenacity import (
 from .serializers import json_serialize
 
 ClientSession: TypeAlias = AiohttpClientSession
-error_dataclass = partial(dataclass, kw_only=True, frozen=True, slots=True)
+error_dataclass = partial(dataclass, kw_only=True, slots=True)
 
 
 @error_dataclass
@@ -42,7 +42,7 @@ class RequestError(Exception):
 class RequestHTTPError(RequestError):
     """Base class for all HTTP errors."""
 
-    status_code: int
+    status: int
 
 
 @error_dataclass
@@ -59,22 +59,27 @@ class ClientError(RequestError):
 
 @error_dataclass
 class UnauthorizedError(ClientError):
-    status_code: ClassVar[int] = 401
+    status: ClassVar[int] = 401
 
 
 @error_dataclass
 class NotFoundError(ClientError):
-    status_code: ClassVar[int] = 404
+    status: ClassVar[int] = 404
 
 
 @error_dataclass
 class ContentTooLargeError(ClientError):
-    status_code: ClassVar[int] = 413
+    status: ClassVar[int] = 413
+
+
+@error_dataclass
+class UnprocessableEntityError(ClientError):
+    status: ClassVar[int] = 422
 
 
 @error_dataclass
 class RateLimitError(ClientError):
-    status_code: ClassVar[int] = 429
+    status: ClassVar[int] = 429
 
 
 @define(kw_only=True)
@@ -187,6 +192,9 @@ async def _make_request(session: ClientSession, method: str, url: str, **kwargs:
             case 413:
                 error_cls = ContentTooLargeError
                 error_message = f"Content too large ({e.status}): Request body too large for {method} {url}"
+            case 422:
+                error_cls = UnprocessableEntityError
+                error_message = f"Unprocessable Entity ({e.status}): {e.message} during {method} {url}"
             case 429:
                 error_cls = RateLimitError
                 error_message = f"Rate limit exceeded ({e.status}): Too many requests for {method} {url}"

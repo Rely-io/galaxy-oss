@@ -1,15 +1,16 @@
 # Galaxy
 
-Galaxy framework is the integrations framework for Rely.io. This framework allow you integrations 3rd party API's
-with rely app in a very simple fashion. The framework is built using python, and it is designed to have reusable components,
-so the integrations can be easily added to the framework. Galaxy uses JQ syntax to map the retrieved data from the 3rd party API's
-into the Rely data model.
+[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0) [![CI](https://github.com/Rely-io/galaxy-oss/actions/workflows/release_on_tag.yml/badge.svg?event=release)](https://github.com/Rely-io/galaxy-oss/actions/workflows/release_on_tag.yml)
+
+Galaxy is a solution developed by Rely.io that enables seamless integration of third-party systems with our internal developer portal. With Galaxy, you can leverage existing [integrations](https://www.rely.io/product/integrations) to ingest your data into Rely.io or create custom integrations tailored to your needs.
+
+Built with Python, Galaxy offers reusable components, making it easy to add integrations to the framework. It employs JQ syntax to accurately map data from third-party APIs into the Rely data model.
 
 ## Installation
 
 ### Pre-requisites
 
-The plugin you'll be connecting to must already exist in your Rely.io organization account.
+To setup an integration with a third-party tool you must create a plugin for it. If you haven't done it yet, please follow the instructions on the next step "*Creating the plugin*". Otherwise feel free to skip this step.
 
 #### Creating the plugin
 
@@ -26,6 +27,8 @@ There are 2 ways to do this.
 Select *"View details"* on the plugin you want to setup and move to the *"self-hosted instructions"* tab. You'll notice there's a command to create a Kubernetes secret that already makes use of your token. You may extract the token from here or simply use the command directly in step 2 of the Helm install detailed below.
 
 ![self-hosted-instructions](images/self-hosted-instructions.png)
+
+##### Programmatically
 
 First obtain a personal long lived token by going to your organization's `Settings` and clicking *"Generate an API key"*. This key will be used to communicate with our API.
 
@@ -59,10 +62,8 @@ And now you have obtained the plugin token to use during installation.
      RELY_API_URL: https://magneto.rely.io
      RELY_INTEGRATION_ID: "1234567"
      RELY_INTEGRATION_TYPE: pagerduty
+
    ```
-   This values will run galaxy in `daemon` mode with a `60` minutes schedule interval. without relying on kubernetes cronjob.
-   If we want to run galaxy in `cronjob` mode (by default if we don't set the `RELY_INTEGRATION_EXECUTION_TYPE`), we can remove the `RELY_INTEGRATION_EXECUTION_TYPE` and `RELY_INTEGRATION_DAEMON_INTERVAL` values.
-   Then the kubernetes cronjob will be created and run the integration every interval of time according to the `schedule` property in the yaml value file (by default the schedule is set to run each 59 minutes).
 
 3. Install the **Rely.io Galaxy Framework** helm chart:
 
@@ -95,6 +96,7 @@ helm upgrade -f my_values.yaml \
   oci://registry-1.docker.io/devrelyio/galaxy-helm \
   -n rely-galaxy
 ```
+
 or
 
 ```bash

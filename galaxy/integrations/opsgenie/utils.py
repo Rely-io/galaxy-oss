@@ -20,6 +20,7 @@ def map_users_to_teams(team_users):
 
 
 def flatten_team_timeline(schedules):
+    team_timeline = []
     for schedule in schedules:
         if not schedule.get("enabled"):
             continue
