@@ -1,6 +1,6 @@
 rely:
   token: "{{ env('RELY_API_TOKEN') }}"
-  url: "{{ env('RELY_API_URL') | default('https://magneto-api-dev.rely.io', true) }}"
+  url: "{{ env('RELY_API_URL') }}"
 integration:
   # The identifier of this integration instance.
   id: "{{ env('RELY_INTEGRATION_ID') | default('00000', true) }}"
