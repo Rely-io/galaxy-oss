@@ -9,6 +9,8 @@ metadata:
     {{- include "galaxy-helm.labels" . | nindent 4 }}
 spec:
   schedule: "{{ .Values.schedule }}"
+  startingDeadlineSeconds: 60
+  concurrencyPolicy: Forbid
   successfulJobsHistoryLimit: 5
   failedJobsHistoryLimit: 5
   jobTemplate:
@@ -41,7 +43,7 @@ spec:
             envFrom:
               - secretRef:
                   name: {{ include "galaxy-helm.fullname" . }}
-          restartPolicy: OnFailure
+          restartPolicy: Never
           {{- with .Values.nodeSelector }}
           nodeSelector:
             {{- toYaml . | nindent 12 }}
