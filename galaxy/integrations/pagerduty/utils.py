@@ -27,15 +27,19 @@ async def get_on_call_info(
 def update_user_on_call_info(user: dict, current_oncall: list[dict], next_oncall: list[dict]):
     """Update the user dictionary with on-call information."""
     is_oncall = len(current_oncall) > 0
-    next_oncall_start = next_oncall[0].get("start") if next_oncall else None
-    next_oncall_end = next_oncall[0].get("end") if next_oncall else None
+    next_oncall_start = next_oncall[0].get("start") if next_oncall and next_oncall[0] is not None else None
+    next_oncall_end = next_oncall[0].get("end") if next_oncall and next_oncall[0] is not None else None
 
     # Update on-call status if the user is not currently on-call
     if not is_oncall and next_oncall_start is None and next_oncall_end is None:
         is_oncall = True
 
     # Update user details
-    user["oncall_schedule_link"] = next_oncall[0].get("schedule", {}).get("html_url") if next_oncall else None
+    user["oncall_schedule_link"] = (
+        ((next_oncall[0] or {}).get("schedule") or {}).get("html_url")
+        if next_oncall and next_oncall[0] is not None
+        else None
+    )
     user["is_currently_oncall"] = is_oncall
     user["next_oncall_start"] = next_oncall_start
     user["next_oncall_end"] = next_oncall_end
