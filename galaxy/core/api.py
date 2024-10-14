@@ -83,6 +83,10 @@ async def run_app(methods, config):
         jobs = app.state.scheduler.get_jobs()
         return {"status": "up", "jobs": [str(job) for job in jobs]}
 
+    @app.get("/live")
+    async def live():
+        return {"status": "alive"}
+
     @app.post("/trigger/{integration_type}", dependencies=[Depends(get_api_key)])
     async def trigger_integration(integration_type: str) -> dict:
         job = app.state.scheduler.get_job(integration_type)

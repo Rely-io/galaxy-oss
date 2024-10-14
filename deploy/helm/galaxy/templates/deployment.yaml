@@ -46,8 +46,9 @@ spec:
               protocol: TCP
           livenessProbe:
             httpGet:
-              path: /health
+              path: /live
               port: http
+            timeoutSeconds: 10
           readinessProbe:
             httpGet:
               path: /health
