@@ -126,9 +126,9 @@
         ]
       },
       {
-        "id": "trigger_pagerduty_team_chain_automation",
+        "id": "trigger_incident_chain_automation",
         "type": "triggerAutomations",
-        "title": "Trigger Automations for Pagerduty Post Team Import",
+        "title": "Trigger Cascading Incident Import",
         "args": {
           "automationIds": [
             "rely.pagerduty.v1.incident-to-incident"
@@ -227,14 +227,14 @@
         },
         "conditions": [
           {
-            "field": "event.action",
-            "operator": "neq",
-            "value": "addedAsSource"
-          },
-          {
             "field": "data.relations.teams.value",
             "operator": "neq",
             "value": null
+          },
+          {
+            "field": "event.action",
+            "operator": "neq",
+            "value": "addedAsSource"
           }
         ],
         "id": "fetch_oncall"
@@ -300,6 +300,13 @@
       },
       {
         "type": "upsertResource",
+        "conditions": [
+          {
+            "field": "event.action",
+            "operator": "neq",
+            "value": "addedAsSource"
+          }
+        ],
         "args": {
           "resourceType": "entity",
           "createSuggestion": true,
@@ -321,19 +328,12 @@
               }
             }
           }
-        },
-        "conditions": [
-          {
-            "field": "event.action",
-            "operator": "neq",
-            "value": "addedAsSource"
-          }
-        ]
+        }
       },
       {
-        "id": "trigger_pagerduty_service_chain_automation",
+        "id": "trigger_incident_chain_automation",
         "type": "triggerAutomations",
-        "title": "Trigger Automations for Pagerduty Post Service Import",
+        "title": "Trigger Cascading Incident Import",
         "args": {
           "automationIds": [
             "rely.pagerduty.v1.incident-to-incident"
@@ -408,16 +408,6 @@
       {
         "type": "fetchEntitiesBySource",
         "args": {
-          "targetBlueprintId": "service",
-          "sourceBlueprintId": "pagerduty.v1.service",
-          "entityIds": "{{ (data.relations.service.value if data.relations.service else []) | tojson }}",
-          "stopFlowIfNotFound": false
-        },
-        "id": "fetch_services"
-      },
-      {
-        "type": "fetchEntitiesBySource",
-        "args": {
           "targetBlueprintId": "team",
           "sourceBlueprintId": "pagerduty.v1.team",
           "entityIds": "{{ (data.relations.teams.value if data.relations.teams else []) | tojson }}",
@@ -438,7 +428,57 @@
             "properties": {
               "source": "PagerDuty",
               "link": "{{ data.properties.link if data.properties.link else none }}",
-              "status": "{{ data.properties.status if data.properties.status else none }}",
+              "status": "{{ standardize_status(data.properties.status, arguments.targetBlueprintId) if data.properties.status else none }}",
+              "isActive": "{{ true if standardize_status(data.properties.status, arguments.targetBlueprintId) in ['Triggered', 'Acknowledged', 'Escalated'] else false }}",
+              "severity": "{{ data.properties.priority if data.properties.priority else none }}",
+              "createdAt": "{{ data.properties.createdAt if data.properties.createdAt else none }}",
+              "updatedAt": "{{ data.properties.updatedAt if data.properties.updatedAt else none }}",
+              "closedAt": "{{ data.properties.resolvedAt if data.properties.resolvedAt else none }}"
+            },
+            "relations": {
+              "PagerDutyIncident": {
+                "value": "{{ data.id }}"
+              },
+              "responders": {
+                "value": "{{ (actions.fetch_teams.output.ids if actions.fetch_teams else []) | tojson }}"
+              }
+            }
+          }
+        },
+        "conditions": [
+          {
+            "field": "actions.fetch_teams.output.ids",
+            "operator": "neq",
+            "value": []
+          }
+        ],
+        "id": "upsert_incident_with_link_to_teams"
+      },
+      {
+        "type": "fetchEntitiesBySource",
+        "args": {
+          "targetBlueprintId": "service",
+          "sourceBlueprintId": "pagerduty.v1.service",
+          "entityIds": "{{ (data.relations.service.value if data.relations.service else []) | tojson }}",
+          "stopFlowIfNotFound": false
+        },
+        "id": "fetch_services"
+      },
+      {
+        "type": "upsertResource",
+        "args": {
+          "resourceType": "entity",
+          "createSuggestion": false,
+          "data": {
+            "id": "{{ data.id | string }}.{{ arguments.targetBlueprintId }}",
+            "title": "{{ data.title }}",
+            "description": "{{ data.description }}",
+            "blueprintId": "{{ arguments.targetBlueprintId }}",
+            "properties": {
+              "source": "PagerDuty",
+              "link": "{{ data.properties.link if data.properties.link else none }}",
+              "status": "{{ standardize_status(data.properties.status, arguments.targetBlueprintId) if data.properties.status else none }}",
+              "isActive": "{{ true if standardize_status(data.properties.status, arguments.targetBlueprintId) in ['Triggered', 'Acknowledged', 'Escalated'] else false }}",
               "severity": "{{ data.properties.priority if data.properties.priority else none }}",
               "createdAt": "{{ data.properties.createdAt if data.properties.createdAt else none }}",
               "updatedAt": "{{ data.properties.updatedAt if data.properties.updatedAt else none }}",
@@ -450,13 +490,18 @@
               },
               "impactedServices": {
                 "value": "{{ (actions.fetch_services.output.ids if actions.fetch_services else []) | tojson }}"
-              },
-              "responders": {
-                "value": "{{ (actions.fetch_teams.output.ids if actions.fetch_teams else []) | tojson }}"
               }
             }
           }
-        }
+        },
+        "conditions": [
+          {
+            "field": "actions.fetch_services.output.ids",
+            "operator": "neq",
+            "value": []
+          }
+        ],
+        "id": "upsert_incident_with_link_to_services"
       }
     ],
     "tags": [

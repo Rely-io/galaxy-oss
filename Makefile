@@ -160,7 +160,7 @@ autofix-unsafe:
 ################################################################################
 .PHONY: test
 test:
-	$(POETRY) run pytest --ignore=galaxy/core/cli/cookiecutter -vvv;
+	$(POETRY) run pytest --ignore=galaxy/cli/cookiecutter -vvv;
 
 
 ################################################################################

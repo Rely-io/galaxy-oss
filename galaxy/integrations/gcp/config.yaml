@@ -1,0 +1,15 @@
+rely:
+  token: "{{ env('RELY_API_TOKEN') }}"
+  url: "{{ env('RELY_API_URL') }}"
+integration:
+  # The identifier of this integration instance.
+  id: "{{ env('RELY_INTEGRATION_ID') | default('00000', true) }}"
+  # The type of the integration.
+  type: "gcp"
+# The execution type of the integration.
+  executionType: "{{ env('RELY_INTEGRATION_EXECUTION_TYPE') | default('cronjob', true) }}"
+  # The configuration for the integration.
+  scheduledInterval: 60
+  defaultModelMappings: {}
+  properties:
+    foo: "bar"

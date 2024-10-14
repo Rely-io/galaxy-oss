@@ -11,6 +11,7 @@ integration:
   scheduledInterval: "{{ env('RELY_INTEGRATION_DAEMON_INTERVAL') | default(60, true) | int  }}"
   defaultModelMappings:
     sonarqube.v1.project: "service"
+    sonarqube.v1.issue: "cve"
   properties:
     apiToken: "{{ env('RELY_INTEGRATION_SONARQUBE_TOKEN') | default('', true) }}"
     serverUrl: "{{ env('RELY_INTEGRATION_SONARQUBE_URL') | default('', true) }}"

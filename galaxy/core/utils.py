@@ -62,14 +62,13 @@ async def update_integration_config_entity(
     magneto_client: Magneto, integration_config_entity: dict, properties: dict[str, Any]
 ) -> None:
     try:
-        async with magneto_client as magneto:
-            await magneto.upsert_entity(
-                {
-                    "id": integration_config_entity["id"],
-                    "blueprintId": integration_config_entity["blueprintId"],
-                    "properties": properties,
-                }
-            )
+        await magneto_client.upsert_entity(
+            {
+                "id": integration_config_entity["id"],
+                "blueprintId": integration_config_entity["blueprintId"],
+                "properties": properties,
+            }
+        )
     except Exception as e:
         raise Exception(f"Error updating integration config entity: {str(e)}")
 
@@ -83,7 +82,8 @@ async def get_logger(request: Request) -> logging.Logger:
 
 
 async def get_magneto_client(request: Request) -> Magneto:
-    return request.app.state.magneto_client
+    async with request.app.state.magneto_client as client:
+        yield client
 
 
 async def get_api_key(api_key_header: str = Security(APIKeyHeader(name="authorization", auto_error=True))) -> bool:

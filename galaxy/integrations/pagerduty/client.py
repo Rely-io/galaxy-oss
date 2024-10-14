@@ -1,21 +1,29 @@
 from datetime import datetime, timedelta, timezone
+from typing import ClassVar
 
-from pdpyras import APISession, PDHTTPError, PDClientError
+from pdpyras import APISession, PDClientError, PDHTTPError
 
 __all__ = ["PagerdutyClient"]
 
 
 class PagerdutyClient:
+    DEFAULT_API_URL: ClassVar[str] = "https://api.eu.pagerduty.com"
+
     def __init__(self, config, logger):
         self.config = config
         self.logger = logger
 
-        self.url = config.integration.properties["url"]
-        self.api_key = config.integration.properties["apiKey"]
+        self.api_key = config.integration.properties.get("apiKey")
+        if not self.api_key:
+            raise ValueError("No Pagerduty API key provided")
+
+        self.url = config.integration.properties.get("url")
+        if not self.url:
+            self.logger.warning("No Pagerduty URL provided, defaulting to %s", self.DEFAULT_API_URL)
+            self.url = self.DEFAULT_API_URL
 
         self.session = APISession(api_key=self.api_key)
-        if self.url:
-            self.session.url = self.url
+        self.session.url = self.url
 
         now = datetime.now(timezone.utc)
         start_date = now - timedelta(days=int(config.integration.properties["daysOfHistory"]))

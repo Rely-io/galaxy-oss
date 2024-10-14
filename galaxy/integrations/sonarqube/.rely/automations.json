@@ -14,7 +14,11 @@
         "type": "onEvent",
         "event": {
           "resource": "entity",
-          "action": ["create", "update"]
+          "action": [
+            "create",
+            "update",
+            "addedAsSource"
+          ]
         },
         "conditions": [
           {
@@ -28,6 +32,13 @@
     "actions": [
       {
         "type": "upsertResource",
+        "conditions": [
+          {
+            "field": "event.action",
+            "operator": "neq",
+            "value": "addedAsSource"
+          }
+        ],
         "args": {
           "resourceType": "entity",
           "createSuggestion": true,
@@ -37,12 +48,135 @@
             "description": "{{ data.description }}",
             "blueprintId": "{{ arguments.targetBlueprintId }}",
             "properties": {
-              "codeCoverage": "{{ data.properties.coverage }}",
+              "codeCoverage": "{{ data.properties.coverage }}",
               "mainBranch": "{{ data.properties.mainBranch }}",
-              "openVulnerabilities": "{{ data.properties.numberOfVulnerabilities }}"
+              "openVulnerabilities": "{{ data.properties.numberOfVulnerabilities }}"
             },
             "relations": {
               "SonarQubeProject": {
+                "value": "{{ data.id | string }}"
+              }
+            }
+          }
+        }
+      },
+      {
+        "type": "triggerAutomations",
+        "conditions": [
+          {
+            "field": "event.action",
+            "operator": "eq",
+            "value": "addedAsSource"
+          }
+        ],
+        "args": {
+          "automationIds": [
+            "sonarqube.v1.issue-to-cve"
+          ],
+          "entities": {
+            "conditions": [
+              {
+                "field": "blueprintId",
+                "operator": "eq",
+                "value": "sonarqube.v1.issue"
+              },
+              {
+                "field": "relations/project/value",
+                "operator": "eq",
+                "value": "{{ data.id }}"
+              }
+            ]
+          }
+        }
+      }
+    ],
+    "tags": [
+      {
+        "key": "default",
+        "value": "true"
+      },
+      {
+        "key": "owner",
+        "value": "rely"
+      }
+    ]
+  },
+  {
+    "id": "sonarqube.v1.issue-to-cve",
+    "title": "SonarQube issue to CVE",
+    "description": "This automation creates a CVE from a relevant SonarQube issue",
+    "isActive": true,
+    "type": "automation",
+    "arguments": {
+      "sourceBlueprintId": "sonarqube.v1.issue",
+      "targetBlueprintId": "cve"
+    },
+    "triggers": [
+      {
+        "type": "onEvent",
+        "event": {
+          "resource": "entity",
+          "action": [
+            "create",
+            "update"
+          ]
+        },
+        "conditions": [
+          {
+            "field": "data.blueprintId",
+            "operator": "eq",
+            "value": "{{ arguments.sourceBlueprintId }}"
+          },
+          {
+            "field": "data.properties.type",
+            "operator": "eq",
+            "value": "VULNERABILITY"
+          }
+        ]
+      }
+    ],
+    "actions": [
+      {
+        "id": "fetch_service",
+        "type": "fetchResource",
+        "args": {
+          "resourceType": "entity",
+          "stopFlowIfNotFound": true,
+          "conditions": [
+            {
+              "field": "blueprintId",
+              "value": "service",
+              "operator": "eq"
+            },
+            {
+              "field": "sources",
+              "value": "sonarqube.v1.project.{{ data.relations.project.value | string }}",
+              "operator": "contains"
+            }
+          ]
+        }
+      },
+      {
+        "type": "upsertResource",
+        "args": {
+          "resourceType": "entity",
+          "createSuggestion": false,
+          "data": {
+            "id": "{{ data.id | string }}.{{ arguments.targetBlueprintId }}",
+            "title": "{{ data.title }}",
+            "description": "{{ data.description }}",
+            "blueprintId": "{{ arguments.targetBlueprintId }}",
+            "properties": {
+              "source": "SonarQube",
+              "status": "{{ data.properties.status }}",
+              "severity": "{{ data.properties.severity }}",
+              "recommendation": "{{ data.properties.message }}"
+            },
+            "relations": {
+              "service": {
+                "value": "{{ actions.fetch_service.output.id | string }}"
+              },
+              "SonarQubeIssue": {
                 "value": "{{ data.id | string }}"
               }
             }

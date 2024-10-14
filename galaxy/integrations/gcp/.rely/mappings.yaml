@@ -1,0 +1,108 @@
+resources:
+- kind: appengine_application
+  mappings:
+    id: '.resource.data.defaultHostname'
+    title: '.resource.data.name'
+    blueprintId: '"gcp.v1.appengine_application"'
+    properties:
+      authDomain: '.resource.data.authDomain'
+      codeBucket: '.resource.data.codeBucket'
+      databaseType: '.resource.data.databaseType'
+      defaultBucket: '.resource.data.defaultBucket'
+      defaultCookieExpiration: '.resource.data.defaultCookieExpiration'
+      defaultHostname: '.resource.data.defaultHostname'
+      gcrDomain: '.resource.data.gcrDomain'
+      locationId: '.resource.data.locationId'
+      servingStatus: '.resource.data.servingStatus'
+
+- kind: cloudfunctions_function
+  mappings:
+    id: '.resource.data.name'
+    title: '.resource.data.name'
+    blueprintId: '"gcp.v1.cloudfunctions_function"'
+    properties:
+      environment: '.resource.data.environment'
+      link: '.resource.data.url'
+      maxInstanceCount: '.resource.data.maxInstances'
+      memorySize: '.resource.data.availableMemoryMb'
+      runtime: '.resource.data.runtime'
+      status: '.resource.data.status'
+      tags: '.resource.data.labels // {}'
+      timeout: '.resource.data.timeoutSeconds'
+      updatedAt: '.resource.data.updateTime'
+    relations:
+      project:
+        value: '.resource.data.name | split("/")[1]'
+
+- kind: cloudresourcemanager_folder
+  mappings:
+    id: '.resource.data.name | split("/") | last'
+    title: '.resource.data.displayName'
+    blueprintId: '"gcp.v1.cloudresourcemanager_folder"'
+    properties:
+      createdAt: '.resource.data.createTime'
+      status: '.resource.data.lifecycleState'
+      tags: '.resource.data.labels // {}'
+      updatedAt: '.resource.data.updateTime'
+
+- kind: cloudresourcemanager_organization
+  mappings:
+    id: '.resource.data.name'
+    title: '.resource.data.displayName'
+    blueprintId: '"gcp.v1.cloudresourcemanager_organization"'
+    properties:
+      createdAt: '.resource.data.creationTime'
+      status: '.resource.data.lifecycleState'
+
+- kind: cloudresourcemanager_project
+  mappings:
+    id: '.resource.data.projectId'
+    title: '.resource.data.name'
+    blueprintId: '"gcp.v1.cloudresourcemanager_project"'
+    properties:
+      createdAt: '.resource.data.createTime'
+      status: '.resource.data.lifecycleState'
+      tags: '.resource.data.labels // {}'
+      updatedAt: '.updateTime'
+
+- kind: container_cluster
+  mappings:
+    id: '.resource.data.id'
+    title: '.resource.data.name'
+    blueprintId: '"gcp.v1.container_cluster"'
+    properties:
+      clusterIpv4Cidr: '.resource.data.clusterIpv4Cidr'
+      createdAt: '.resource.data.createTime'
+      currentMasterVersion: '.resource.data.currentMasterVersion'
+      endpoint: '.resource.data.endpoint'
+      initialNodeCount: '.resource.data.initialNodeCount'
+      link: '.resource.data.selfLink'
+      loggingService: '.resource.data.loggingService'
+      monitoringService: '.resource.data.monitoringService'
+      network: '.resource.data.network'
+      region: '.resource.data.location'
+      status: '.resource.data.status'
+      subnetwork: '.resource.data.subnetwork'
+      tags: '.resource.data.labels // {}'
+    relations:
+      project:
+        value: '.resource.data.selfLink | split("/")[5]'
+
+- kind: sqladmin_instance
+  mappings:
+    id: '.resource.data.name'
+    title: '.resource.data.name'
+    blueprintId: '"gcp.v1.sqladmin_instance"'
+    properties:
+      activationPolicy: '.resource.data.settings.activationPolicy'
+      createdAt: '.resource.data.createTime'
+      databaseVersion: '.resource.data.databaseVersion'
+      link: '.resource.data.selfLink'
+      region: '.resource.data.region'
+      storageCapacityGB: '.resource.data.settings.dataDiskSizeGb | tonumber'
+      storageType: '.resource.data.settings.dataDiskType'
+      tags: '.resource.data.settings.userLabels // {}'
+      tier: '.resource.data.settings.tier'
+    relations:
+      project:
+        value: '.resource.data.selfLink | split("/")[6]'

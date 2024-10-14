@@ -1,0 +1,473 @@
+[
+  {
+    "id": "gcp.v1.appengine_application",
+    "title": "GCP App Engine Application",
+    "description": "Blueprint defining an App Engine application",
+    "icon": "gcp",
+    "schemaProperties": {
+      "type": "object",
+      "properties": {
+        "authDomain": {
+          "type": "string",
+          "title": "Auth Domain",
+          "description": "The auth domain of the App Engine application"
+        },
+        "codeBucket": {
+          "type": "string",
+          "title": "Code Bucket",
+          "description": "The code bucket of the App Engine application"
+        },
+        "databaseType": {
+          "type": "string",
+          "title": "Database Type",
+          "description": "The database type of the App Engine application"
+        },
+        "defaultBucket": {
+          "type": "string",
+          "title": "Default Bucket",
+          "description": "The default bucket of the App Engine application"
+        },
+        "defaultCookieExpiration": {
+          "type": "string",
+          "title": "Default Cookie Expiration",
+          "description": "The default cookie expiration of the App Engine application"
+        },
+        "defaultHostname": {
+          "type": "string",
+          "title": "Default Hostname",
+          "description": "The default hostname of the App Engine application"
+        },
+        "featureSettings": {
+          "type": "object",
+          "title": "Feature Settings",
+          "description": "The feature settings of the App Engine application",
+          "properties": {
+            "splitHealthChecks": {
+              "type": "boolean",
+              "title": "Split Health Checks",
+              "description": "The split health checks of the App Engine application"
+            },
+            "useContainerOptimizedOs": {
+              "type": "boolean",
+              "title": "Use Container Optimized OS",
+              "description": "The use container optimized OS of the App Engine application"
+            }
+          }
+        },
+        "gcrDomain": {
+          "type": "string",
+          "title": "GCR Domain",
+          "description": "The GCR domain of the App Engine application"
+        },
+        "locationId": {
+          "type": "string",
+          "title": "Location",
+          "description": "The location of the App Engine application"
+        },
+        "servingStatus": {
+          "type": "string",
+          "title": "Serving Status",
+          "description": "The serving status of the App Engine application"
+        },
+        "managementPageUrl": {
+          "type": "string",
+          "format": "url",
+          "title": "Management Page URL",
+          "description": "The URL to the management page of the App Engine application"
+        },
+        "dashboardPageUrl": {
+          "type": "string",
+          "format": "url",
+          "title": "Dashboard Page URL",
+          "description": "The URL to the dashboard page of the App Engine application"
+        }
+      }
+    },
+    "relations": {
+      "project": {
+        "value": "gcp.v1.cloudresourcemanager_project",
+        "title": "Project",
+        "description": "The project this App Engine application belongs to"
+      }
+    }
+  },
+  {
+    "id": "gcp.v1.cloudfunctions_function",
+    "title": "GCP Cloud Run Function",
+    "description": "Blueprint defining a Cloud Run function",
+    "icon": "gcp",
+    "schemaProperties": {
+      "type": "object",
+      "properties": {
+        "availableCpu": {
+          "type": "string",
+          "title": "Number of CPUs",
+          "description": "The number of CPUs used for the Cloud Run function instance (1 indicates 1 vCPU)"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "title": "Created At",
+          "description": "The time when the Cloud Run function was created in RFC 3339 format"
+        },
+        "dashboardPageUrl": {
+          "type": "string",
+          "format": "url",
+          "title": "Dashboard Page URL",
+          "description": "The URL to the dashboard page of the Cloud Run function"
+        },
+        "environment": {
+          "type": "string",
+          "title": "Environment",
+          "description": "The environment of the Cloud Run function"
+        },
+        "link": {
+          "type": "string",
+          "title": "URL",
+          "description": "The URL of the Cloud Run function"
+        },
+        "managementPageUrl": {
+          "type": "string",
+          "format": "url",
+          "title": "Management Page URL",
+          "description": "The URL to the management page of the Cloud Run function"
+        },
+        "maxInstanceCount": {
+          "type": "number",
+          "title": "Max. Number of Instances",
+          "description": "The maximum number of Cloud Run function instances that may coexist at a given time"
+        },
+        "maxInstanceRequestConcurrency": {
+          "type": "number",
+          "title": "Max. Concurrent Requests",
+          "description": "Sets the maximum number of concurrent requests that the Cloud Run function instance can receive"
+        },
+        "memorySize": {
+          "type": "string",
+          "title": "Memory Size",
+          "description": "The amount of memory available for the Cloud Run function"
+        },
+        "runtime": {
+          "type": "string",
+          "title": "Runtime",
+          "description": "The runtime in which to run the Cloud Run function"
+        },
+        "status": {
+          "type": "string",
+          "title": "Status",
+          "description": "The status of the Cloud Run function"
+        },
+        "tags": {
+          "type": "object",
+          "title": "Tags",
+          "description": "User-provided labels for the Cloud Run function"
+        },
+        "timeout": {
+          "type": "number",
+          "title": "Timeout",
+          "description": "Maximum duration the Cloud Run function can run before being terminated (in seconds)"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "title": "Updated At",
+          "description": "The time when the Cloud Run function was created in RFC 3339 format"
+        }
+      }
+    },
+    "relations": {
+      "project": {
+        "value": "gcp.v1.cloudresourcemanager_project",
+        "title": "Project",
+        "description": "The project this Cloud Run function belongs to"
+      }
+    }
+  },
+  {
+    "id": "gcp.v1.cloudresourcemanager_folder",
+    "title": "GCP Folder",
+    "description": "Blueprint defining a Google Cloud Platform folder",
+    "icon": "gcp",
+    "schemaProperties": {
+      "type": "object",
+      "properties": {
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "title": "Created At",
+          "description": "The time when this folder was created"
+        },
+        "status": {
+          "type": "string",
+          "title": "Lifecycle State",
+          "description": "The lifecycle state of the folder"
+        },
+        "tags": {
+          "type": "object",
+          "title": "Tags",
+          "description": "User-provided labels for this folder"
+        }
+      },
+      "updatedAt": {
+        "type": "string",
+        "format": "date-time",
+        "title": "Updated At",
+        "description": "The time when this folder was last updated"
+      }
+    },
+    "relations": {
+      "folder": {
+        "value": "gcp.v1.cloudresourcemanager_folder",
+        "title": "Folder",
+        "description": "The parent folder this folder is contained in"
+      },
+      "organization": {
+        "value": "gcp.v1.cloudresourcemanager_organization",
+        "title": "Organization",
+        "description": "The organization this folder belongs to"
+      }
+    }
+  },
+  {
+    "id": "gcp.v1.cloudresourcemanager_organization",
+    "title": "GCP Organization",
+    "description": "Blueprint defining a Google Cloud Platform organization",
+    "icon": "gcp",
+    "schemaProperties": {
+      "type": "object",
+      "properties": {
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "title": "Created At",
+          "description": "The time when this organization was created"
+        },
+        "status": {
+          "type": "string",
+          "title": "State",
+          "description": "The organization's current lifecycle state"
+        }
+      }
+    }
+  },
+  {
+    "id": "gcp.v1.cloudresourcemanager_project",
+    "title": "GCP Project",
+    "description": "Blueprint defining a Google Cloud Platform project",
+    "icon": "gcp",
+    "schemaProperties": {
+      "title": "GCP Project Properties",
+      "type": "object",
+      "properties": {
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "title": "Created At",
+          "description": "The time when this project was created"
+        },
+        "status": {
+          "type": "string",
+          "title": "Lifecycle State",
+          "description": "The lifecycle state of the project"
+        },
+        "tags": {
+          "type": "object",
+          "title": "Tags",
+          "description": "User-provided labels for this project"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "title": "Updated At",
+          "description": "The time when this project was last updated"
+        }
+      }
+    },
+    "relations": {
+      "folder": {
+        "value": "gcp.v1.cloudresourcemanager_folder",
+        "title": "Folder",
+        "description": "The folder this project is contained in"
+      },
+      "organization": {
+        "value": "gcp.v1.cloudresourcemanager_organization",
+        "title": "Organization",
+        "description": "The organization this project belongs to"
+      }
+    }
+  },
+  {
+    "id": "gcp.v1.container_cluster",
+    "title": "GCP Kubernetes Engine Cluster",
+    "description": "Blueprint defining a Kubernetes Engine cluster",
+    "icon": "gcp",
+    "schemaProperties": {
+      "type": "object",
+      "properties": {
+        "clusterIpv4Cidr": {
+          "type": "string",
+          "title": "Cluster IPv4 CIDR",
+          "description": "The IPv4 CIDR of the Kubernetes Engine cluster"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "title": "Created At",
+          "description": "The time when the Kubernetes Engine cluster was created in RFC 3339 format"
+        },
+        "currentMasterVersion": {
+          "type": "string",
+          "title": "Current Master Version",
+          "description": "The current master version of the Kubernetes Engine cluster"
+        },
+        "dashboardPageUrl": {
+          "type": "string",
+          "format": "url",
+          "title": "Dashboard Page URL",
+          "description": "The URL to the dashboard page of the Kubernetes Engine cluster"
+        },
+        "endpoint": {
+          "type": "string",
+          "title": "Endpoint",
+          "description": "The endpoint of the Kubernetes Engine cluster"
+        },
+        "initialNodeCount": {
+          "type": "number",
+          "title": "Initial Node Count",
+          "description": "The initial number of nodes for the Kubernetes Engine cluster"
+        },
+        "link": {
+          "type": "string",
+          "format": "url",
+          "title": "URL",
+          "description": "The URL of the Kubernetes Engine cluster"
+        },
+        "loggingService": {
+          "type": "string",
+          "title": "Logging Service",
+          "description": "The logging service of the Kubernetes Engine cluster"
+        },
+        "managementPageUrl": {
+          "type": "string",
+          "format": "url",
+          "title": "Management Page URL",
+          "description": "The URL to the management page of the Kubernetes Engine cluster"
+        },
+        "monitoringService": {
+          "type": "string",
+          "title": "Monitoring Service",
+          "description": "The monitoring service of the Kubernetes Engine cluster"
+        },
+        "network": {
+          "type": "string",
+          "title": "Network",
+          "description": "The network of the Kubernetes Engine cluster"
+        },
+        "region": {
+          "type": "string",
+          "title": "Location",
+          "description": "The location of the Kubernetes Engine cluster"
+        },
+        "status": {
+          "type": "string",
+          "title": "Status",
+          "description": "The status of the Kubernetes Engine cluster"
+        },
+        "subnetwork": {
+          "type": "string",
+          "title": "Subnetwork",
+          "description": "The subnetwork of the Kubernetes Engine cluster"
+        },
+        "tags": {
+          "type": "object",
+          "title": "Tags",
+          "description": "User-provided labels for the Kubernetes Engine cluster"
+        }
+      }
+    },
+    "relations": {
+      "project": {
+        "value": "gcp.v1.cloudresourcemanager_project",
+        "title": "Project",
+        "description": "The project this Kubernetes Engine cluster belongs to"
+      }
+    }
+  },
+  {
+    "id": "gcp.v1.sqladmin_instance",
+    "title": "GCP Cloud SQL Instance",
+    "description": "Blueprint defining a Cloud SQL Instance",
+    "icon": "gcp",
+    "schemaProperties": {
+      "type": "object",
+      "properties": {
+        "activationPolicy": {
+          "type": "string",
+          "title": "Activation Policy",
+          "description": "The activation policy for the Cloud SQL instance: ALWAYS or NEVER"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "title": "Created At",
+          "description": "The time when this Cloud SQL instance was created in RFC 3339 format"
+        },
+        "dashboardPageUrl": {
+          "type": "string",
+          "format": "url",
+          "title": "Dashboard Page URL",
+          "description": "The URL to the dashboard page of the Cloud SQL instance"
+        },
+        "databaseVersion": {
+          "type": "string",
+          "title": "Database Version",
+          "description": "The database engine type and version"
+        },
+        "link": {
+          "type": "string",
+          "format": "url",
+          "title": "URL",
+          "description": "The URL of this Cloud SQL instance"
+        },
+        "managementPageUrl": {
+          "type": "string",
+          "format": "url",
+          "title": "Management Page URL",
+          "description": "The URL to the management page of the Cloud SQL instance"
+        },
+        "region": {
+          "type": "string",
+          "title": "Region",
+          "description": "The geographical region where the Cloud SQL instance is located"
+        },
+        "storageCapacityGB": {
+          "type": "integer",
+          "title": "Storage Capacity (GB)",
+          "description": "The size of data disk in gigabytes"
+        },
+        "storageType": {
+          "type": "string",
+          "title": "Storage Type",
+          "description": "The type of data disk: PD_SSD (default) or PD_HDD"
+        },
+        "tags": {
+          "type": "object",
+          "title": "Tags",
+          "description": "User-provided labels for this Cloud SQL instance"
+        },
+        "tier": {
+          "type": "string",
+          "title": "Machine Tier",
+          "description": "The tier (or machine type) for this Cloud SQL instance"
+        }
+      }
+    },
+    "relations": {
+      "project": {
+        "value": "gcp.v1.cloudresourcemanager_project",
+        "title": "Project",
+        "description": "The project this Cloud SQL instance belongs to"
+      }
+    }
+  }
+]

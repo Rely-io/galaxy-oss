@@ -1,5 +1,7 @@
+from unittest.mock import AsyncMock, patch
+
 import pytest
-from unittest.mock import patch, AsyncMock
+
 from galaxy.core.mapper import Mapper
 
 
@@ -10,10 +12,8 @@ def mock_resource_filename():
 
 
 @pytest.fixture
-def mock_aiofiles_open():
-    async_mock_open = AsyncMock()
-    async_mock_file = AsyncMock()
-    async_mock_file.__aenter__.return_value.read.return_value = """
+def mock_load_integration_resource():
+    mock = """
     resources:
       - kind: test_kind
         mappings:
@@ -23,10 +23,8 @@ def mock_aiofiles_open():
             sub_key2:
               - '.data3'
     """
-    async_mock_open.return_value = async_mock_file
-
-    with patch("aiofiles.open", async_mock_open):
-        yield async_mock_open
+    with patch("galaxy.core.resources.load_integration_resource", mock):
+        yield mock
 
 
 @pytest.fixture
@@ -39,7 +37,7 @@ def mock_load_mapping():
 
 
 @pytest.mark.asyncio
-async def test_process(mock_resource_filename, mock_aiofiles_open, mock_load_mapping):
+async def test_process(mock_resource_filename, mock_load_integration_resource, mock_load_mapping):
     mapper = Mapper("test_integration")
     json_data = [{"data1": "value1", "data2": "value2", "data3": "value3"}]
     entities = await mapper.process("test_kind", json_data)

@@ -2,11 +2,9 @@ import json
 import re
 from collections import defaultdict
 
-import aiofiles
-import pkg_resources
-
 from galaxy.core.magneto import Magneto
 from galaxy.core.models import Config
+from galaxy.core.resources import load_integration_resource
 
 __all__ = ["get_relation_for_default_model_association", "collect_blueprints"]
 
@@ -26,15 +24,12 @@ def get_relation_for_default_model_association(blueprint_data: dict) -> dict:
 async def collect_blueprints(config: Config, magneto_client: Magneto) -> list[dict]:
     selected_blueprints = config.integration.properties.get("assetsForDiscovery")
     default_model_mappings = config.integration.default_model_mappings
-    blueprints_path = pkg_resources.resource_filename(
-        "galaxy", f"integrations/{config.integration.type}/.rely/blueprints.json"
-    )
-    async with aiofiles.open(blueprints_path, "r") as blueprints_file:
-        blueprints = [
-            bp
-            for bp in json.loads(await blueprints_file.read())
-            if selected_blueprints is None or bp["id"] in selected_blueprints
-        ]
+
+    blueprints = [
+        bp
+        for bp in json.loads(load_integration_resource(config.integration.type, ".rely/blueprints.json"))
+        if selected_blueprints is None or bp["id"] in selected_blueprints
+    ]
 
     relations_to_create: dict[str, list] = {}
     relations_to_remove: dict[str, set] = defaultdict(set)
@@ -61,13 +56,12 @@ async def collect_blueprints(config: Config, magneto_client: Magneto) -> list[di
                 }
 
     if config.integration.dry_run is False:
-        async with magneto_client as session:
-            blueprints = await session.insert_or_update_blueprint_bulk(blueprints=blueprints)
+        blueprints = await magneto_client.insert_or_update_blueprint_bulk(blueprints=blueprints)
         for blueprint_id in relations_to_create:
             for relation in relations_to_create[blueprint_id]:
-                async with magneto_client as session:
-                    # If blueprint is not found then lets just ignore it and proceed
-                    await session.upsert_blueprint_relation(blueprint_id, relation, raise_if_blueprint_not_found=False)
+                await magneto_client.upsert_blueprint_relation(
+                    blueprint_id, relation, raise_if_blueprint_not_found=False
+                )
 
         # Need to iterate and remove "invalid" relations again since the relations might be here again if the blueprint
         #   already had them on server side, but we want to ignore them for the current run

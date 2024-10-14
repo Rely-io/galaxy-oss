@@ -17,7 +17,7 @@ include  = [{ path = "galaxy", format = ["sdist", "wheel"] }]
 packages = [{ include = "galaxy" }]
 
 [tool.poetry.scripts]
-galaxy         = "galaxy.core.cli.galaxy:cli"
+galaxy         = "galaxy.cli.galaxy:cli"
 update-version = "deploy.update_version:main"
 
 [tool.poetry.dependencies]
@@ -25,28 +25,30 @@ python = ">=3.11,<4.0"
 
 magneto_api_client = { git = "https://gitlab.com/relyio/backend/magneto-sdk.git", rev = "master" }
 
-aiofiles      = "^24.1.0"
-aiohttp       = { extras = ["speedups"], version = "^3.10.8" }
-apscheduler   = "^3.10.4"
-asyncio       = "^3.4.3"
-click         = "^8.1.7"
-cookiecutter  = "^2.6.0"
-fastapi       = "^0.111.1"
-jinja2        = "^3.1.4"
-jq            = "^1.7.0"
-jsonschema    = "^4.23.0"
-msgspec       = "^0.18.6"
-pdpyras       = "^5.2.0"
-pygithub      = "^2.3.0"
-pyhumps       = "^3.8.0"
-python-dotenv = "^1.0.1"
-pyyaml        = "^6.0.1"
-ruamel-yaml   = "^0.18.6"
-setuptools    = "^70.3.0"
-tenacity      = "^8.5.0"
-toml          = "^0.10.2"
-uvicorn       = "^0.30.3"
-boto3 = "^1.35.35"
+aiohttp            = { extras = ["speedups"], version = "^3.10.8" }
+anyio              = "^4.6.0"
+apscheduler        = "^3.10.4"
+asyncio            = "^3.4.3"
+boto3              = "^1.35.35"
+click              = "^8.1.7"
+cookiecutter       = "^2.6.0"
+fastapi            = "^0.111.1"
+google-cloud-asset = "^3.26.4"
+jinja2             = "^3.1.4"
+jq                 = "^1.7.0"
+jsonschema         = "^4.23.0"
+msgspec            = "^0.18.6"
+pdpyras            = "^5.2.0"
+pygithub           = "^2.3.0"
+pyhumps            = "^3.8.0"
+python-dotenv      = "^1.0.1"
+pyyaml             = "^6.0.1"
+ruamel-yaml        = "^0.18.6"
+setuptools         = "^70.3.0"
+tenacity           = "^8.5.0"
+toml               = "^0.10.2"
+uvicorn            = "^0.30.3"
+uvloop             = "^0.20.0"
 
 [tool.poetry.group.dev.dependencies]
 aioresponses = ">=0.7.6"
@@ -73,7 +75,7 @@ line-length      = 120
 required-version = ">=0.6.7"
 target-version   = "py311"
 
-exclude = ["galaxy/core/cli/cookiecutter"]
+exclude = ["galaxy/cli/cookiecutter"]
 src     = ["galaxy"]
 
 [tool.ruff.format]
@@ -152,7 +154,7 @@ xfail_strict = true
 
 [tool.coverage.run]
 branch = true
-omit   = ["*/tests/*", "galaxy/core/cli/cookiecutter/*"]
+omit   = ["galaxy/cli/cookiecutter/*"]
 source = ["galaxy/"]
 
 [tool.coverage.report]

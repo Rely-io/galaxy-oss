@@ -1,5 +1,6 @@
 import logging
 from types import TracebackType
+from typing import Any
 
 from galaxy.core.models import Config
 from galaxy.utils.requests import ClientSession, RetryPolicy, create_session, make_request
@@ -8,6 +9,8 @@ __all__ = ["OpsgenieClient"]
 
 
 class OpsgenieClient:
+    PAGINATION_SIZE: int = 100
+
     def __init__(self, config: Config, logger: logging.Logger):
         self.logger = logger
         self.config = config
@@ -31,53 +34,43 @@ class OpsgenieClient:
         if self.session is not None:
             await self.session.close()
 
-    async def get_teams(self) -> list[dict]:
-        # No support for pagination: https://docs.opsgenie.com/docs/team-api#list-teams
-        response = await make_request(self.session, "GET", f"{self.url}/v2/teams", retry_policy=self._retry_policy)
-        teams = response.get("data", [])
-        return teams
+    async def _make_request(self, method: str, url: str, **kwargs: Any) -> dict[str, Any]:
+        return await make_request(self.session, method, url, **kwargs, retry_policy=self._retry_policy)
 
-    async def get_team(self, team_id: int) -> list[dict]:
-        response = await make_request(
-            self.session, "GET", f"{self.url}/v2/teams/{team_id}", retry_policy=self._retry_policy
+    async def _fetch_list_data(self, url: str, **kwargs: Any) -> list[dict[str, Any]]:
+        params = {**kwargs.pop("params", {}), "offset": 0, "limit": self.PAGINATION_SIZE}
+        response = await self._make_request("GET", url, params=params, **kwargs)
+        results = response["data"]
+        while "paging" in response and len(response["data"]) >= self.PAGINATION_SIZE:
+            params["offset"] += self.PAGINATION_SIZE
+            response = await self._make_request("GET", url, params=params, **kwargs)
+            results.extend(response["data"])
+        return results
+
+    async def get_teams(self) -> list[dict[str, Any]]:
+        return await self._fetch_list_data(f"{self.url}/v2/teams")
+
+    async def get_team(self, team_id: str) -> dict[str, Any]:
+        response = await self._make_request("GET", f"{self.url}/v2/teams/{team_id}")
+        return response.get("data") or {}
+
+    async def get_services(self) -> list[dict[str, Any]]:
+        return await self._fetch_list_data(f"{self.url}/v1/services")
+
+    async def get_users(self) -> list[dict[str, Any]]:
+        return await self._fetch_list_data(f"{self.url}/v2/users")
+
+    async def get_escalations(self) -> list[dict[str, Any]]:
+        return await self._fetch_list_data(f"{self.url}/v2/escalations")
+
+    async def get_incidents(self) -> list[dict[str, Any]]:
+        return await self._fetch_list_data(f"{self.url}/v1/incidents")
+
+    async def get_schedules(self) -> list[dict[str, Any]]:
+        return await self._fetch_list_data(f"{self.url}/v2/schedules")
+
+    async def get_schedule_timeline(self, schedule_id: str) -> dict[str, Any]:
+        response = await self._make_request(
+            "GET", f"{self.url}/v2/schedules/{schedule_id}/timeline", params={"interval": 3, "intervalUnit": "weeks"}
         )
-        team = response.get("data", [])
-        return team
-
-    async def get_services(self) -> list[dict]:
-        response = await make_request(self.session, "GET", f"{self.url}/v1/services", retry_policy=self._retry_policy)
-        services = response.get("data", [])
-        return services
-
-    async def get_users(self) -> list[dict]:
-        response = await make_request(self.session, "GET", f"{self.url}/v2/users", retry_policy=self._retry_policy)
-        users = response.get("data", [])
-        return users
-
-    async def get_escalations(self) -> list[dict]:
-        response = await make_request(
-            self.session, "GET", f"{self.url}/v2/escalations", retry_policy=self._retry_policy
-        )
-        escalations = response.get("data", [])
-        return escalations
-
-    async def get_incidents(self) -> list[dict]:
-        response = await make_request(self.session, "GET", f"{self.url}/v1/incidents", retry_policy=self._retry_policy)
-        incidents = response.get("data", [])
-        return incidents
-
-    async def get_schedules(self) -> list[dict]:
-        response = await make_request(self.session, "GET", f"{self.url}/v2/schedules", retry_policy=self._retry_policy)
-        schedules = response.get("data", [])
-        return schedules
-
-    async def get_schedule_timeline(self, schedule_id) -> list[dict]:
-        response = await make_request(
-            self.session,
-            "GET",
-            f"{self.url}/v2/schedules/{schedule_id}/timeline",
-            params={"interval": 3, "intervalUnit": "weeks"},
-            retry_policy=self._retry_policy,
-        )
-        schedules = response.get("data", [])
-        return schedules
+        return response.get("data") or {}

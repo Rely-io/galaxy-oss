@@ -1,18 +1,16 @@
 #!/usr/bin/env python
+import os
 import sys
 
 import click
 import humps
 from cookiecutter.main import cookiecutter
-
-import asyncio
-import os
-
 from dotenv import load_dotenv
 
-from galaxy.core.cli.validators import validator
-from galaxy.core.main import main
 from galaxy import __version__
+from galaxy.cli.validators import validator
+from galaxy.core.main import main
+from galaxy.utils.concurrency import run as anyio_run
 
 
 @click.group()
@@ -42,15 +40,14 @@ def run(integration_type, integration_id, config_file, debug, url, token, dry_ru
         click.echo(f"Error: Configuration file '{config_file}' not found.")
         raise Exception(f"Configuration file '{config_file}' not found.")
 
-    asyncio.run(
-        main(
-            integration_type=integration_type,
-            integration_id=integration_id,
-            config_file=config_file,
-            url=url,
-            token=token,
-            dry_run=dry_run,
-        )
+    anyio_run(
+        main,
+        integration_type=integration_type,
+        integration_id=integration_id,
+        config_file=config_file,
+        url=url,
+        token=token,
+        dry_run=dry_run,
     )
 
 
@@ -58,7 +55,7 @@ def run(integration_type, integration_id, config_file, debug, url, token, dry_ru
 @click.option("--name", "-i", required=True, help="The name of the new integration.")
 def scaffold(name):
     click.echo(f"Creating new integration with name {name}!")
-    template_path = "galaxy/core/cli/cookiecutter"
+    template_path = "galaxy/cli/cookiecutter"
 
     if humps.is_snakecase(name) is False:
         click.echo("Integration name must be in snake_case.")
