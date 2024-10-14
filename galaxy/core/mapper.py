@@ -2,10 +2,10 @@ import asyncio
 import re
 from typing import Any
 
-import aiofiles
 import jq
-import pkg_resources
 import yaml
+
+from galaxy.core.resources import load_integration_resource
 
 __all__ = ["Mapper"]
 
@@ -16,11 +16,7 @@ class Mapper:
         self.id_allowed_chars = "[^a-zA-Z0-9-]"
 
     async def _load_mapping(self, mapping_kind: str) -> list[dict]:
-        mapping_path = pkg_resources.resource_filename(
-            "galaxy", f"integrations/{self.integration_name}/.rely/mappings.yaml"
-        )
-        async with aiofiles.open(mapping_path, "r") as mapping_file:
-            mappings = yaml.safe_load(await mapping_file.read())
+        mappings = yaml.safe_load(load_integration_resource(self.integration_name, ".rely/mappings.yaml"))
         return [mapping for mapping in mappings.get("resources") if mapping["kind"] == mapping_kind]
 
     def _compile_mappings(self, mapping: dict) -> dict:

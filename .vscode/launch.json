@@ -1,4 +1,15 @@
 {
   "version": "0.2.0",
-  "configurations": []
+  "configurations": [
+    {
+      "name": "Run Galaxy (CLI)",
+      "type": "debugpy",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "module": "galaxy.cli.galaxy",
+      "args": ["run"],
+      "env": {},
+      "envFile": "${workspaceFolder}/.env"
+    }
+  ]
 }

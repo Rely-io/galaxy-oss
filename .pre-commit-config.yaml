@@ -2,7 +2,7 @@ exclude: ^(.idea|.vscode/)
 
 repos:
   - repo: https://github.com/charliermarsh/ruff-pre-commit
-    rev: v0.6.7
+    rev: v0.6.9
     hooks:
       - id: ruff
         args: [--fix, --exit-non-zero-on-fix]
@@ -16,13 +16,21 @@ repos:
           - tomli
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.6.0
+    rev: v5.0.0
     hooks:
       - id: trailing-whitespace
       - id: end-of-file-fixer
       - id: check-json
       - id: check-toml
+      - id: check-yaml
+        args: [--allow-multiple-documents]
+        exclude: ^deploy/|^galaxy/cli/cookiecutter
       - id: detect-private-key
+      - id: pretty-format-json
+        args:
+          - "--autofix"
+          - "--indent=2"
+          - "--no-sort-keys"
 
   - repo: local
     hooks:
@@ -34,7 +42,7 @@ repos:
         pass_filenames: false
 
   - repo: https://github.com/norwoodj/helm-docs
-    rev:  ""
+    rev:  "v1.14.2"
     hooks:
       - id: helm-docs-built
         args:

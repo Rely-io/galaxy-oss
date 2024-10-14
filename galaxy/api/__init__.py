@@ -1,43 +1,42 @@
 import importlib
+import logging
 from datetime import datetime
 
-import asyncio
-
-from fastapi import FastAPI, Depends, HTTPException
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from apscheduler.events import EVENT_JOB_EXECUTED, EVENT_JOB_ERROR, EVENT_JOB_SUBMITTED, EVENT_JOB_REMOVED
+import anyio
+import uvicorn
+from apscheduler.events import EVENT_JOB_ERROR, EVENT_JOB_EXECUTED, EVENT_JOB_REMOVED, EVENT_JOB_SUBMITTED
 from apscheduler.jobstores.memory import MemoryJobStore
-from apscheduler.triggers.interval import IntervalTrigger
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.date import DateTrigger
+from apscheduler.triggers.interval import IntervalTrigger
+from fastapi import Depends, FastAPI, HTTPException
 
-import logging
-from galaxy.core.galaxy import call_methods
+from galaxy.core.galaxy import Integration, run_integration
 from galaxy.core.logging import get_log_format
 from galaxy.core.magneto import Magneto
-
 from galaxy.core.mapper import Mapper
-import uvicorn
 from galaxy.core.models import SchedulerJobStates
-
+from galaxy.core.resources import get_integration_module_name
 from galaxy.core.utils import get_api_key
 
 
-async def run_app(methods, config):
-    app = FastAPI()
+async def run_app(instance: Integration):
     logger = logging.getLogger("galaxy")
-    app.state.config = config
-    app.state.mapper = Mapper(config.integration.type)
-    app.state.magneto_client = Magneto(config.rely.url, config.rely.token, logger=logger)
+
+    app = FastAPI()
+    app.state.config = instance.config
+    app.state.mapper = Mapper(instance.type_)
+    app.state.magneto_client = Magneto(instance.config.rely.url, instance.config.rely.token, logger=logger)
     app.state.logger = logger
+
     try:
-        module = importlib.import_module(f"galaxy.integrations.{config.integration.type}.routes")
+        module = importlib.import_module(f"{get_integration_module_name(instance.type_)}.routes")
         app.include_router(module.router)
     except ModuleNotFoundError:
-        logger.warning(f"Integration type {config.integration.type} routes not found")
+        logger.warning("Integration type %r routes not found", instance.type_)
 
     job_defaults = {"coalesce": False, "max_instances": 1, "misfire_grace_time": None}
     job_stores = {"default": MemoryJobStore()}
-    job_params = {"instance": methods, "config": config}
     job_states = {}
 
     scheduler = AsyncIOScheduler(jobstores=job_stores, job_defaults=job_defaults)
@@ -56,21 +55,23 @@ async def run_app(methods, config):
 
     scheduler.add_listener(job_listener, EVENT_JOB_EXECUTED | EVENT_JOB_ERROR | EVENT_JOB_SUBMITTED | EVENT_JOB_REMOVED)
 
+    async def _run_integration():
+        async with Magneto(instance.config.rely.url, instance.config.rely.token, logger=logger) as magneto_client:
+            await run_integration(instance, magneto_client=magneto_client, logger=app.state.logger)
+
     @app.on_event("startup")
     async def startup_event():
         scheduler.add_job(
-            call_methods,
+            _run_integration,
             id=f"{app.state.config.integration.type}-startup",
             name=f"{app.state.config.integration.type}",
             trigger=DateTrigger(run_date=datetime.now()),
-            kwargs=job_params,
         )
         scheduler.add_job(
-            call_methods,
+            _run_integration,
             id=f"{app.state.config.integration.type}",
             name=f"{app.state.config.integration.type}",
             trigger=IntervalTrigger(minutes=app.state.config.integration.scheduled_interval),
-            kwargs=job_params,
         )
         scheduler.start()
 
@@ -97,10 +98,10 @@ async def run_app(methods, config):
         app.state.scheduler.modify_job(integration_type, next_run_time=datetime.now())
         return {"status": "Job triggered"}
 
-    loop = asyncio.get_running_loop()
     log_config = uvicorn.config.LOGGING_CONFIG
-    log_config["formatters"]["default"]["fmt"] = get_log_format(config)
-    log_config["formatters"]["access"]["fmt"] = get_log_format(config)
-    config = uvicorn.Config(app=app, host="0.0.0.0", port=8000, loop=loop, log_config=log_config)
+    log_config["formatters"]["default"]["fmt"] = get_log_format(instance.config)
+    log_config["formatters"]["access"]["fmt"] = get_log_format(instance.config)
+    config = uvicorn.Config(app=app, host="0.0.0.0", port=8000, log_config=log_config)
     server = uvicorn.Server(config=config)
-    await server.serve()
+    async with anyio.create_task_group() as task_group:
+        task_group.start_soon(server.serve)
