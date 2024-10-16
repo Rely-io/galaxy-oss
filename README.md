@@ -182,7 +182,7 @@ The creation of the external secrets are outside of the scope of this documentat
 apiVersion: external-secrets.io/v1beta1
 kind: ExternalSecret
 metadata:
-  name: my-vault-secrets
+  name: my-external-secrets
   namespace: rely-galaxy
 spec:
   refreshInterval: "5m"
