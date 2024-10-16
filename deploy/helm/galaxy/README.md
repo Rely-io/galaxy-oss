@@ -9,17 +9,23 @@ Rely Galaxy Framework Helm chart for Kubernetes
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
 | affinity | object | `{}` | Affinity settings for pod assignment |
-| env | object | `{"RELY_API_TOKEN":null,"RELY_API_URL":"https://magneto.rely.io/","RELY_INTEGRATION_DAEMON_INTERVAL":60,"RELY_INTEGRATION_EXECUTION_TYPE":"cronjob","RELY_INTEGRATION_ID":null,"RELY_INTEGRATION_TYPE":null}` | Environment variables to be set in the container |
+| env | object | `{"RELY_API_TOKEN":null,"RELY_INTEGRATION_ID":null}` | Environment variables to be set in the container if not using external secrets |
 | env.RELY_API_TOKEN | string | `nil` | The API token for the Rely API |
-| env.RELY_API_URL | string | `"https://magneto.rely.io/"` | The URL for the Rely API |
-| env.RELY_INTEGRATION_DAEMON_INTERVAL | int | `60` | The interval in minutes at which the integration should run only required if the execution type is daemon |
-| env.RELY_INTEGRATION_EXECUTION_TYPE | string | `"cronjob"` | The execution type of the integration can be either cronjob or daemon |
 | env.RELY_INTEGRATION_ID | string | `nil` | The identifier of this integration instance |
-| env.RELY_INTEGRATION_TYPE | string | `nil` | The type of the integration |
+| externalSecrets | object | `{"allAsEnv":false,"enabled":false,"envs":[],"target":"my-vault-secrets"}` | External secrets configuration |
+| externalSecrets.allAsEnv | bool | `false` | All keys in secrets file will be exported as environment variables |
+| externalSecrets.enabled | bool | `false` | Enable external secrets |
+| externalSecrets.envs | list | `[]` | environment variables to be set in the container from the external secrets if allAsEnv is false envs is an array of objects with the following keys name -- The name of the environment variable to setup key -- The key in the secret to use eg.: envs: - name: "RELY_API_TOKEN"   key: "api_token" |
+| externalSecrets.target | string | `"my-vault-secrets"` | The name of the external secrets |
 | fullnameOverride | string | `""` | Override the fullname of the chart |
 | image.pullPolicy | string | `"IfNotPresent"` | Pull policy for the image |
 | image.repository | string | `"devrelyio/galaxy"` |  |
 | image.tag | string | `""` | Tag to use for deploying the application |
+| integration | object | `{"apiUrl":"https://magneto.rely.io/","daemonInterval":60,"executionType":"cronjob","type":null}` | The configuration for the integration |
+| integration.apiUrl | string | `"https://magneto.rely.io/"` | The url for the Rely API |
+| integration.daemonInterval | int | `60` | The interval in minutes at which the integration should run only required if the execution type is daemon |
+| integration.executionType | string | `"cronjob"` | The execution type of the integration can be either cronjob or daemon |
+| integration.type | string | `nil` | The type of the integration can be any of the following: pagerduty, github, gitlab, bitbucket, sonarqube, aws, opsgenie, gcp |
 | nameOverride | string | `""` | Override the name of the chart |
 | nodeSelector | object | `{}` | Node labels for pod assignment |
 | podAnnotations | object | `{}` | The annotations to add to the pod |
@@ -35,3 +41,4 @@ Rely Galaxy Framework Helm chart for Kubernetes
 | tolerations | list | `[]` | Toleration labels for pod assignment |
 | volumeMounts | list | `[]` | Additional volumeMounts on the output Deployment definition. |
 | volumes | list | `[]` | Additional volumes on the output Deployment definition. |
+

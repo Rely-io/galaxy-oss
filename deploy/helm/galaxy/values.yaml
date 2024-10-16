@@ -10,24 +10,46 @@ image:
 # -- This is a cron expression that defines the schedule for the cronjob
 schedule: "*/59 * * * *" # Every 59 minutes
 
-# -- Environment variables to be set in the container
+# -- External secrets configuration
+externalSecrets:
+  # -- Enable external secrets
+  enabled: false
+  # -- The name of the external secrets
+  target: "my-vault-secrets"
+  # -- All keys in secrets file will be exported as environment variables
+  allAsEnv: false
+  # -- environment variables to be set in the container from the external secrets if allAsEnv is false
+  # envs is an array of objects with the following keys
+  # name -- The name of the environment variable to setup
+  # key -- The key in the secret to use
+  # eg.:
+  # envs:
+  # - name: "RELY_API_TOKEN"
+  #   key: "api_token"
+  envs: []
+
+# -- The configuration for the integration
+integration:
+  # -- The type of the integration
+  # can be any of the following: pagerduty, github, gitlab, bitbucket, sonarqube, aws, opsgenie, gcp
+  type:
+  # -- The execution type of the integration
+  # can be either cronjob or daemon
+  executionType: cronjob
+  # -- The interval in minutes at which the integration should run
+  # only required if the execution type is daemon
+  daemonInterval: 60
+  # -- The url for the Rely API
+  apiUrl: "https://magneto.rely.io/"
+
+# -- Environment variables to be set in the container if not using external secrets
 env:
   # The following environment variables are required to run this container
   # more environment variables can be added here as required for each integration
   # env.RELY_API_TOKEN -- The API token for the Rely API
   RELY_API_TOKEN:
-  # env.RELY_API_URL -- The URL for the Rely API
-  RELY_API_URL: https://magneto.rely.io/
   # env.RELY_INTEGRATION_ID -- The identifier of this integration instance
   RELY_INTEGRATION_ID:
-  # env.RELY_INTEGRATION_TYPE -- The type of the integration
-  RELY_INTEGRATION_TYPE:
-  # env.RELY_INTEGRATION_EXECUTION_TYPE -- The execution type of the integration
-  # can be either cronjob or daemon
-  RELY_INTEGRATION_EXECUTION_TYPE: cronjob
-  # env.RELY_INTEGRATION_DAEMON_INTERVAL -- The interval in minutes at which the integration should run
-  # only required if the execution type is daemon
-  RELY_INTEGRATION_DAEMON_INTERVAL: 60
 
 # nameOverride -- Override the name of the chart
 nameOverride: ""

@@ -57,11 +57,12 @@ And now you have obtained the plugin token to use during installation.
 2. Create a `my_values.yaml` file (name isn't important) with the variables we need to setup on the chart, example below:
 
    ```yaml
+   integration:
+     type: gitlab
+
    env:
      RELY_API_TOKEN: the_rely_api_token
-     RELY_API_URL: https://magneto.rely.io
      RELY_INTEGRATION_ID: "1234567"
-     RELY_INTEGRATION_TYPE: pagerduty
 
    ```
 
@@ -79,9 +80,8 @@ And now you have obtained the plugin token to use during installation.
   ```bash
   helm upgrade --install relyio-galaxy \
     --set env.RELY_API_TOKEN=the_rely_api_token \
-    --set env.RELY_API_URL=https://magneto.rely.io \
     --set env.RELY_INTEGRATION_ID=1234567 \
-    --set env.RELY_INTEGRATION_TYPE=pagerduty \
+    --set integration.type=pagerduty \
     oci://registry-1.docker.io/devrelyio/galaxy-helm \
     -n rely-galaxy
   ```
@@ -102,9 +102,8 @@ or
 ```bash
 helm upgrade relyio-galaxy \
     --set env.RELY_API_TOKEN=the_rely_api_token \
-    --set env.RELY_API_URL=https://magneto.rely.io \
     --set env.RELY_INTEGRATION_ID=1234567 \
-    --set env.RELY_INTEGRATION_TYPE=pagerduty \
+    --set integration.type=pagerduty \
     oci://registry-1.docker.io/devrelyio/galaxy-helm \
     -n rely-galaxy
 ```
@@ -123,9 +122,8 @@ or
 ```bash
 helm upgrade relyio-galaxy \
     --set env.RELY_API_TOKEN=the_rely_api_token \
-    --set env.RELY_API_URL=https://magneto.rely.io \
     --set env.RELY_INTEGRATION_ID=1234567 \
-    --set env.RELY_INTEGRATION_TYPE=pagerduty \
+    --set integration.type=pagerduty \
     oci://registry-1.docker.io/devrelyio/galaxy-helm \
     -n rely-galaxy \
     --version 1.0.0
@@ -137,18 +135,88 @@ helm upgrade relyio-galaxy \
 
 Helm chart requires the following values to be set or it will fail to install:
 
-- `env.RELY_API_URL`: The rely api url, ex: https://magneto.rely.io/
-- `env.RELY_API_TOKEN`: Go to rely app and get the token for the plugin installation
-- `env.RELY_INTEGRATION_TYPE`: The name of the integration, ex: gitlab
-- `env.RELY_INTEGRATION_ID`: Go to rely app and get the rely integration installation id
+- `integration.apiUrl`: The rely api url, ex: https://magneto.rely.io/
+- `integration.type`: The name of the integration, ex: gitlab
 
 These are the minimum values that need to be set for the framework to work. You can also set other values that are in the [`values.yaml`](deploy/helm/galaxy/values.yaml) file.
 
 Additionally, you can set the following values:
 
-- `env.RELY_INTEGRATION_EXECUTION_TYPE`: The execution type of the integration. The default value is `cronjob`. If you want to run the integration in daemon mode you need to set this value to `daemon`.
-- `env.RELY_INTEGRATION_DAEMON_INTERVAL`: The interval in minutes that the integration will run in daemon mode. The default value is `60`.
+- `integration.executionType`: The execution type of the integration. The default value is `cronjob`. If you want to run the integration in daemon mode you need to set this value to `daemon`.
+- `integration.daemonInterval`: The interval in minutes that the integration will run in daemon mode. The default value is `60`.
 - `schedule`: The cronjob schedule for the integration. The default value is `59 * * * *`.
+
+###### External Secrets
+
+If we use external secrets with [External Secrets Operator](https://external-secrets.io/) we need to set `externalSecrets.enabled` to `true` and set the `externalSecrets.target` to the name of the secret that contains the values for the `RELY_API_TOKEN` and `RELY_INTEGRATION_ID`. When we use external secrets we can set all values from the secret file set in `target` as env vars in the helm chart if we set `externalSecrets.allAsEnv` to `true`. If we don't set this value to `true` we need to set the values we want to use in the helm chart as env vars in the `envs` section.
+
+Example of external secrets configuration in the `my_values.yaml` file when we want to set all values from the secret file as env vars in the helm chart:
+
+```yaml
+externalSecrets
+  enabled: true
+  target: my-external-secrets
+  allAsEnv: true
+  envs: []
+```
+
+Example of external secrets configuration in the `my_values.yaml` file when we want to set only the `RELY_API_TOKEN` and `RELY_INTEGRATION_ID` values from the secret file as env vars in the helm chart:
+
+```yaml
+externalSecrets
+  enabled: true
+  target: my-external-secrets
+  allAsEnv: false
+  envs:
+    - name: RELY_API_TOKEN
+      key: RELY_API_TOKEN
+    - name: RELY_INTEGRATION_ID
+      key: RELY_INTEGRATION_ID
+```
+
+The `envs` section is an array of objects that contains the `name` of the env var that we want to set in the helm chart and the `key` that is the key of the value in the secret file.
+
+The creation of the external secrets are outside of the scope of this documentation, but for the previous examples we can assume as example of an `ExternalSecret` resource configuration, that would be created prior to the helm chart install, look like this:
+
+```yaml
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: my-external-secrets
+  namespace: rely-galaxy
+spec:
+  refreshInterval: "5m"
+  secretStoreRef:
+    name: vault-backend
+    kind: SecretStore
+  target:
+    name: my-external-secrets
+    creationPolicy: Owner
+  data:
+    - secretKey: RELY_API_TOKEN
+      remoteRef:
+        key: "secret/data/rely"
+        property: rely_api_token
+    - secretKey: RELY_INTEGRATION_ID
+      remoteRef:
+        key: "secret/data/rely"
+        property: rely_integration_id
+```
+
+> NOTE:
+>
+> This previous example is just for demonstration purposes and assumes that the external secrets are stored on [Vault](https://www.vaultproject.io/) and the secret `rely` in the vault backend has the keys `rely_api_token` and `rely_integration_id` with the values for the `RELY_API_TOKEN` and `RELY_INTEGRATION_ID` respectively. The `target` in the `ExternalSecret` resource is the name of the secret that contains the values for the `RELY_API_TOKEN` and `RELY_INTEGRATION_ID`.
+
+> **NOTE** <br/>
+> Depending on the integration you are using you might need to set other values. You can find the values needed for each integration in its own documentation.
+
+
+###### Base kubernetes secrets
+
+If we are not using external secrets, the helm chart also requires the following environment variables to be set:
+
+- `env.RELY_API_TOKEN`: Go to rely app and get the token for the plugin installation
+- `env.RELY_INTEGRATION_ID`: Go to rely app and get the rely integration installation id
 
 <br/>
 

@@ -1,4 +1,4 @@
-{{- $exec_mode := default "cronjob" .Values.env.RELY_INTEGRATION_EXECUTION_TYPE }}
+{{- $exec_mode := default "cronjob" .Values.integration.executionType }}
 {{- if eq $exec_mode "cronjob" }}
 ---
 apiVersion: batch/v1
@@ -40,9 +40,30 @@ spec:
             {{- end }}
             image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
             imagePullPolicy: {{ .Values.image.pullPolicy }}
+            {{- if and .Values.externalSecrets.enabled .Values.externalSecrets.allAsEnv}}
+            env:
+              {{- include "galaxy-helm.base.envs" . | nindent 14 }}
+            envFrom:
+              - secretRef:
+                  name: {{ .Values.externalSecrets.target }}
+            {{- else if and .Values.externalSecrets.enabled (not .Values.externalSecrets.allAsEnv) }}
+            env:
+              {{- include "galaxy-helm.base.envs" . | nindent 14 }}
+              {{- $target := .Values.externalSecrets.target }}
+              {{- range .Values.externalSecrets.envs }}
+              - name: {{ .name }}
+                valueFrom:
+                  secretKeyRef:
+                    name: {{ $target }}
+                    key: {{ .key }}
+              {{- end }}
+            {{- else }}
+            env:
+              {{- include "galaxy-helm.base.envs" . | nindent 14 }}
             envFrom:
               - secretRef:
                   name: {{ include "galaxy-helm.fullname" . }}
+            {{- end }}
           restartPolicy: Never
           {{- with .Values.nodeSelector }}
           nodeSelector:

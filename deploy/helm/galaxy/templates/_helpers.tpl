@@ -65,8 +65,29 @@ Create the name of the service account to use
 Create a validation for required values
 */}}
 {{- define "galaxy-helm.required.envs" -}}
+{{- if not .Values.externalSecrets.enabled -}}
 {{- required "RELY_API_TOKEN is a required value" .Values.env.RELY_API_TOKEN -}}
-{{- required "RELY_API_URL is a required value" .Values.env.RELY_API_URL -}}
 {{- required "RELY_INTEGRATION_ID is a required value" .Values.env.RELY_INTEGRATION_ID -}}
-{{- required "RELY_INTEGRATION_TYPE is a required value" .Values.env.RELY_INTEGRATION_TYPE -}}
+{{- else -}}
+{{- required "externalSecrets.target is a required value" .Values.externalSecrets.target -}}
+{{- if not .Values.externalSecrets.allAsEnv -}}
+{{- required "externalSecrets.envs cannot be empty" .Values.externalSecrets.envs -}}
+{{- end -}}
 {{- end }}
+{{- required "integration.apiUrl is a required value" .Values.integration.apiUrl -}}
+{{- required "integration.type is a required value" .Values.integration.type -}}
+{{- end }}
+
+{{/*
+Set default environment variables
+*/}}
+{{- define "galaxy-helm.base.envs" -}}
+- name: RELY_API_URL
+  value: {{ .Values.integration.apiUrl | quote}}
+- name: RELY_INTEGRATION_TYPE
+  value: {{ .Values.integration.type | quote }}
+- name: RELY_INTEGRATION_EXECUTION_TYPE
+  value: {{ .Values.integration.executionType | quote }}
+- name: RELY_INTEGRATION_DAEMON_INTERVAL
+  value: {{ .Values.integration.daemonInterval | quote }}
+{{- end -}}
