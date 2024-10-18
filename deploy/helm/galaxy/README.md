@@ -21,6 +21,7 @@ Rely Galaxy Framework Helm chart for Kubernetes
 | image.pullPolicy | string | `"IfNotPresent"` | Pull policy for the image |
 | image.repository | string | `"devrelyio/galaxy"` |  |
 | image.tag | string | `""` | Tag to use for deploying the application |
+| imagePullSecrets | list | `[]` | The image pull secrets to use for pulling the image imagePullSecrets is an array of objects with the following keys name -- The name of the image pull secret eg.: imagePullSecrets: - name: myregistrykey https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/ |
 | integration | object | `{"apiUrl":"https://magneto.rely.io/","daemonInterval":60,"executionType":"cronjob","type":null}` | The configuration for the integration |
 | integration.apiUrl | string | `"https://magneto.rely.io/"` | The url for the Rely API |
 | integration.daemonInterval | int | `60` | The interval in minutes at which the integration should run only required if the execution type is daemon |

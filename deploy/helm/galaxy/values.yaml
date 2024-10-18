@@ -51,6 +51,14 @@ env:
   # env.RELY_INTEGRATION_ID -- The identifier of this integration instance
   RELY_INTEGRATION_ID:
 
+# imagePullSecrets -- The image pull secrets to use for pulling the image
+# imagePullSecrets is an array of objects with the following keys
+# name -- The name of the image pull secret
+# eg.:
+# imagePullSecrets:
+# - name: myregistrykey
+# https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
+imagePullSecrets: []
 # nameOverride -- Override the name of the chart
 nameOverride: ""
 # fullnameOverride -- Override the fullname of the chart
