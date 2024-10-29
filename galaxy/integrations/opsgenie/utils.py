@@ -39,11 +39,10 @@ def flatten_team_timeline(schedules):
 def get_user_on_call_teams(user):
     teams_on_call = []
 
+    now = datetime.now(timezone.utc)
     for team in user["teams"]:
         ongoing_periods = [
-            period
-            for period in team["timeline"]
-            if isoparse(period["startDate"]) <= isoparse(period["endDate"]) <= isoparse(period["endDate"])
+            period for period in team["timeline"] if isoparse(period["startDate"]) <= now <= isoparse(period["endDate"])
         ]
         user_on_call = user["id"] in [period["recipient"]["id"] for period in ongoing_periods]
         if user_on_call:

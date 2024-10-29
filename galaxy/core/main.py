@@ -3,6 +3,7 @@ import yaml
 from jinja2 import Environment, FileSystemLoader
 
 from galaxy.api import run_app
+from galaxy.core.exceptions import CronjobRunError
 from galaxy.core.galaxy import import_and_instantiate_integration, run_integration
 from galaxy.core.logging import setup_logger
 from galaxy.core.magneto import Magneto
@@ -79,7 +80,13 @@ async def main(
 
         if config.integration.execution_type == ExecutionType.CRONJOB:
             logger.info("Running galaxy framework in cronjob mode")
-            await run_integration(instance, magneto_client=magneto_client, logger=logger)
+            success = await run_integration(instance, magneto_client=magneto_client, logger=logger)
+            if success:
+                logger.info("Integration %r run completed successfully: %r", instance.type_, instance.id_)
+            else:
+                error = f"Integration {instance.type_!r} run failed: {instance.id_!r}"
+                logger.error(error)
+                raise CronjobRunError(error)
         elif config.integration.execution_type == ExecutionType.DAEMON:
             logger.info("Running galaxy framework in daemon mode")
             await run_app(instance)

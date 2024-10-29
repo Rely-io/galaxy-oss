@@ -14,7 +14,11 @@
         "type": "onEvent",
         "event": {
           "resource": "entity",
-          "action": ["create", "update", "addedAsSource"]
+          "action": [
+            "create",
+            "update",
+            "addedAsSource"
+          ]
         },
         "conditions": [
           {
@@ -51,42 +55,46 @@
           }
         },
         "conditions": [
-            {
-                "field": "event.action",
-                "operator": "neq",
-                "value": "addedAsSource"
-            }
+          {
+            "field": "event.action",
+            "operator": "neq",
+            "value": "addedAsSource"
+          }
         ]
       },
       {
-            "id": "trigger_bitbucket_service_chain_automation",
-            "type": "triggerAutomations",
-            "title": "Trigger Automations for Bitbucket Post Service Import",
-            "args": {
-				        "automationIds": ["rely.bitbucket.v1.environment-to-running-service-instance","rely.bitbucket.v1.pullrequest-to-pull-request","rely.bitbucket.v1.deployment-to-deployment"],
-                "entities": {
-                    "conditions": [
-                        {
-                            "field": "blueprintId",
-                            "operator": "in",
-                            "value": "bitbucket.v1.pullrequest,bitbucket.v1.environment,bitbucket.v1.deployment"
-                        },
-                        {
-                            "field": "relations/repository/value",
-                            "operator": "eq",
-                            "value": "{{ data.id }}"
-                        }
-                    ]
-                }
-            },
+        "id": "trigger_bitbucket_service_chain_automation",
+        "type": "triggerAutomations",
+        "title": "Trigger Automations for Bitbucket Post Service Import",
+        "args": {
+          "automationIds": [
+            "rely.bitbucket.v1.environment-to-running-service-instance",
+            "rely.bitbucket.v1.pullrequest-to-pull-request",
+            "rely.bitbucket.v1.deployment-to-deployment"
+          ],
+          "entities": {
             "conditions": [
-                {
-                    "field": "event.action",
-                    "operator": "eq",
-                    "value": "addedAsSource"
-                }
+              {
+                "field": "blueprintId",
+                "operator": "in",
+                "value": "bitbucket.v1.pullrequest,bitbucket.v1.environment,bitbucket.v1.deployment"
+              },
+              {
+                "field": "relations/repository/value",
+                "operator": "eq",
+                "value": "{{ data.id }}"
+              }
             ]
-        }
+          }
+        },
+        "conditions": [
+          {
+            "field": "event.action",
+            "operator": "eq",
+            "value": "addedAsSource"
+          }
+        ]
+      }
     ],
     "tags": [
       {
@@ -116,7 +124,10 @@
         "type": "onEvent",
         "event": {
           "resource": "entity",
-          "action": ["create", "update"]
+          "action": [
+            "create",
+            "update"
+          ]
         },
         "conditions": [
           {
@@ -164,7 +175,7 @@
             }
           ],
           "resourceType": "entity",
-          "stopFlowIfNotFound": true
+          "stopFlowIfNotFound": false
         },
         "id": "fetch_author"
       },
@@ -184,7 +195,7 @@
             }
           ],
           "resourceType": "entity",
-          "stopFlowIfNotFound": true
+          "stopFlowIfNotFound": false
         },
         "id": "fetch_approver"
       },
@@ -203,12 +214,12 @@
               "createdAt": "{{ data.properties.created_on if data.properties.created_on else none }}",
               "updatedAt": "{{ data.properties.updated_on if data.properties.updated_on else none }}",
               "sourceBranch": "{{ data.properties.sourceBranch if data.properties.sourceBranch else none }}",
-              "sourceCommit": "{{ data.properties.sourceCommit if data.properties.sourceCommit else none }}",
+              "sourceCommit": "{{ (data.properties.sourceCommit | string) if data.properties.sourceCommit else none }}",
               "targetBranch": "{{ data.properties.destinationBranch if data.properties.destinationBranch else none }}",
-              "mergeCommit": "{{ data.properties.destinationCommit if data.properties.destinationCommit else none }}",
+              "mergeCommit": "{{ (data.properties.destinationCommit | string) if data.properties.destinationCommit else none }}",
               "reason": "{{ data.properties.reason if data.properties.reason else none }}",
-              "createdBy": "{{ actions.fetch_author.output.title }}",
-              "closedBy": "{{ actions.fetch_approver.output.title }}"
+              "createdBy": "{{ actions.fetch_author.output.title if actions.fetch_author else none }}",
+              "closedBy": "{{ actions.fetch_approver.output.title if actions.fetch_approver else none }}"
             },
             "relations": {
               "service": {
@@ -252,7 +263,10 @@
         "type": "onEvent",
         "event": {
           "resource": "entity",
-          "action": ["create", "update"]
+          "action": [
+            "create",
+            "update"
+          ]
         },
         "conditions": [
           {
@@ -285,31 +299,31 @@
         "id": "fetch_service"
       },
       {
-         "type":"fetchResource",
-         "args":{
-            "conditions":[
-               {
-                  "field":"blueprintId",
-                  "value":"environment",
-                  "operator":"eq"
-               },
-               {
-                  "field":"properties/labels/aws",
-                  "value": "{{ data.properties.type }}",
-                  "operator":"contains"
-               }
-            ],
-            "resourceType":"entity",
-            "stopFlowIfNotFound": true
-         },
-         "conditions":[
+        "type": "fetchResource",
+        "args": {
+          "conditions": [
             {
-               "field":"data.properties.type",
-               "value":null,
-               "operator":"neq"
+              "field": "blueprintId",
+              "value": "environment",
+              "operator": "eq"
+            },
+            {
+              "field": "properties/labels",
+              "value": "{{ data.title | lower }}",
+              "operator": "contains"
             }
-         ],
-         "id":"fetch_environment"
+          ],
+          "resourceType": "entity",
+          "stopFlowIfNotFound": true
+        },
+        "conditions": [
+          {
+            "field": "data.properties.type",
+            "value": null,
+            "operator": "neq"
+          }
+        ],
+        "id": "fetch_environment"
       },
       {
         "type": "upsertResource",
@@ -319,8 +333,7 @@
             "title": "{{ actions.fetch_service.output.title }} ({{ actions.fetch_environment.output.title }})",
             "description": "{{ data.description }}",
             "blueprintId": "{{ arguments.targetBlueprintId }}",
-            "properties": {
-            },
+            "properties": {},
             "relations": {
               "service": {
                 "value": "{{ actions.fetch_service.output.id | string }}"
@@ -366,7 +379,10 @@
         "type": "onEvent",
         "event": {
           "resource": "entity",
-          "action": ["create", "update"]
+          "action": [
+            "create",
+            "update"
+          ]
         },
         "conditions": [
           {
@@ -452,7 +468,7 @@
               "createdAt": "{{ data.properties.created_on if data.properties.created_on else actions.fetch_pipeline.output.properties.created_on }}",
               "updatedAt": "{{ data.properties.updated_on if data.properties.updated_on else none }}",
               "closedAt": "{{ data.properties.closed_on if data.properties.closed_on else actions.fetch_pipeline.output.properties.completed_on }}",
-              "sourceCommit": "{{ data.properties.commit if data.properties.commit else none }}",
+              "sourceCommit": "{{ (data.properties.commit | string) if data.properties.commit else none }}",
               "duration": "{{ (actions.fetch_pipeline.output.properties.duration_in_seconds | int) if actions.fetch_pipeline.output.properties.duration_in_seconds else none }}",
               "successful": "{{ actions.fetch_pipeline.output.properties.successful }}",
               "triggeredBy": "{{ actions.fetch_author.output.title }}"
@@ -501,8 +517,7 @@
             "title": "{{ actions.fetch_service.output.title }} ({{ actions.fetch_environment.output.title }}): {{ data.id }}",
             "description": "{{ data.description }}",
             "blueprintId": "{{ arguments.targetBlueprintId }}",
-            "properties": {
-            },
+            "properties": {},
             "relations": {
               "targetEnvironment": {
                 "value": "{{ actions.fetch_running_service.output.relations.environment.value | string }}"
@@ -542,7 +557,10 @@
         "type": "onEvent",
         "event": {
           "resource": "entity",
-          "action": ["create", "update"]
+          "action": [
+            "create",
+            "update"
+          ]
         },
         "conditions": [
           {
@@ -551,10 +569,10 @@
             "value": "{{ arguments.sourceBlueprintId }}"
           },
           {
-          "field": "data.properties.branch",
-          "operator": "like",
-          "value": "release/%"
-        }
+            "field": "data.properties.branch",
+            "operator": "like",
+            "value": "release/%"
+          }
         ]
       }
     ],
@@ -622,7 +640,7 @@
               "duration": "{{ data.properties.duration_in_seconds | int }}",
               "createdAt": "{{ data.properties.created_on if data.properties.created_on else none }}",
               "closedAt": "{{ data.properties.completed_on if data.properties.completed_on else none }}",
-              "sourceCommit": "{{ data.properties.commit if data.properties.commit else none }}",
+              "sourceCommit": "{{ (data.properties.commit | string) if data.properties.commit else none }}",
               "successful": "{{ data.properties.successful }}",
               "triggeredBy": "{{ actions.fetch_author.output.title }}"
             },
@@ -662,7 +680,10 @@
         "type": "onEvent",
         "event": {
           "resource": "entity",
-          "action": ["create", "update"]
+          "action": [
+            "create",
+            "update"
+          ]
         },
         "conditions": [
           {
@@ -671,9 +692,9 @@
             "value": "{{ arguments.sourceBlueprintId }}"
           },
           {
-          "field": "data.properties.branch",
-          "operator": "in",
-          "value": "master,main"
+            "field": "data.properties.branch",
+            "operator": "in",
+            "value": "master,main"
           }
         ]
       }
@@ -743,7 +764,7 @@
               "successful": "{{ data.properties.successful }}",
               "createdAt": "{{ data.properties.created_on if data.properties.created_on else none }}",
               "closedAt": "{{ data.properties.completed_on if data.properties.completed_on else none }}",
-              "sourceCommit": "{{ data.properties.commit if data.properties.commit else none }}",
+              "sourceCommit": "{{ (data.properties.commit | string) if data.properties.commit else none }}",
               "triggeredBy": "{{ actions.fetch_author.output.title }}"
             },
             "blueprintId": "{{ arguments.targetBlueprintId }}",

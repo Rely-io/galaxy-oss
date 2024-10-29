@@ -57,7 +57,11 @@ async def run_app(instance: Integration):
 
     async def _run_integration():
         async with Magneto(instance.config.rely.url, instance.config.rely.token, logger=logger) as magneto_client:
-            await run_integration(instance, magneto_client=magneto_client, logger=app.state.logger)
+            success = await run_integration(instance, magneto_client=magneto_client, logger=app.state.logger)
+            if success:
+                logger.info("Integration %r run completed successfully: %r", instance.type_, instance.id_)
+            else:
+                logger.error("Integration %r run failed: %r", instance.type_, instance.id_)
 
     @app.on_event("startup")
     async def startup_event():

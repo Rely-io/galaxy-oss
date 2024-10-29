@@ -2,7 +2,6 @@ from galaxy.core.galaxy import Integration, register
 from galaxy.core.models import Config
 from galaxy.integrations.aws.client import AwsClient
 
-
 __all__ = ["Aws"]
 
 
@@ -15,7 +14,7 @@ class Aws(Integration):
         self.client = AwsClient(self.config, self.logger)
 
         self.regions = {}
-        self.organization_account = {}
+        self.organization_account = {"AccountId": self.client.account_id, "AccountName": "Unknown AWS Organization"}
         self.regions_to_ec2s = {}
         self.regions_to_eks_clusters = {}
         self.regions_to_lambdas = {}
@@ -34,19 +33,23 @@ class Aws(Integration):
 
     @register(_methods, group=1)
     async def accounts(self) -> list[dict]:
-        accounts = await self.client.get_accounts(region=self.default_region)
+        accounts = None
+        try:
+            accounts = await self.client.get_accounts(region=self.default_region)
+        except Exception:
+            self.logger.exception("Error getting organization accounts")
+
+        if not accounts:
+            self.logger.warning(
+                "No organization accounts found, falling back to single account: %s",
+                self.organization_account["AccountId"],
+            )
+            accounts = [self.organization_account]
+
         accounts_mapped = await self.mapper.process("account", accounts, context={})
         self.logger.info(f"Found {len(accounts_mapped)} accounts")
 
-        if not accounts_mapped:
-            # Should never happen
-            self.logger.error("Organization account not found, using fallback")
-            self.organization_account = {
-                "AccountId": "unknown_aws_organization",
-                "AccountName": "Unknown AWS Organization",
-            }
-            accounts_mapped = await self.mapper.process("account", [self.organization_account], context={})
-        elif len(accounts_mapped) > 2:
+        if len(accounts_mapped) > 2:
             self.logger.warning("Multiple organization account detected, using fallback")
             self.organization_account = accounts[0]
         else:

@@ -42,6 +42,18 @@ class Queries:
                                 }
                             }
                         }
+                        branchRules {
+                            nodes {
+                                name
+                                isDefault
+                                approvalRules {
+                                    nodes{
+                                        name
+                                        approvalsRequired
+                                    }
+                                }
+                            }
+                        }
                     }
                     pageInfo {
                         hasNextPage
@@ -91,6 +103,18 @@ class Queries:
                                     nodes {
                                         rawBlob
                                         path
+                                    }
+                                }
+                            }
+                            branchRules {
+                                nodes {
+                                    name
+                                    isDefault
+                                    approvalRules {
+                                        nodes{
+                                            name
+                                            approvalsRequired
+                                        }
                                     }
                                 }
                             }

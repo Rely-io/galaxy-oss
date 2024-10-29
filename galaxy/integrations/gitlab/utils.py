@@ -129,3 +129,38 @@ def add_user_to_inactive_group(inactive_user, inactive_group_template):
         }
     ]
     return inactive_user
+
+
+def get_required_reviews(branch_rules: list[dict]) -> dict[str, int]:
+    DEFAULT = "default"
+    ALL_BRANCHES = "All branches"
+    ALL_PROTECTED_BRANCHES = "All protected branches"
+
+    # use of default as branch name for convenience (we can have main, master, etc)
+    result = {DEFAULT: 0, ALL_BRANCHES: 0, ALL_PROTECTED_BRANCHES: 0}
+    for branch in branch_rules["nodes"]:
+        branch_name = branch["name"]
+        if branch.get("isDefault", False):
+            branch_name = DEFAULT
+
+        approval_rules = branch.get("approvalRules", {}).get("nodes", [])
+
+        # Sum the approvals required for each branch's approval rules
+        total_reviews_required = sum(rule.get("approvalsRequired", 0) for rule in approval_rules)
+
+        result[branch_name] = total_reviews_required
+
+    default_reviews = result.get(DEFAULT, 0)
+    all_reviews = result.get(ALL_BRANCHES, 0)
+    protected_reviews = result.get(ALL_PROTECTED_BRANCHES, 0)
+
+    # Determine the maximum between "All branches" and "All protected branches"
+    all_max = max(all_reviews, protected_reviews)
+
+    # Update the default value based on the calculated maximums
+    if all_max > default_reviews:
+        result[DEFAULT] = all_max
+    else:
+        result[DEFAULT] = default_reviews + all_max
+
+    return result

@@ -8,6 +8,7 @@ from galaxy.integrations.gitlab.utils import (
     get_inactive_usernames_from_merge_requests,
     get_inactive_usernames_from_pipelines,
     get_inactive_usernames_from_deployments,
+    get_required_reviews,
 )
 
 __all__ = ["Gitlab"]
@@ -76,6 +77,8 @@ class Gitlab(Integration):
         repos_mapped = []
         for group_id, repositories in self.group_to_repos.items():
             self.repositories.update({repo["id"]: repo for repo in repositories})
+            for repo in repositories:
+                repo["requiredReviews"] = get_required_reviews(repo.get("branchRules", []))
 
             repos_mapped.extend(
                 (await self.mapper.process("repository", repositories, context={"ownerGroup": group_id}))

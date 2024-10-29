@@ -1,0 +1,17 @@
+rely:
+  token: "{{ env('RELY_API_TOKEN') }}"
+  url: "{{ env('RELY_API_URL') }}"
+
+integration:
+  id: "{{ env('RELY_INTEGRATION_ID') }}"
+  type: "snyk"
+  executionType: "{{ env('RELY_INTEGRATION_EXECUTION_TYPE') | default('cronjob', true) }}"
+
+  # The configuration for the integration.
+  scheduledInterval: "{{ env('RELY_INTEGRATION_DAEMON_INTERVAL') | default(60, true) | int  }}"
+  defaultModelMappings:
+    snyk.v1.target: "service"
+    snyk.v1.issue: "cve"
+  properties:
+    apiToken: "{{ env('RELY_INTEGRATION_SNYK_TOKEN') | default('', true) }}"
+    region: "{{ env('RELY_INTEGRATION_SNYK_REGION') | default('', true) }}"

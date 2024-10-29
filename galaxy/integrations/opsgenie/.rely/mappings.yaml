@@ -74,6 +74,7 @@ resources:
       status: .status
       createdAt: .createdAt
       updatedAt: .updatedAt
+      closedAt: .impactEndDate
       priority: .priority
       webUrl: '.context.baseUrl + "/incident/detail/"  + .id'
     relations:
