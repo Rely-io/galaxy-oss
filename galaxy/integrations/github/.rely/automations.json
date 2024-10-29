@@ -503,9 +503,9 @@
               "status": "{{ standardize_status(data.properties.status, arguments.targetBlueprintId) if data.properties.status else none }}",
               "createdAt": "{{ data.properties.createdAt if data.properties.createdAt else none }}",
               "updatedAt": "{{ data.properties.updatedAt if data.properties.updatedAt else none }}",
-              "sourceCommit": "{{ data.properties.commitSha if data.properties.commitSha else none }}",
+              "sourceCommit": "{{ (data.properties.commitSha | string) if data.properties.commitSha else none }}",
               "triggeredBy": "{{ actions.fetch_author.output.title if actions.fetch_author else none }}",
-              "successful": "{{ data.properties.successful if data.properties.successful else none }}"
+              "successful": "{{ data.properties.successful }}"
             },
             "relations": {
               "service": {
@@ -624,7 +624,7 @@
               "status": "{{ standardize_status(data.properties.status, arguments.targetBlueprintId) if data.properties.status else none }}",
               "createdAt": "{{ data.properties.createdAt if data.properties.createdAt else none }}",
               "updatedAt": "{{ data.properties.updatedAt if data.properties.updatedAt else none }}",
-              "sourceCommit": "{{ data.properties.commitSHA if data.properties.commitSHA else none }}",
+              "sourceCommit": "{{ (data.properties.commitSHA | string) if data.properties.commitSHA else none }}",
               "successful": "{{ data.properties.successful }}",
               "triggeredBy": "{{ data.relations.triggeringActor.value }}"
             }
@@ -731,7 +731,7 @@
               "status": "{{ standardize_status(data.properties.status, arguments.targetBlueprintId) if data.properties.status else none }}",
               "createdAt": "{{ data.properties.createdAt if data.properties.createdAt else none }}",
               "updatedAt": "{{ data.properties.updatedAt if data.properties.updatedAt else none }}",
-              "sourceCommit": "{{ data.properties.commitSHA if data.properties.commitSHA else none }}",
+              "sourceCommit": "{{ (data.properties.commitSHA | string) if data.properties.commitSHA else none }}",
               "successful": "{{ data.properties.successful }}",
               "triggeredBy": "{{ data.relations.triggeringActor.value }}"
             }

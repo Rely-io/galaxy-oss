@@ -16,10 +16,10 @@ resources:
     description: '""'
     properties:
       arn: .Arn
-      tags: '.Tags | map({(.Key): .Value}) | add'
+      tags: '.Tags // [] | map({(.Key): .Value}) | add'
       email: .Email
       status: .Status
-      joinedAt: '.JoinedTimestamp | split(".") | .[0] + "Z"'
+      joinedAt: '.JoinedTimestamp // "" | (select(. != "") | split(".") | .[0] + "Z") // ""'
 
 - kind: eks_cluster
   mappings:

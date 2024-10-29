@@ -4,46 +4,22 @@ import json
 import logging
 import traceback
 from collections import OrderedDict
-from collections.abc import Callable
-from dataclasses import dataclass
+from collections.abc import AsyncGenerator, Callable
 from datetime import UTC, datetime
 from typing import Any
 
 import anyio
 
 from galaxy.core.blueprints import collect_blueprints
+from galaxy.core.exceptions import EntityPushTaskError, GalaxyError, IntegrationRunError, IntegrationRunMethodError
 from galaxy.core.logging import get_magneto_logs
-from galaxy.core.magneto import Magneto
+from galaxy.core.magneto import Magneto, TaskWithEntities, magneto_models
 from galaxy.core.mapper import Mapper
 from galaxy.core.models import Config
 from galaxy.core.resources import load_integration_resource
 from galaxy.core.utils import update_integration_config_entity
 
-__all__ = ["Integration", "IntegrationRunError", "import_and_instantiate_integration", "register", "run_integration"]
-
-
-@dataclass(kw_only=True)
-class IntegrationRunError(Exception):
-    integration_id: str
-    integration_type: str
-    errors: list[Exception]
-
-    def __str__(self):
-        return f"Error running integration: {self.integration_id} ({self.integration_type}): {self.errors}"
-
-
-@dataclass(kw_only=True)
-class IntegrationRunMethodError(Exception):
-    integration_id: str
-    integration_type: str
-    method: str
-    error: Exception
-
-    def __str__(self):
-        return (
-            f"Error running in method {self.method!r} for integration {self.integration_id}"
-            f" ({self.integration_type}): {self.error}"
-        )
+__all__ = ["Integration", "import_and_instantiate_integration", "register", "run_integration"]
 
 
 class Integration:
@@ -104,7 +80,7 @@ async def import_and_instantiate_integration(
 
 
 @instance_async_enter
-async def run_integration(instance: Integration, *, magneto_client: Magneto, logger: logging.Logger) -> None:
+async def run_integration(instance: Integration, *, magneto_client: Magneto, logger: logging.Logger) -> bool:
     try:
         if not instance.is_dry_run:
             config_entity = await magneto_client.get_entity(instance.id_)
@@ -119,51 +95,69 @@ async def run_integration(instance: Integration, *, magneto_client: Magneto, log
         await run_integration_methods(
             instance=instance, config_entity=config_entity, magneto_client=magneto_client, logger=logger
         )
-
     except IntegrationRunError as e:
         if not instance.is_dry_run:
             await _update_integration_config_entity(
                 config_entity, error="; ".join(str(x) for x in e.errors), magneto_client=magneto_client, logger=logger
             )
-        raise
+        logger.exception(e)
+
+        return False
     except Exception as e:
         if not instance.is_dry_run:
             await _update_integration_config_entity(
                 config_entity, error=str(e), magneto_client=magneto_client, logger=logger
             )
-        raise
+
+        raise GalaxyError(e) from e
+    else:
+        logger.info("Integration %r finished with success", instance.id_)
+        if not instance.is_dry_run:
+            await _update_integration_config_entity(config_entity, magneto_client=magneto_client, logger=logger)
+
+        return True
     finally:
         get_magneto_logs(logger).flush()
-
-    logger.info("Integration %r finished with success", instance.id_)
-
-    if not instance.is_dry_run:
-        await _update_integration_config_entity(config_entity, magneto_client=magneto_client, logger=logger)
 
 
 async def run_integration_methods(
     instance: Integration, *, config_entity: dict[str, Any] | None, magneto_client: Magneto, logger: logging.Logger
 ) -> None:
     errors: list[Exception] = []
+    entities_found = {}
+    tasks_entities: dict[str, TaskWithEntities] = {}
+
+    method_logger_width = max(len(method.__name__) for method, _ in instance._methods)
+
+    async def _run_integration_method_and_push_to_magneto(method: Callable) -> None:
+        logger.info("%-*s | Executing method", method_logger_width, method.__name__)
+
+        method_entities = [e async for e in _run_integration_method_to_entities(instance=instance, method=method)]
+        logger.info("%-*s | Entities found: %d", method_logger_width, method.__name__, len(method_entities))
+        logger.debug("%-*s | Results: %r", method_logger_width, method.__name__, method_entities)
+
+        if not instance.is_dry_run:
+            created_tasks = await magneto_client.upsert_entities_bulk_chunks(method_entities)
+            logger.info("%-*s | Push tasks created: %d", method_logger_width, method.__name__, len(created_tasks))
+
+        for task, entities in created_tasks:
+            tasks_entities[task.id] = (task, entities)
+        entities_found[method.__name__] = len(method_entities)
+
     for group, methods in _group_methods(instance._methods).items():
-        logger.info("Executing task group: %r", group)
+        logger.debug("Executing task group: %r", group)
+
         try:
             async with anyio.create_task_group() as task_group:
                 for method in methods:
-                    task_group.start_soon(
-                        functools.partial(
-                            _run_integration_method,
-                            instance=instance,
-                            method=method,
-                            magneto_client=magneto_client,
-                            logger=logger,
-                        )
-                    )
+                    task_group.start_soon(_run_integration_method_and_push_to_magneto, method)
+
         except* IntegrationRunMethodError as excgroup:
             for exc in excgroup.exceptions:
                 error = f"Error executing method {exc.method} (group {group}): {exc.error}"
                 logger.error(error)
                 errors.append(Exception(error))
+
         except* Exception as excgroup:
             for exc in excgroup.exceptions:
                 errors.append(Exception(f"Error executing group {group}: {exc}"))
@@ -173,34 +167,145 @@ async def run_integration_methods(
                 config_entity, is_running=True, magneto_client=magneto_client, logger=logger
             )
 
+    logger.info("Entities found (total: %d): %r", sum(entities_found.values()), entities_found)
+
+    if not instance.config.integration.wait_for_tasks_enabled:
+        logger.info("Not waiting for push tasks (created tasks: %d)", len(tasks_entities))
+    elif not instance.is_dry_run:
+        try:
+            tasks_success, tasks_failed = await _wait_for_push_tasks_to_finish(
+                entities_tasks=tasks_entities,
+                magneto_client=magneto_client,
+                logger=logger,
+                timeout=instance.config.integration.wait_for_tasks_timeout_seconds,
+            )
+            logger.info(
+                "Push tasks finished with success: %d / %d", len(tasks_success), len(tasks_success) + len(tasks_failed)
+            )
+
+            if tasks_failed:
+                logger.info("Retrying failed push tasks: %d", len(tasks_failed))
+                retried_tasks_success, tasks_failed = await _retry_failed_push_tasks(
+                    failed_tasks=tasks_failed,
+                    magneto_client=magneto_client,
+                    logger=logger,
+                    timeout=instance.config.integration.wait_for_tasks_timeout_seconds,
+                )
+                if retried_tasks_success:
+                    tasks_success.update(retried_tasks_success)
+                    logger.info(
+                        "Retry push tasks finished with success: %d / %d",
+                        len(retried_tasks_success),
+                        len(retried_tasks_success) + len(tasks_failed),
+                    )
+                else:
+                    logger.info("All push tasks retries failed")
+
+            if tasks_failed:
+                logger.error("Push tasks with errors: %d", len(tasks_failed))
+                for task, entities in tasks_failed.values():
+                    errors.append(
+                        EntityPushTaskError(
+                            integration_id=instance.id_,
+                            integration_type=instance.type_,
+                            error=Exception(f" ({task.error.type}) {task.error.message}"),
+                            entity_ids=[entity.get("id") or "unknown" for entity in entities],
+                        )
+                    )
+                    logger.debug("Push task error: task=%r, entities=%r", task, entities)
+        except TimeoutError as e:
+            errors.append(Exception(f"Timeout waiting for push tasks to finish: {e}"))
+
     if len(errors) > 0:
         raise IntegrationRunError(integration_id=instance.id_, integration_type=instance.type_, errors=errors)
 
 
-async def _run_integration_method(
-    *, instance: Integration, method: Callable, magneto_client: Magneto, logger: logging.Logger
-) -> dict:
+async def _run_integration_method_to_entities(
+    *, instance: Integration, method: Callable
+) -> AsyncGenerator[dict[str, Any], None]:
     try:
-        logger.info("Executing method %r", method.__name__)
-        method_output = await method(instance)
-        logger.debug("Results from method %r: %r", method.__name__, method_output)
-
-        results = []
-        if method_output is not None and len(method_output) > 0:
-            logger.debug("Magneto response for method %r: %r", method.__name__, method_output)
-            if not instance.is_dry_run:
-                logger.info("Sending entities to Rely API for method %r", method.__name__)
-                response = await magneto_client.insert_or_update_entities_bulk(method_output)
-                logger.info("%d entities sent to Rely API for method %r", len(response), method.__name__)
-                logger.debug("Magneto response for method %r: %r", method.__name__, response)
-                results.extend(response)
-        return results
-
+        entities = await method(instance)
+        for entity in entities or ():
+            yield entity
     except Exception as e:
         traceback.print_exc()
         raise IntegrationRunMethodError(
             integration_id=instance.id_, integration_type=instance.type_, method=method.__name__, error=e
         ) from e
+
+
+async def _retry_failed_push_tasks(
+    *,
+    failed_tasks: dict[str, TaskWithEntities],
+    magneto_client: Magneto,
+    logger: logging.Logger,
+    timeout: int | None = None,
+) -> tuple[dict[str, TaskWithEntities], dict[str, TaskWithEntities]]:
+    entities_from_failed_tasks = [entity for _, entities in failed_tasks.values() for entity in entities]
+    logger.info("Entities from failed tasks to retry: %d", len(entities_from_failed_tasks))
+
+    created_tasks = await magneto_client.upsert_entities_bulk_chunks(entities_from_failed_tasks, chunk_size=1)
+    logger.info("Push tasks created for retry: %d", len(created_tasks))
+
+    return await _wait_for_push_tasks_to_finish(
+        entities_tasks={task.id: (task, entities) for task, entities in created_tasks},
+        magneto_client=magneto_client,
+        logger=logger,
+        timeout=timeout,
+    )
+
+
+async def _wait_for_push_tasks_to_finish(
+    *,
+    entities_tasks: dict[str, TaskWithEntities],
+    magneto_client: Magneto,
+    logger: logging.Logger,
+    timeout: int | None = None,
+) -> tuple[dict[str, TaskWithEntities], dict[str, TaskWithEntities]]:
+    if not entities_tasks:
+        return [], []
+
+    tasks_success: dict[str, TaskWithEntities] = {}
+    tasks_errors: dict[str, TaskWithEntities] = {}
+
+    async def _func() -> None:
+        task_ids = (task_id for task_id in entities_tasks)
+        while True:
+            logger.info(
+                "Waiting for push tasks to finish (%d / %d)",
+                len(tasks_success) + len(tasks_errors),
+                len(entities_tasks),
+            )
+            task_ids_unfinished = []
+            async for task in magneto_client.get_tasks(task_ids=task_ids):
+                match task.status:
+                    case magneto_models.TaskStatus.SUCCESS:
+                        logger.debug("Task %r finished successfully", task.id)
+                        tasks_success[task.id] = (task, entities_tasks[task.id][1])
+                    case magneto_models.TaskStatus.FAILED:
+                        logger.warning(
+                            "Task %r failed with error: (%s) %s", task.id, task.error.type, task.error.message
+                        )
+                        tasks_errors[task.id] = (task, entities_tasks[task.id][1])
+                    case magneto_models.TaskStatus.CREATED | magneto_models.TaskStatus.RUNNING:
+                        logger.debug("Task %r still running", task.id)
+                        task_ids_unfinished.append(task.id)
+                    case _:
+                        raise ValueError(f"Unknown task status: {task.status}")
+
+            if len(task_ids_unfinished) == 0:
+                break
+            await anyio.sleep(5)
+            task_ids = task_ids_unfinished
+
+    if timeout is not None and timeout <= 0:
+        timeout = None
+
+    with anyio.fail_after(timeout):
+        async with anyio.create_task_group() as task_group:
+            task_group.start_soon(_func)
+
+    return tasks_success, tasks_errors
 
 
 def _group_methods(method_registry: list) -> OrderedDict[int, list[Any]]:
@@ -216,16 +321,25 @@ def _group_methods(method_registry: list) -> OrderedDict[int, list[Any]]:
 
 
 async def _upsert_automations(instance: Integration, *, magneto_client: Magneto, logger: logging.Logger) -> None:
+    if instance.is_dry_run is True:
+        return
+
     try:
         automations = json.loads(load_integration_resource(instance.type_, ".rely/automations.json"))
-        if instance.config.integration.dry_run is False:
-            for automation in automations:
-                logger.debug("Upserting automation: %r", automation)
-                await magneto_client.upsert_automation(
-                    automation,
-                    # If automation has errors due to missing blueprints, lets skip it
-                    raise_if_blueprint_not_found=False,
-                )
+        for automation in automations:
+            logger.debug("Upserting automation: %r", automation)
+            try:
+                existing_automation = await magneto_client.get_automation(automation["id"])
+                if existing_automation is not None:
+                    automation["isActive"] = existing_automation["isActive"]
+            except Exception:
+                logger.info("Automation %r not found, creating a new one", automation["id"])
+
+            await magneto_client.upsert_automation(
+                automation,
+                # If automation has errors due to missing blueprints, lets skip it
+                raise_if_blueprint_not_found=False,
+            )
     except Exception as e:
         raise Exception(f"Error upserting automations: {e}") from e
 

@@ -1,724 +1,738 @@
 [
-   {
-      "id":"gitlab.v1.group",
-      "title":"Gitlab Group",
-      "description":"Blueprint defining a GitLab group, including its projects and members.",
-      "icon":"gitlab",
-      "schemaProperties":{
-         "title":"group properties",
-         "type":"object",
-         "properties":{
-            "name":{
-               "type":"string",
-               "title":"Group Name",
-               "description":"The name of the group."
-            },
-            "description":{
-               "type":"string",
-               "title":"Group Description",
-               "description":"A brief description of the group."
-            },
-            "url":{
-               "type":"string",
-               "title":"Group URL",
-               "description":"The URL of the group",
-               "format":"url"
-            },
-            "projectCount":{
-               "type":"number",
-               "title":"Project Count",
-               "description":"The number of projects within the group."
-            },
-            "membersCount":{
-               "type":"number",
-               "title":"Members Count",
-               "description":"The number of members within the group."
-            }
-         }
+  {
+    "id": "gitlab.v1.group",
+    "title": "Gitlab Group",
+    "description": "Blueprint defining a GitLab group, including its projects and members.",
+    "icon": "gitlab",
+    "schemaProperties": {
+      "title": "group properties",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "title": "Group Name",
+          "description": "The name of the group."
+        },
+        "description": {
+          "type": "string",
+          "title": "Group Description",
+          "description": "A brief description of the group."
+        },
+        "url": {
+          "type": "string",
+          "title": "Group URL",
+          "description": "The URL of the group",
+          "format": "url"
+        },
+        "projectCount": {
+          "type": "number",
+          "title": "Project Count",
+          "description": "The number of projects within the group."
+        },
+        "membersCount": {
+          "type": "number",
+          "title": "Members Count",
+          "description": "The number of members within the group."
+        }
       }
-   },
-   {
-      "id":"gitlab.v1.repository",
-      "title":"Gitlab Repository",
-      "description":"Blueprint defining a GitLab repository",
-      "icon":"gitlab",
-      "schemaProperties":{
-         "title":"blueprint properties",
-         "type":"object",
-         "properties":{
-            "createdAt":{
-               "type":"string",
-               "format":"date-time",
-               "title":"Project Created At",
-               "description":"The created date and time of the project."
-            },
-            "lastActivityAt":{
-               "type":"string",
-               "format":"date-time",
-               "title":"Project Last Activity",
-               "description":"The update date and time of the project."
-            },
-            "visibility":{
-               "type":"string",
-               "title":"Project Visibility",
-               "description":"The visibility of the Project"
-            },
-            "url":{
-               "type":"string",
-               "title":"Web URL",
-               "description":"The URL of the project",
-               "format":"url"
-            },
-            "openIssuesCount":{
-               "type":"number",
-               "title":"Open Issues",
-               "description":"The open issues count of the project"
-            },
-            "openMergeRequestsCount":{
-               "type":"number",
-               "title":"Open Merges",
-               "description":"The merge requests open count for the project"
-            },
-            "languages":{
-               "type":"array",
-               "items":{
-                  "type":"string"
-               },
-               "title":"Languages",
-               "description":"The list of languages in the project"
-            },
-            "updatedAt":{
-               "type":"string",
-               "format":"date-time",
-               "title":"Updated At",
-               "description":"The update date of the repository"
-            },
-            "starCount":{
-               "type":"number",
-               "title":"Stars",
-               "description":"The number of stars for the project"
-            },
-            "defaultBranch":{
-               "type":"string",
-               "title":"Default Branch",
-               "description":"The default branch for the project"
-            },
-            "readmeUrl":{
-               "type":"string",
-               "title":"Readme URL",
-               "description":"The URL of the readme file",
-               "format":"url"
-            },
-            "readme":{
-               "type":"string",
-               "title":"Readme",
-               "description":"The content of the readme file",
-               "format":"markdown"
-            }
-         }
-      },
-      "relations":{
-         "owner":{
-            "value":"gitlab.v1.group",
-            "title":"Repository Owner",
-            "description":"The repository owner group."
-         }
-      },
-      "isHideable":false
-   },
-   {
-      "id":"gitlab.v1.groupmember",
-      "title":"Gitlab Group Member",
-      "description":"Blueprint defining a member of a GitLab group, including their role and contributions.",
-      "icon":"gitlab",
-      "schemaProperties":{
-         "title":"group member properties",
-         "type":"object",
-         "properties":{
-            "createdAt":{
-               "type":"string",
-               "format":"date-time",
-               "title":"Created At",
-               "description":"The date and time the member joined the group."
-            },
-            "email":{
-               "type":"string",
-               "title":"Email",
-               "description":"The email address of the member."
-            },
-            "username":{
-               "type":"string",
-               "title":"Username",
-               "description":"The GitLab username of the member."
-            },
-            "name":{
-               "type":"string",
-               "title":"Name",
-               "description":"The full name of the member."
-            }
-         }
-      },
-      "relations":{
-         "groups":{
-            "array":true,
-            "value":"gitlab.v1.group",
-            "title":"Groups",
-            "description":"The group this member belongs to"
-         }
+    }
+  },
+  {
+    "id": "gitlab.v1.repository",
+    "title": "Gitlab Repository",
+    "description": "Blueprint defining a GitLab repository",
+    "icon": "gitlab",
+    "schemaProperties": {
+      "title": "blueprint properties",
+      "type": "object",
+      "properties": {
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "title": "Project Created At",
+          "description": "The created date and time of the project."
+        },
+        "lastActivityAt": {
+          "type": "string",
+          "format": "date-time",
+          "title": "Project Last Activity",
+          "description": "The update date and time of the project."
+        },
+        "visibility": {
+          "type": "string",
+          "title": "Project Visibility",
+          "description": "The visibility of the Project"
+        },
+        "url": {
+          "type": "string",
+          "title": "Web URL",
+          "description": "The URL of the project",
+          "format": "url"
+        },
+        "openIssuesCount": {
+          "type": "number",
+          "title": "Open Issues",
+          "description": "The open issues count of the project"
+        },
+        "openMergeRequestsCount": {
+          "type": "number",
+          "title": "Open Merges",
+          "description": "The merge requests open count for the project"
+        },
+        "languages": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "title": "Languages",
+          "description": "The list of languages in the project"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "title": "Updated At",
+          "description": "The update date of the repository"
+        },
+        "starCount": {
+          "type": "number",
+          "title": "Stars",
+          "description": "The number of stars for the project"
+        },
+        "defaultBranch": {
+          "type": "string",
+          "title": "Default Branch",
+          "description": "The default branch for the project"
+        },
+        "readmeUrl": {
+          "type": "string",
+          "title": "Readme URL",
+          "description": "The URL of the readme file",
+          "format": "url"
+        },
+        "readme": {
+          "type": "string",
+          "title": "Readme",
+          "description": "The content of the readme file",
+          "format": "markdown"
+        },
+        "allBranchesRequiredReviews": {
+          "type": "integer",
+          "title": "All Branches Required Reviews",
+          "description": "The number of reviews required for all branches MR rules for the project"
+        },
+        "protectedBranchesRequiredReviews": {
+          "type": "integer",
+          "title": "Protected Branches Required Reviews",
+          "description": "The number of reviews required for protected branches MR rules for the project"
+        },
+        "defaultBranchRequiredReviews": {
+          "type": "integer",
+          "title": "Default Branch Required Reviews",
+          "description": "The number of reviews required for default branch MR rules for the project"
+        }
       }
-   },
-   {
-      "id":"gitlab.v1.issue",
-      "title":"Gitlab Issue",
-      "description":"Blueprint defining a GitLab issue",
-      "icon":"gitlab",
-      "schemaProperties":{
-         "title":"blueprint properties",
-         "type":"object",
-         "properties":{
-            "summary":{
-               "type":"string",
-               "title":"Summary",
-               "format":"markdown",
-               "description":"A markdown description of the merge request."
-            },
-            "createdAt":{
-               "type":"string",
-               "format":"date-time",
-               "title":"Created At",
-               "description":"The closing date of the issue"
-            },
-            "updatedAt":{
-               "type":"string",
-               "format":"date-time",
-               "title":"Updated At",
-               "description":"The last update date of the issue"
-            },
-            "closedAt":{
-               "type":"string",
-               "format":"date-time",
-               "title":"Closed At",
-               "description":"The date time when the issue was closed"
-            },
-            "url":{
-               "type":"string",
-               "title":"Link",
-               "description":"The url of the issue",
-               "format":"url"
-            },
-            "state":{
-               "type":"string",
-               "title":"Status",
-               "description":"The current status of the issue"
-            },
-            "labels":{
-               "type":"array",
-               "items":{
-                  "type":"string"
-               },
-               "title":"Labels",
-               "description":"Labels associated with the issue for categorization"
-            }
-         }
-      },
-      "relations":{
-         "repository":{
-            "value":"gitlab.v1.repository",
-            "title":"Repository",
-            "description":"The project this resource belongs to",
-            "array":false
-         },
-         "owner":{
-            "value":"gitlab.v1.group",
-            "title":"Issue Owner",
-            "description":"The issue owner group.",
-            "array":false
-         },
-         "createdBy":{
-            "value":"gitlab.v1.groupmember",
-            "title":"Created By",
-            "description":"The creator of the issue",
-            "array":false
-         },
-         "assignees":{
-            "value":"gitlab.v1.groupmember",
-            "title":"Assignees",
-            "description":"The list of assignees responsible for the issue",
-            "array":true
-         }
+    },
+    "relations": {
+      "owner": {
+        "value": "gitlab.v1.group",
+        "title": "Repository Owner",
+        "description": "The repository owner group."
       }
-   },
-   {
-      "id":"gitlab.v1.mergerequest",
-      "title":"Gitlab Merge Request",
-      "description":"Blueprint definition for GitLab Merge Request",
-      "icon":"gitlab",
-      "schemaProperties":{
-         "title":"blueprint properties",
-         "type":"object",
-         "properties":{
-            "url":{
-               "type":"string",
-               "title":"Link",
-               "description":"The URL link to the GitLab merge request.",
-               "format":"url"
-            },
-            "summary":{
-               "type":"string",
-               "title":"Summary",
-               "format":"markdown",
-               "description":"A markdown description of the merge request."
-            },
-            "createdAt":{
-               "type":"string",
-               "format":"date-time",
-               "title":"Closed At",
-               "description":"The creation date of the merge request."
-            },
-            "updatedAt":{
-               "type":"string",
-               "format":"date-time",
-               "title":"Updated At",
-               "description":"The last update date of the pull request."
-            },
-            "state":{
-               "type":"string",
-               "title":"Status",
-               "description":"The current status of the merge request"
-            },
-            "labels":{
-               "type":"array",
-               "title":"Labels",
-               "items":{
-                  "type":"string"
-               },
-               "description":"The list of labels for the merge request"
-            },
-            "sourceBranch":{
-               "type":"string",
-               "title":"Source Branch",
-               "description":"The source branch of the merge request"
-            },
-            "targetBranch":{
-               "type":"string",
-               "title":"Target Branch",
-               "description":"The target branch of the merge request"
-            },
-            "mergedAt":{
-               "type":"string",
-               "format":"date-time",
-               "title":"Merged At",
-               "description":"The merge date of the merge request"
-            },
-            "commitSHA":{
-               "title":"Commit SHA",
-               "description":"The latest commit hash of the merge request",
-               "type":"string"
-            },
-            "diffStats":{
-               "type":"object",
-               "title":"Diff Stats",
-               "properties":{
-                  "additions":{
-                     "type":"integer",
-                     "title":"Additions",
-                     "description":"The number of additions in the merge request"
-                  },
-                  "deletions":{
-                     "type":"integer",
-                     "title":"Deletions",
-                     "description":"The number of deletions in the merge request"
-                  },
-                  "changes":{
-                     "type":"integer",
-                     "title":"Total",
-                     "description":"The total number of changes in the merge request"
-                  },
-                  "fileCount":{
-                     "type":"integer",
-                     "title":"Files",
-                     "description":"The number of files in the merge request"
-                  }
-               }
-            }
-         }
-      },
-      "relations":{
-         "repository":{
-            "value":"gitlab.v1.repository",
-            "title":"Repository",
-            "description":"The project this resource belongs to"
-         },
-         "owner":{
-            "value":"gitlab.v1.group",
-            "title":"Merge Request Owner",
-            "description":"The merge request owner group."
-         },
-         "author":{
-            "value":"gitlab.v1.groupmember",
-            "title":"Creator",
-            "description":"The author of the merge request"
-         },
-         "assignees":{
-            "value":"gitlab.v1.groupmember",
-            "title":"Assignees",
-            "description":"The list of assignees responsible for the merge request",
-            "array":true
-         },
-         "reviewers":{
-            "value":"gitlab.v1.groupmember",
-            "title":"Reviewers",
-            "description":"The list of reviewers for the merge request",
-            "array":true
-         }
+    },
+    "isHideable": false
+  },
+  {
+    "id": "gitlab.v1.groupmember",
+    "title": "Gitlab Group Member",
+    "description": "Blueprint defining a member of a GitLab group, including their role and contributions.",
+    "icon": "gitlab",
+    "schemaProperties": {
+      "title": "group member properties",
+      "type": "object",
+      "properties": {
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "title": "Created At",
+          "description": "The date and time the member joined the group."
+        },
+        "email": {
+          "type": "string",
+          "title": "Email",
+          "description": "The email address of the member."
+        },
+        "username": {
+          "type": "string",
+          "title": "Username",
+          "description": "The GitLab username of the member."
+        },
+        "name": {
+          "type": "string",
+          "title": "Name",
+          "description": "The full name of the member."
+        }
       }
-   },
-   {
-      "id":"gitlab.v1.pipeline",
-      "title":"Gitlab Pipeline",
-      "description":"Blueprint defining a GitLab pipeline",
-      "icon":"gitlab",
-      "schemaProperties":{
-         "title":"Blueprint properties",
-         "type":"object",
-         "properties":{
-            "createdAt":{
-               "title":"Created At",
-               "description":"The timestamp when was created",
-               "type":"string",
-               "format":"date-time"
-            },
-            "updatedAt":{
-               "title":"Updated At",
-               "description":"The timestamp of the last update",
-               "type":"string",
-               "format":"date-time"
-            },
-            "commitSHA":{
-               "title":"Commit SHA",
-               "description":"The commit hash the pipeline ran in",
-               "type":"string"
-            },
-            "startedAt":{
-               "title":"Started At",
-               "description":"The timestamp of the pipeline start",
-               "type":"string",
-               "format":"date-time"
-            },
-            "finishedAt":{
-               "title":"Finished At",
-               "description":"The timestamp of the pipeline finish",
-               "type":"string",
-               "format":"date-time"
-            },
-            "status":{
-               "title":"Status",
-               "description":"The status of pipeline",
-               "type":"string"
-            },
-            "duration":{
-               "title":"Duration",
-               "description":"The duration of the pipeline",
-               "type":"number"
-            },
-            "branch":{
-               "title":"Branch",
-               "description":"The branch for which the pipeline was created",
-               "type":"string"
-            },
-            "webUrl":{
-               "title":"Link",
-               "description":"The url of the pipeline",
-               "type":"string",
-               "format":"url"
-            },
-            "failureReason":{
-               "title":"Failure Reason",
-               "description":"The failure reason of the pipeline",
-               "type":"string"
-            },
-            "successful":{
-               "type":"boolean",
-               "title":"Successful?",
-               "description":"A boolean flag indicating if the pipeline has finished successfully."
-            }
-         }
-      },
-      "relations":{
-         "repository":{
-            "value":"gitlab.v1.repository",
-            "title":"Repository",
-            "description":"The project this resource belongs to"
-         },
-         "owner":{
-            "value":"gitlab.v1.group",
-            "title":"Pipeline Owner",
-            "description":"The pipeline owner group."
-         },
-         "triggeredBy":{
-            "value":"gitlab.v1.groupmember",
-            "title":"Triggered By",
-            "description":"The user who triggered the pipeline"
-         }
+    },
+    "relations": {
+      "groups": {
+        "array": true,
+        "value": "gitlab.v1.group",
+        "title": "Groups",
+        "description": "The group this member belongs to"
       }
-   },
-   {
-      "id":"gitlab.v1.environment",
-      "title":"Gitlab Environment",
-      "description":"Blueprint defining a GitLab Environment",
-      "icon":"gitlab",
-      "schemaProperties":{
-         "title":"Blueprint properties",
-         "type":"object",
-         "properties":{
-            "url":{
-               "type":"string",
-               "title":"Link",
-               "description":"The URL link to the GitLab merge request.",
-               "format":"url"
-            },
-            "externalUrl":{
-               "type":"string",
-               "title":"External Link",
-               "description":"The URL link to the external representation of the environment (outside of Gitlab).",
-               "format":"url"
-            },
-            "status":{
-               "title":"Status",
-               "description":"The ",
-               "type":"string"
-            },
-            "createdAt":{
-               "title":"Created At",
-               "description":"The timestamp when the environment was created",
-               "type":"string",
-               "format":"date-time"
-            },
-            "updatedAt":{
-               "title":"Updated At",
-               "description":"The timestamp when the the environment was last updated",
-               "type":"string",
-               "format":"date-time"
-            }
-         }
-      },
-      "relations":{
-         "repository":{
-            "value":"gitlab.v1.repository",
-            "title":"Repository",
-            "description":"The project this environment belongs to",
-            "array":false
-         }
+    }
+  },
+  {
+    "id": "gitlab.v1.issue",
+    "title": "Gitlab Issue",
+    "description": "Blueprint defining a GitLab issue",
+    "icon": "gitlab",
+    "schemaProperties": {
+      "title": "blueprint properties",
+      "type": "object",
+      "properties": {
+        "summary": {
+          "type": "string",
+          "title": "Summary",
+          "format": "markdown",
+          "description": "A markdown description of the merge request."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "title": "Created At",
+          "description": "The closing date of the issue"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "title": "Updated At",
+          "description": "The last update date of the issue"
+        },
+        "closedAt": {
+          "type": "string",
+          "format": "date-time",
+          "title": "Closed At",
+          "description": "The date time when the issue was closed"
+        },
+        "url": {
+          "type": "string",
+          "title": "Link",
+          "description": "The url of the issue",
+          "format": "url"
+        },
+        "state": {
+          "type": "string",
+          "title": "Status",
+          "description": "The current status of the issue"
+        },
+        "labels": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "title": "Labels",
+          "description": "Labels associated with the issue for categorization"
+        }
       }
-   },
-   {
-      "id":"gitlab.v1.deployment",
-      "title":"Gitlab Deployment",
-      "description":"Blueprint defining a GitLab Deployment",
-      "icon":"gitlab",
-      "schemaProperties":{
-         "title":"Blueprint properties",
-         "type":"object",
-         "properties":{
-            "status":{
-               "type":"string",
-               "format":null,
-               "title":"Status",
-               "description":"The current status of the pipeline."
-            },
-            "createdAt":{
-               "type":"string",
-               "format":"date-time",
-               "title":"Created At",
-               "description":"Date & Time at which this deployment was executed."
-            },
-            "updatedAt":{
-               "type":"string",
-               "format":"date-time",
-               "title":"Updated At",
-               "description":"Date & Time at which this deployment was last updated."
-            },
-            "finishedAt":{
-               "type":"string",
-               "format":"date-time",
-               "title":"Finished At",
-               "description":"Date & Time at which this deployment finished."
-            },
-            "number":{
-               "type":"number",
-               "format":null,
-               "title":"Number",
-               "description":"the auto-incremented position of this deployment within its pipeline"
-            },
-            "envLink":{
-               "type":"string",
-               "format":"url",
-               "title":"Env Url",
-               "description":"Link to the environment page in Gitlab listing all the deployments."
-            },
-            "outputLink":{
-               "type":"string",
-               "format":"url",
-               "title":"Output Url",
-               "description":"Link to the output of the deployment (outside of Gitlab)"
-            },
-            "jobLink":{
-                 "type":"string",
-                 "format":"url",
-                 "title":"Job Url",
-                 "description":"Link to the job logs page in Gitlab that deployment occurred in."
-              },
-            "pipelineLink":{
-                 "type":"string",
-                 "format":"url",
-                 "title":"Pipeline Url",
-                 "description":"Link to the pipeline execution in Gitlab that deployment occurred in."
-              },
-            "branch":{
-   "title":"Branch",
-   "description":"The branch for which the pipeline was created",
-   "type":"string"
-},
-            "commit":{
-               "type":"string",
-               "format":null,
-               "title":"Commit",
-               "description":"The hash of the commit the deployment targeted."
-            },
-            "jobId":{
-               "type":"string",
-               "format":null,
-               "title":"Job",
-               "description":"The Job ID of the job the deployment occurred in."
-            },
-            "commitTitle":{
-                 "type":"string",
-                 "format":null,
-                 "title":"Commit  Title",
-                 "description":"The title of the commit the deployment targeted."
-              },
-            "commitMessage":{
-                 "type":"string",
-                 "format":null,
-                 "title":"Commit Message",
-                 "description":"The message of the commit the deployment targeted."
-              },
-            "commitAuthor":{
-                 "type":"string",
-                 "format": "user",
-                 "title":"Commit",
-                 "description":"The person of the commit the deployment targeted."
-              }
-         }
+    },
+    "relations": {
+      "repository": {
+        "value": "gitlab.v1.repository",
+        "title": "Repository",
+        "description": "The project this resource belongs to",
+        "array": false
       },
-      "relations":{
-            "repository":{
-               "value":"gitlab.v1.repository",
-               "title":"Repository",
-               "description":"The project this deployment belongs to",
-               "array":false
-            },
-            "triggeredBy":{
-               "value":"gitlab.v1.groupmember",
-               "title":"Triggered By",
-               "description":"The user that triggered this deployment",
-               "array":false
-            },
-            "environment":{
-               "value":"gitlab.v1.environment",
-               "title":"Environment",
-               "description":"The environment this deployment updated",
-               "array":false
-            },
-            "pipeline":{
-               "value":"gitlab.v1.pipeline",
-               "title":"Pipeline",
-               "description":"The Pipeline this deployment ran in",
-               "array":false
-            }
-     }
-
-   },
-   {
-      "id":"gitlab.v1.job",
-      "title":"Gitlab Pipeline Job",
-      "description":"Blueprint defining a GitLab pipeline job",
-      "icon":"gitlab",
-      "schemaProperties":{
-         "title":"Blueprint properties",
-         "type":"object",
-         "properties":{
-            "name":{
-               "title":"Name",
-               "description":"The name of the job",
-               "type":"string"
-            },
-            "status":{
-               "title":"Status",
-               "description":"The name of the job",
-               "type":"string"
-            },
-            "createdAt":{
-               "title":"Created At",
-               "description":"The timestamp when the job created",
-               "type":"string",
-               "format":"date-time"
-            },
-            "startedAt":{
-               "title":"Started At",
-               "description":"The timestamp of the job start",
-               "type":"string",
-               "format":"date-time"
-            },
-            "finishedAt":{
-               "title":"Finished At",
-               "description":"The timestamp of the job finish",
-               "type":"string",
-               "format":"date-time"
-            },
-            "duration":{
-               "title":"Duration",
-               "description":"The duration of the pipeline",
-               "type":"number"
-            },
-            "retried":{
-               "title":"Retried",
-               "description":"Whether the job was retried",
-               "type":"boolean"
-            },
-            "failureMessage":{
-               "title":"Failure Message",
-               "description":"The failure message of the pipeline",
-               "type":"string"
-            },
-            "triggered":{
-               "title":"Triggered",
-               "description":"Whether the job was triggered",
-               "type":"boolean"
-            },
-            "allowFailure":{
-               "title":"Allow Failure",
-               "description":"Whether the job is allowed to fail",
-               "type":"boolean"
-            },
-            "stage":{
-               "title":"Stage",
-               "description":"The stage the job belongs to",
-               "type":"string"
-            }
-         }
+      "owner": {
+        "value": "gitlab.v1.group",
+        "title": "Issue Owner",
+        "description": "The issue owner group.",
+        "array": false
       },
-      "relations":{
-         "pipeline":{
-            "value":"gitlab.v1.pipeline",
-            "title":"Pipeline",
-            "description":"The pipeline this job belongs to"
-         },
-         "owner":{
-            "value":"gitlab.v1.group",
-            "title":"Job Owner",
-            "description":"The job owner group"
-         }
+      "createdBy": {
+        "value": "gitlab.v1.groupmember",
+        "title": "Created By",
+        "description": "The creator of the issue",
+        "array": false
+      },
+      "assignees": {
+        "value": "gitlab.v1.groupmember",
+        "title": "Assignees",
+        "description": "The list of assignees responsible for the issue",
+        "array": true
       }
-   }
+    }
+  },
+  {
+    "id": "gitlab.v1.mergerequest",
+    "title": "Gitlab Merge Request",
+    "description": "Blueprint definition for GitLab Merge Request",
+    "icon": "gitlab",
+    "schemaProperties": {
+      "title": "blueprint properties",
+      "type": "object",
+      "properties": {
+        "url": {
+          "type": "string",
+          "title": "Link",
+          "description": "The URL link to the GitLab merge request.",
+          "format": "url"
+        },
+        "summary": {
+          "type": "string",
+          "title": "Summary",
+          "format": "markdown",
+          "description": "A markdown description of the merge request."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "title": "Closed At",
+          "description": "The creation date of the merge request."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "title": "Updated At",
+          "description": "The last update date of the pull request."
+        },
+        "state": {
+          "type": "string",
+          "title": "Status",
+          "description": "The current status of the merge request"
+        },
+        "labels": {
+          "type": "array",
+          "title": "Labels",
+          "items": {
+            "type": "string"
+          },
+          "description": "The list of labels for the merge request"
+        },
+        "sourceBranch": {
+          "type": "string",
+          "title": "Source Branch",
+          "description": "The source branch of the merge request"
+        },
+        "targetBranch": {
+          "type": "string",
+          "title": "Target Branch",
+          "description": "The target branch of the merge request"
+        },
+        "mergedAt": {
+          "type": "string",
+          "format": "date-time",
+          "title": "Merged At",
+          "description": "The merge date of the merge request"
+        },
+        "commitSHA": {
+          "title": "Commit SHA",
+          "description": "The latest commit hash of the merge request",
+          "type": "string"
+        },
+        "diffStats": {
+          "type": "object",
+          "title": "Diff Stats",
+          "properties": {
+            "additions": {
+              "type": "integer",
+              "title": "Additions",
+              "description": "The number of additions in the merge request"
+            },
+            "deletions": {
+              "type": "integer",
+              "title": "Deletions",
+              "description": "The number of deletions in the merge request"
+            },
+            "changes": {
+              "type": "integer",
+              "title": "Total",
+              "description": "The total number of changes in the merge request"
+            },
+            "fileCount": {
+              "type": "integer",
+              "title": "Files",
+              "description": "The number of files in the merge request"
+            }
+          }
+        }
+      }
+    },
+    "relations": {
+      "repository": {
+        "value": "gitlab.v1.repository",
+        "title": "Repository",
+        "description": "The project this resource belongs to"
+      },
+      "owner": {
+        "value": "gitlab.v1.group",
+        "title": "Merge Request Owner",
+        "description": "The merge request owner group."
+      },
+      "author": {
+        "value": "gitlab.v1.groupmember",
+        "title": "Creator",
+        "description": "The author of the merge request"
+      },
+      "assignees": {
+        "value": "gitlab.v1.groupmember",
+        "title": "Assignees",
+        "description": "The list of assignees responsible for the merge request",
+        "array": true
+      },
+      "reviewers": {
+        "value": "gitlab.v1.groupmember",
+        "title": "Reviewers",
+        "description": "The list of reviewers for the merge request",
+        "array": true
+      }
+    }
+  },
+  {
+    "id": "gitlab.v1.pipeline",
+    "title": "Gitlab Pipeline",
+    "description": "Blueprint defining a GitLab pipeline",
+    "icon": "gitlab",
+    "schemaProperties": {
+      "title": "Blueprint properties",
+      "type": "object",
+      "properties": {
+        "createdAt": {
+          "title": "Created At",
+          "description": "The timestamp when was created",
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "title": "Updated At",
+          "description": "The timestamp of the last update",
+          "type": "string",
+          "format": "date-time"
+        },
+        "commitSHA": {
+          "title": "Commit SHA",
+          "description": "The commit hash the pipeline ran in",
+          "type": "string"
+        },
+        "startedAt": {
+          "title": "Started At",
+          "description": "The timestamp of the pipeline start",
+          "type": "string",
+          "format": "date-time"
+        },
+        "finishedAt": {
+          "title": "Finished At",
+          "description": "The timestamp of the pipeline finish",
+          "type": "string",
+          "format": "date-time"
+        },
+        "status": {
+          "title": "Status",
+          "description": "The status of pipeline",
+          "type": "string"
+        },
+        "duration": {
+          "title": "Duration",
+          "description": "The duration of the pipeline",
+          "type": "number"
+        },
+        "branch": {
+          "title": "Branch",
+          "description": "The branch for which the pipeline was created",
+          "type": "string"
+        },
+        "webUrl": {
+          "title": "Link",
+          "description": "The url of the pipeline",
+          "type": "string",
+          "format": "url"
+        },
+        "failureReason": {
+          "title": "Failure Reason",
+          "description": "The failure reason of the pipeline",
+          "type": "string"
+        },
+        "successful": {
+          "type": "boolean",
+          "title": "Successful?",
+          "description": "A boolean flag indicating if the pipeline has finished successfully."
+        }
+      }
+    },
+    "relations": {
+      "repository": {
+        "value": "gitlab.v1.repository",
+        "title": "Repository",
+        "description": "The project this resource belongs to"
+      },
+      "owner": {
+        "value": "gitlab.v1.group",
+        "title": "Pipeline Owner",
+        "description": "The pipeline owner group."
+      },
+      "triggeredBy": {
+        "value": "gitlab.v1.groupmember",
+        "title": "Triggered By",
+        "description": "The user who triggered the pipeline"
+      }
+    }
+  },
+  {
+    "id": "gitlab.v1.environment",
+    "title": "Gitlab Environment",
+    "description": "Blueprint defining a GitLab Environment",
+    "icon": "gitlab",
+    "schemaProperties": {
+      "title": "Blueprint properties",
+      "type": "object",
+      "properties": {
+        "url": {
+          "type": "string",
+          "title": "Link",
+          "description": "The URL link to the GitLab merge request.",
+          "format": "url"
+        },
+        "externalUrl": {
+          "type": "string",
+          "title": "External Link",
+          "description": "The URL link to the external representation of the environment (outside of Gitlab).",
+          "format": "url"
+        },
+        "status": {
+          "title": "Status",
+          "description": "The ",
+          "type": "string"
+        },
+        "createdAt": {
+          "title": "Created At",
+          "description": "The timestamp when the environment was created",
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "title": "Updated At",
+          "description": "The timestamp when the the environment was last updated",
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "relations": {
+      "repository": {
+        "value": "gitlab.v1.repository",
+        "title": "Repository",
+        "description": "The project this environment belongs to",
+        "array": false
+      }
+    }
+  },
+  {
+    "id": "gitlab.v1.deployment",
+    "title": "Gitlab Deployment",
+    "description": "Blueprint defining a GitLab Deployment",
+    "icon": "gitlab",
+    "schemaProperties": {
+      "title": "Blueprint properties",
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "string",
+          "format": null,
+          "title": "Status",
+          "description": "The current status of the pipeline."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "title": "Created At",
+          "description": "Date & Time at which this deployment was executed."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "title": "Updated At",
+          "description": "Date & Time at which this deployment was last updated."
+        },
+        "finishedAt": {
+          "type": "string",
+          "format": "date-time",
+          "title": "Finished At",
+          "description": "Date & Time at which this deployment finished."
+        },
+        "number": {
+          "type": "number",
+          "format": null,
+          "title": "Number",
+          "description": "the auto-incremented position of this deployment within its pipeline"
+        },
+        "envLink": {
+          "type": "string",
+          "format": "url",
+          "title": "Env Url",
+          "description": "Link to the environment page in Gitlab listing all the deployments."
+        },
+        "outputLink": {
+          "type": "string",
+          "format": "url",
+          "title": "Output Url",
+          "description": "Link to the output of the deployment (outside of Gitlab)"
+        },
+        "jobLink": {
+          "type": "string",
+          "format": "url",
+          "title": "Job Url",
+          "description": "Link to the job logs page in Gitlab that deployment occurred in."
+        },
+        "pipelineLink": {
+          "type": "string",
+          "format": "url",
+          "title": "Pipeline Url",
+          "description": "Link to the pipeline execution in Gitlab that deployment occurred in."
+        },
+        "branch": {
+          "title": "Branch",
+          "description": "The branch for which the pipeline was created",
+          "type": "string"
+        },
+        "commit": {
+          "type": "string",
+          "format": null,
+          "title": "Commit",
+          "description": "The hash of the commit the deployment targeted."
+        },
+        "jobId": {
+          "type": "string",
+          "format": null,
+          "title": "Job",
+          "description": "The Job ID of the job the deployment occurred in."
+        },
+        "commitTitle": {
+          "type": "string",
+          "format": null,
+          "title": "Commit  Title",
+          "description": "The title of the commit the deployment targeted."
+        },
+        "commitMessage": {
+          "type": "string",
+          "format": null,
+          "title": "Commit Message",
+          "description": "The message of the commit the deployment targeted."
+        },
+        "commitAuthor": {
+          "type": "string",
+          "format": "user",
+          "title": "Commit",
+          "description": "The person of the commit the deployment targeted."
+        }
+      }
+    },
+    "relations": {
+      "repository": {
+        "value": "gitlab.v1.repository",
+        "title": "Repository",
+        "description": "The project this deployment belongs to",
+        "array": false
+      },
+      "triggeredBy": {
+        "value": "gitlab.v1.groupmember",
+        "title": "Triggered By",
+        "description": "The user that triggered this deployment",
+        "array": false
+      },
+      "environment": {
+        "value": "gitlab.v1.environment",
+        "title": "Environment",
+        "description": "The environment this deployment updated",
+        "array": false
+      },
+      "pipeline": {
+        "value": "gitlab.v1.pipeline",
+        "title": "Pipeline",
+        "description": "The Pipeline this deployment ran in",
+        "array": false
+      }
+    }
+  },
+  {
+    "id": "gitlab.v1.job",
+    "title": "Gitlab Pipeline Job",
+    "description": "Blueprint defining a GitLab pipeline job",
+    "icon": "gitlab",
+    "schemaProperties": {
+      "title": "Blueprint properties",
+      "type": "object",
+      "properties": {
+        "name": {
+          "title": "Name",
+          "description": "The name of the job",
+          "type": "string"
+        },
+        "status": {
+          "title": "Status",
+          "description": "The name of the job",
+          "type": "string"
+        },
+        "createdAt": {
+          "title": "Created At",
+          "description": "The timestamp when the job created",
+          "type": "string",
+          "format": "date-time"
+        },
+        "startedAt": {
+          "title": "Started At",
+          "description": "The timestamp of the job start",
+          "type": "string",
+          "format": "date-time"
+        },
+        "finishedAt": {
+          "title": "Finished At",
+          "description": "The timestamp of the job finish",
+          "type": "string",
+          "format": "date-time"
+        },
+        "duration": {
+          "title": "Duration",
+          "description": "The duration of the pipeline",
+          "type": "number"
+        },
+        "retried": {
+          "title": "Retried",
+          "description": "Whether the job was retried",
+          "type": "boolean"
+        },
+        "failureMessage": {
+          "title": "Failure Message",
+          "description": "The failure message of the pipeline",
+          "type": "string"
+        },
+        "triggered": {
+          "title": "Triggered",
+          "description": "Whether the job was triggered",
+          "type": "boolean"
+        },
+        "allowFailure": {
+          "title": "Allow Failure",
+          "description": "Whether the job is allowed to fail",
+          "type": "boolean"
+        },
+        "stage": {
+          "title": "Stage",
+          "description": "The stage the job belongs to",
+          "type": "string"
+        }
+      }
+    },
+    "relations": {
+      "pipeline": {
+        "value": "gitlab.v1.pipeline",
+        "title": "Pipeline",
+        "description": "The pipeline this job belongs to"
+      },
+      "owner": {
+        "value": "gitlab.v1.group",
+        "title": "Job Owner",
+        "description": "The job owner group"
+      }
+    }
+  }
 ]

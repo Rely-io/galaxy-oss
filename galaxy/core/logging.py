@@ -4,7 +4,6 @@ from typing import List
 
 from galaxy.core.models import Config
 
-
 __all__ = ["InMemoryLogHandler", "get_magneto_logs", "setup_logger", "get_log_format"]
 
 

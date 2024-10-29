@@ -36,6 +36,9 @@ class IntegrationConfig(BaseModel):
     dry_run: bool = Field(False, alias="dryRun")
     properties: dict[str, Any] = Field(..., alias="properties")
 
+    wait_for_tasks_enabled: bool = Field(True, alias="waitForTasksEnabled")
+    wait_for_tasks_timeout_seconds: int | None = Field(600, alias="waitForTasksTimeout")
+
 
 class Config(BaseModel):
     @classmethod

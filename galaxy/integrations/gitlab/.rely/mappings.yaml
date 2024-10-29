@@ -30,6 +30,9 @@ resources:
       updatedAt: .updatedAt
       readmeUrl: 'if .repository.blobs.nodes | length > 0 then .webUrl + "/-/blob/" + .repository.rootRef + "/" + .repository.blobs.nodes[0].path else "" end'
       readme: 'if .repository.blobs.nodes | length > 0 then .repository.blobs.nodes[0].rawBlob else "" end'
+      defaultBranchRequiredReviews: .requiredReviews["default"]
+      allBranchesRequiredReviews: .requiredReviews["All branches"]
+      protectedBranchesRequiredReviews: .requiredReviews["All protected branches"]
     relations:
       owner:
         value: '"gitlab_group_" + (.context.ownerGroup | tostring)'

@@ -1,0 +1,66 @@
+resources:
+  - kind: organization
+    mappings:
+      blueprintId: '"snyk.v1.organization"'
+      id: .id
+      title: .attributes.name
+      description: '""'
+      properties:
+        link: '"https://app.snyk.io/org/" + .attributes.slug | tostring'
+        createdAt: .attributes.created_at
+        updatedAt: .attributes.updated_at
+
+  - kind: target
+    mappings:
+      blueprintId: '"snyk.v1.target"'
+      id: .id
+      title: .attributes.display_name
+      description: '""'
+      properties:
+        origin: .relationships.integration.data.attributes.integration_type
+        criticalIssueCounts: "[.__projects[].meta.latest_issue_counts.critical] | add"
+        highIssueCounts: "[.__projects[].meta.latest_issue_counts.high] | add"
+        lowIssueCounts: "[.__projects[].meta.latest_issue_counts.low] | add"
+        mediumIssueCounts: "[.__projects[].meta.latest_issue_counts.medium] | add"
+      relations:
+        organization:
+          value: .relationships.organization.data.id
+
+  - kind: project
+    mappings:
+      blueprintId: '"snyk.v1.project"'
+      id: .id
+      title: .attributes.name
+      description: '""'
+      properties:
+        link: '"https://app.snyk.io/org/" + .__organization_slug + "/project/" + .id | tostring'
+        type: .attributes.type
+        businessCriticalities: .attributes.business_criticality
+        environments: .attributes.environment
+        lifecycles: .attributes.lifecycle
+        origin: .attributes.origin
+        criticalIssueCounts: .meta.latest_issue_counts.critical
+        highIssueCounts: .meta.latest_issue_counts.high
+        lowIssueCounts: .meta.latest_issue_counts.low
+        mediumIssueCounts: .meta.latest_issue_counts.medium
+      relations:
+        target:
+          value: .relationships.target.data.id
+
+  - kind: issue
+    mappings:
+      blueprintId: '"snyk.v1.issue"'
+      id: .id
+      title: .attributes.title
+      description: '""'
+      properties:
+        type: .attributes.type
+        severity: .attributes.effective_severity_level
+        status: .attributes.status
+        createdAt: .attributes.created_at
+        updatedAt: .attributes.updated_at
+      relations:
+        project:
+          value: .relationships.scan_item.data.id
+        target:
+          value: .__target

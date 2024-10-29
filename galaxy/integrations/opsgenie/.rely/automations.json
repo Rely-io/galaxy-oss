@@ -252,7 +252,7 @@
             "properties": {
               "incidentManagementLink": "{{ data.properties.webUrl if data.properties.webUrl else none }}",
               "currentOnCalls": "{{ (actions.fetch_oncall.output.title | tojson) if actions.fetch_oncall else [] }}",
-              "activeOnCallSchedules": "{{ (actions.fetch_opsgenie_team.output.properties.onCallSchedules | tojson) if actions.fetch_opsgenie_team else [] }}"
+              "activeOnCallSchedules": "{{ (data.properties.onCallSchedules | tojson) if data.properties.onCallSchedules else [] }}"
             },
             "relations": {
               "OpsGenieTeam": {
@@ -368,10 +368,11 @@
               "source": "OpsGenie",
               "link": "{{ data.properties.webUrl if data.properties.webUrl else none }}",
               "status": "{{ standardize_status(data.properties.status, arguments.targetBlueprintId) if data.properties.status else none }}",
-              "isActive": "{{ true if standardize_status(data.properties.status, arguments.targetBlueprintId) in ['Triggered', 'Acknowledged', 'Escalated'] else false }}",
+              "isActive": "{{ true if standardize_status(data.properties.status, arguments.targetBlueprintId) in ['Open', 'Acknowledged', 'Escalated'] else false }}",
               "severity": "{{ data.properties.priority if data.properties.priority else none }}",
               "createdAt": "{{ data.properties.createdAt if data.properties.createdAt else none }}",
-              "updatedAt": "{{ data.properties.updatedAt if data.properties.updatedAt else none }}"
+              "updatedAt": "{{ data.properties.updatedAt if data.properties.updatedAt else none }}",
+              "closedAt": "{{ data.properties.closedAt if data.properties.closedAt else none }}"
             },
             "relations": {
               "OpsGenieIncident": {
@@ -416,7 +417,7 @@
               "source": "OpsGenie",
               "link": "{{ data.properties.webUrl if data.properties.webUrl else none }}",
               "status": "{{ standardize_status(data.properties.status, arguments.targetBlueprintId) if data.properties.status else none }}",
-              "isActive": "{{ true if standardize_status(data.properties.status, arguments.targetBlueprintId) in ['Triggered', 'Acknowledged', 'Escalated'] else false }}",
+              "isActive": "{{ true if standardize_status(data.properties.status, arguments.targetBlueprintId) in ['Open', 'Acknowledged', 'Escalated'] else false }}",
               "severity": "{{ data.properties.priority if data.properties.priority else none }}",
               "createdAt": "{{ data.properties.createdAt if data.properties.createdAt else none }}",
               "updatedAt": "{{ data.properties.updatedAt if data.properties.updatedAt else none }}"

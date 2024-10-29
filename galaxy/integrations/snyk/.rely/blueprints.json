@@ -1,0 +1,260 @@
+[
+  {
+    "id": "snyk.v1.organization",
+    "title": "Snyk Organization",
+    "description": "Blueprint defining a Snyk organization",
+    "icon": "snyk",
+    "schemaProperties": {
+      "title": "blueprint properties",
+      "type": "object",
+      "properties": {
+        "link": {
+          "type": "string",
+          "format": "url",
+          "title": "Link"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "title": "Created At"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "title": "Updated At"
+        }
+      }
+    },
+    "isHideable": false
+  },
+  {
+    "id": "snyk.v1.target",
+    "title": "Snyk Target",
+    "description": "Blueprint defining a Snyk target",
+    "icon": "snyk",
+    "schemaProperties": {
+      "title": "blueprint properties",
+      "type": "object",
+      "properties": {
+        "origin": {
+          "type": "string",
+          "title": "Origin",
+          "enum": [
+            "artifactory-cr",
+            "aws-config",
+            "aws-lambda",
+            "azure-functions",
+            "azure-repos",
+            "bitbucket-cloud",
+            "bitbucket-server",
+            "cli",
+            "cloud-foundry",
+            "digitalocean-cr",
+            "docker-hub",
+            "ecr",
+            "gcr",
+            "github",
+            "github-cr",
+            "github-enterprise",
+            "gitlab",
+            "gitlab-cr",
+            "google-artifact-cr",
+            "harbor-cr",
+            "heroku",
+            "ibm-cloud",
+            "kubernetes",
+            "nexus-cr",
+            "pivotal",
+            "quay-cr",
+            "terraform-cloud",
+            "bitbucket-connect-app",
+            "acr",
+            "api"
+          ]
+        },
+        "criticalIssueCounts": {
+          "type": "integer",
+          "title": "Number of critical open issues"
+        },
+        "highIssueCounts": {
+          "type": "integer",
+          "title": "Number of high open issues"
+        },
+        "lowIssueCounts": {
+          "type": "integer",
+          "title": "Number of low open issues"
+        },
+        "mediumIssueCounts": {
+          "type": "integer",
+          "title": "Number of medium open issues"
+        }
+      }
+    },
+    "relations": {
+      "organization": {
+        "value": "snyk.v1.organization",
+        "title": "Organization",
+        "description": "The organization that the target belongs to"
+      }
+    },
+    "isHideable": false
+  },
+  {
+    "id": "snyk.v1.project",
+    "title": "Snyk Project",
+    "description": "Blueprint defining a Snyk project",
+    "icon": "snyk",
+    "schemaProperties": {
+      "title": "blueprint properties",
+      "type": "object",
+      "properties": {
+        "link": {
+          "type": "string",
+          "format": "url",
+          "title": "Link"
+        },
+        "type": {
+          "type": "string",
+          "title": "Type"
+        },
+        "businessCriticalities": {
+          "type": "array",
+          "title": "Business criticalities",
+          "items": {
+            "type": "string",
+            "enum": [
+              "low",
+              "medium",
+              "high",
+              "critical"
+            ]
+          }
+        },
+        "environments": {
+          "type": "array",
+          "title": "Environments",
+          "items": {
+            "type": "string",
+            "enum": [
+              "frontend",
+              "backend",
+              "internal",
+              "external",
+              "mobile",
+              "saas",
+              "onprem",
+              "hosted",
+              "distributed"
+            ]
+          }
+        },
+        "lifecycles": {
+          "type": "array",
+          "title": "Lifecycles",
+          "items": {
+            "type": "string",
+            "enum": [
+              "production",
+              "development",
+              "sandbox"
+            ]
+          }
+        },
+        "origin": {
+          "type": "string",
+          "title": "Origin"
+        },
+        "criticalIssueCounts": {
+          "type": "integer",
+          "title": "Number of critical open issues"
+        },
+        "highIssueCounts": {
+          "type": "integer",
+          "title": "Number of high open issues"
+        },
+        "lowIssueCounts": {
+          "type": "integer",
+          "title": "Number of low open issues"
+        },
+        "mediumIssueCounts": {
+          "type": "integer",
+          "title": "Number of medium open issues"
+        }
+      }
+    },
+    "relations": {
+      "target": {
+        "value": "snyk.v1.target",
+        "title": "Target",
+        "description": "The target that the project belongs to"
+      }
+    },
+    "isHideable": false
+  },
+  {
+    "id": "snyk.v1.issue",
+    "title": "Snyk Issue",
+    "description": "Blueprint defining a Snyk issue",
+    "icon": "snyk",
+    "schemaProperties": {
+      "title": "blueprint properties",
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "title": "Type",
+          "enum": [
+            "package_vulnerability",
+            "license",
+            "cloud",
+            "code",
+            "custom",
+            "config"
+          ]
+        },
+        "severity": {
+          "type": "string",
+          "title": "Severity",
+          "enum": [
+            "info",
+            "low",
+            "medium",
+            "high",
+            "critical"
+          ]
+        },
+        "status": {
+          "type": "string",
+          "title": "Status",
+          "enum": [
+            "open",
+            "resolved"
+          ]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "title": "Created At"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "title": "Updated At"
+        }
+      }
+    },
+    "relations": {
+      "project": {
+        "value": "snyk.v1.project",
+        "title": "Project",
+        "description": "The project that the issue belongs to"
+      },
+      "target": {
+        "value": "snyk.v1.target",
+        "title": "Target",
+        "description": "The target that issue is related to"
+      }
+    },
+    "isHideable": false
+  }
+]
