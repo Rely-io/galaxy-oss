@@ -11,7 +11,13 @@ from typing import Any
 import anyio
 
 from galaxy.core.blueprints import collect_blueprints
-from galaxy.core.exceptions import EntityPushTaskError, GalaxyError, IntegrationRunError, IntegrationRunMethodError
+from galaxy.core.exceptions import (
+    EntityPushTaskError,
+    GalaxyError,
+    IntegrationRunError,
+    IntegrationRunMethodError,
+    IntegrationRunWarning,
+)
 from galaxy.core.logging import get_magneto_logs
 from galaxy.core.magneto import Magneto, TaskWithEntities, magneto_models
 from galaxy.core.mapper import Mapper
@@ -95,6 +101,13 @@ async def run_integration(instance: Integration, *, magneto_client: Magneto, log
         await run_integration_methods(
             instance=instance, config_entity=config_entity, magneto_client=magneto_client, logger=logger
         )
+    except IntegrationRunWarning as e:
+        if not instance.is_dry_run:
+            await _update_integration_config_entity(
+                config_entity, warnings=[str(w) for w in e.warnings], magneto_client=magneto_client, logger=logger
+            )
+        logger.warning("Integration %r finished with warnings.", instance.id_)
+        return True
     except IntegrationRunError as e:
         if not instance.is_dry_run:
             await _update_integration_config_entity(
@@ -124,6 +137,7 @@ async def run_integration_methods(
     instance: Integration, *, config_entity: dict[str, Any] | None, magneto_client: Magneto, logger: logging.Logger
 ) -> None:
     errors: list[Exception] = []
+    warnings: list[Exception] = []
     entities_found = {}
     tasks_entities: dict[str, TaskWithEntities] = {}
 
@@ -199,12 +213,13 @@ async def run_integration_methods(
                         len(retried_tasks_success) + len(tasks_failed),
                     )
                 else:
-                    logger.info("All push tasks retries failed")
+                    logger.info("All push tasks retries failed (%d)", len(tasks_failed))
 
             if tasks_failed:
-                logger.error("Push tasks with errors: %d", len(tasks_failed))
+                logger.warning("Failed to push %d entities", len(tasks_failed))
                 for task, entities in tasks_failed.values():
-                    errors.append(
+                    # These are considered warnings and not errors as they are not fatal for the integration run
+                    warnings.append(
                         EntityPushTaskError(
                             integration_id=instance.id_,
                             integration_type=instance.type_,
@@ -218,6 +233,9 @@ async def run_integration_methods(
 
     if len(errors) > 0:
         raise IntegrationRunError(integration_id=instance.id_, integration_type=instance.type_, errors=errors)
+
+    if len(warnings) > 0:
+        raise IntegrationRunWarning(integration_id=instance.id_, integration_type=instance.type_, warnings=warnings)
 
 
 async def _run_integration_method_to_entities(
@@ -283,9 +301,8 @@ async def _wait_for_push_tasks_to_finish(
                         logger.debug("Task %r finished successfully", task.id)
                         tasks_success[task.id] = (task, entities_tasks[task.id][1])
                     case magneto_models.TaskStatus.FAILED:
-                        logger.warning(
-                            "Task %r failed with error: (%s) %s", task.id, task.error.type, task.error.message
-                        )
+                        logger.warning("Task %r failed with error: %s", task.id, task.error.type)
+                        logger.debug("Task %r error message: %s", task.id, task.error.message)
                         tasks_errors[task.id] = (task, entities_tasks[task.id][1])
                     case magneto_models.TaskStatus.CREATED | magneto_models.TaskStatus.RUNNING:
                         logger.debug("Task %r still running", task.id)
@@ -349,11 +366,18 @@ async def _update_integration_config_entity(
     *,
     is_running: bool = False,
     error: str | None = None,
+    warnings: list[str] | None = None,
     magneto_client: Magneto,
     logger: logging.Logger,
 ) -> None:
     data = {
-        "fetchStatus": "RUNNING" if is_running else "FAILED" if error is not None else "FINISHED",
+        "fetchStatus": "RUNNING"
+        if is_running
+        else "FAILED"
+        if error is not None
+        else "WARNING"
+        if warnings
+        else "FINISHED",
         "lastFetchedError": error or "",
         "lastFetchedLogs": get_magneto_logs(logger).logs,
     }

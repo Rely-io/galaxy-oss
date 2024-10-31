@@ -7,6 +7,13 @@ class GalaxyError(Exception):
     """Base class for all Galaxy errors."""
 
 
+class GalaxyWarning(GalaxyError):
+    """Base class for all Galaxy warnings."""
+
+    def __str__(self):
+        return f"Warning: {self}"
+
+
 class CronjobRunError(GalaxyError):
     """Exception raised when Galaxy cronjob run fails."""
 
@@ -21,6 +28,18 @@ class IntegrationRunError(GalaxyError):
 
     def __str__(self):
         return f"Error running integration: {self.integration_id} ({self.integration_type}): {self.errors}"
+
+
+@dataclass(kw_only=True)
+class IntegrationRunWarning(GalaxyWarning):
+    """Exception raised when an integration run ends with warnings."""
+
+    integration_id: str
+    integration_type: str
+    warnings: list[Exception]
+
+    def __str__(self):
+        return f"Warning running integration: {self.integration_id} ({self.integration_type}): {self.warnings}"
 
 
 @dataclass(kw_only=True)

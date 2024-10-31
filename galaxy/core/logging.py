@@ -24,8 +24,10 @@ def get_magneto_logs(logger: logging.Logger) -> InMemoryLogHandler | None:
     return None
 
 
-def get_log_format(config) -> str:
-    return f"%(asctime)s - {config.integration.type}-{config.integration.id} - %(levelname)s - %(message)s"
+def get_log_format(config: Config, include_integration_info: bool = True) -> str:
+    if include_integration_info:
+        return f"%(asctime)s - {config.integration.type}-{config.integration.id} - %(levelname)s - %(message)s"
+    return "%(asctime)s - %(levelname)s - %(message)s"
 
 
 def setup_logger(config: Config) -> logging.Logger:
@@ -43,6 +45,9 @@ def setup_logger(config: Config) -> logging.Logger:
     console_formatter = logging.Formatter(get_log_format(config))
     console_handler.setFormatter(console_formatter)
     logger.addHandler(console_handler)
+
+    memory_formatter = logging.Formatter(get_log_format(config, include_integration_info=False))
+    memory_handler.setFormatter(memory_formatter)
     logger.addHandler(memory_handler)
 
     return logger
