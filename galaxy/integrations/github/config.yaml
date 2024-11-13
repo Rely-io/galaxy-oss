@@ -20,6 +20,10 @@ integration:
   properties:
     appId: "{{ env('RELY_INTEGRATION_GITHUB_APP_ID') | default('', true) }}"
     appPrivateKey: "{{ env('RELY_INTEGRATION_GITHUB_APP_PRIVATE_KEY') | default('', true) }}"
-    installationId: "{{ env('RELY_INTEGRATION_GITHUB_INSTALLATION_ID') | default('', true) }}"
+    installationId: "{{ env('RELY_INTEGRATION_GITHUB_APP_INSTALLATION_ID') | default('', true) }}"
     url: "{{ env('RELY_INTEGRATION_GITHUB_URL') | default('https://api.github.com', true)  }}"
     daysOfHistory: "{{ env('DAYS_OF_HISTORY') | default(30, true) | int }}"
+    pageSize: "{{ env('RELY_INTEGRATION_GITHUB_API_PAGE_SIZE') | default(50, true) | int }}"
+    timeout: "{{ env('RELY_INTEGRATION_GITHUB_API_TIMEOUT') | default(60, true) | int }}"
+    ignoreArchived: "{{ env('RELY_INTEGRATION_GITHUB_IGNORE_ARCHIVED') | default('true', true) }}"
+    ignoreOld: "{{ env('RELY_INTEGRATION_GITHUB_IGNORE_OLD') | default('true', true) }}"

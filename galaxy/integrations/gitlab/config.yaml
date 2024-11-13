@@ -22,3 +22,6 @@ integration:
     organization: "{{ env('RELY_INTEGRATION_GITLAB_ORGANIZATION') | default('', true) }}"
     secretToken: "{{ env('RELY_INTEGRATION_GITLAB_SECRET_TOKEN') | default('', true) }}"
     url: "{{ env('RELY_INTEGRATION_GITLAB_URL') | default('https://gitlab.com/api', true)  }}"
+    pageSize: "{{ env('RELY_INTEGRATION_GITLAB_API_PAGE_SIZE') | default(50, true) | int }}"
+    timeout: "{{ env('RELY_INTEGRATION_GITLAB_API_TIMEOUT') | default(60, true) | int }}"
+    ignoreArchived: "{{ env('RELY_INTEGRATION_GITLAB_IGNORE_ARCHIVED') | default('true', true) }}"

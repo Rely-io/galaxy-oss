@@ -213,6 +213,7 @@
               "summary": "{{ data.properties.summary if data.properties.summary else none }}",
               "createdAt": "{{ data.properties.created_on if data.properties.created_on else none }}",
               "updatedAt": "{{ data.properties.updated_on if data.properties.updated_on else none }}",
+              "closedAt": "{{ data.properties.updated_on if data.properties.state is not none and standardize_status(data.properties.state, arguments.targetBlueprintId) != 'Open' else none }}",
               "sourceBranch": "{{ data.properties.sourceBranch if data.properties.sourceBranch else none }}",
               "sourceCommit": "{{ (data.properties.sourceCommit | string) if data.properties.sourceCommit else none }}",
               "targetBranch": "{{ data.properties.destinationBranch if data.properties.destinationBranch else none }}",

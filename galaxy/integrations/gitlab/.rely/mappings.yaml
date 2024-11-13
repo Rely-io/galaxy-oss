@@ -87,6 +87,7 @@ resources:
       summary: .node.descriptionHtml
       createdAt: .node.createdAt
       updatedAt: .node.updatedAt
+      closedAt: .node.closedAt
       state: .node.state
       labels: '[.node.labels.edges[].node.title]'
       sourceBranch: .node.sourceBranch
@@ -94,6 +95,25 @@ resources:
       mergedAt: .node.mergedAt
       diffStats: .node.diffStatsSummary
       commitSHA: .node.commits.edges[0].node.sha
+      firstApprovalAt: |
+        [
+          .node.activity.nodes[]
+          | select(.systemNoteMetadata.action as $action
+            | $action != null and ($action == "approved"))
+          | .createdAt
+        ]
+        | sort
+        | first
+        // null
+      firstNonAuthorCommentAt: |
+        [
+          .node.comments.nodes[]
+          | select(.author.id != .node.author.id)
+          | .createdAt
+        ]
+        | sort
+        | first
+        // null
     relations:
       repository:
         value:  '"gitlab_repo_" + (.context.repository.id | split("/") | last)'

@@ -13,6 +13,8 @@ class QueryType(str, Enum):
     REPOSITORIES = "repositories"
     MEMBERS = "members"
     TEAMS = "teams"
+    TEAM_MEMBERS = "team_members"
+    TEAM_REPOS = "team_repos"
 
 
 def build_graphql_query(query_type: QueryType, **params: Any) -> dict:
@@ -23,6 +25,8 @@ def build_graphql_query(query_type: QueryType, **params: Any) -> dict:
         QueryType.REPOSITORY: _build_repository_query,
         QueryType.MEMBERS: _build_members_query,
         QueryType.TEAMS: _build_teams_query,
+        QueryType.TEAM_MEMBERS: _build_team_members,
+        QueryType.TEAM_REPOS: _build_team_repos,
     }
 
     query, variables = builders_by_query_type[query_type](**params)
@@ -38,27 +42,20 @@ def _build_issues_query(
     state: Optional[str] = "open",
     labels: Optional[Iterable[str]] = None,
     sort: Optional[str] = "created-desc",
-    last: int = 100,
+    page_size: int = 50,
     after: Optional[str] = None,
 ) -> tuple[str, dict[str, int | str | None]]:
     query = """
         query GetIssuesSearch(
             $query: String!
-            $last: Int = 100
+            $pageSize: Int = 50
             $after: String = null
         ) {
-            rateLimit {
-                cost
-                remaining
-                limit
-            }
-
-            search(query: $query, type: ISSUE, last: $last, after: $after) {
+            search(query: $query, type: ISSUE, first: $pageSize, after: $after) {
                 pageInfo {
                     hasNextPage
                     endCursor
                 }
-
                 edges {
                     node {
                         ... on Issue {
@@ -109,17 +106,15 @@ def _build_issues_query(
             "TIME_FILTER_FIELD:=>START_TIME", f"{time_filter_field}:>={start_time}" if start_time else ""
         ).replace("TIME_FILTER_FIELD:<=END_TIME", f"{time_filter_field}:<={end_time}" if end_time else "")
 
-    variables = {"query": query_var, "last": last, "after": after}
+    variables = {"query": query_var, "pageSize": page_size, "after": after}
     return query, variables
 
 
 def _build_pull_requests_query(
     repo_id: str,
-    target_branch: Optional[str] = None,
-    source_branch: Optional[str] = None,
     states: Optional[Iterable[str]] = None,
     labels: Optional[Iterable[str]] = None,
-    last: int = 50,
+    page_size: int = 50,
     after: Optional[str] = None,
 ) -> tuple[str, dict[str, str | None | int | list[str] | Any]]:
     query = """
@@ -128,17 +123,12 @@ def _build_pull_requests_query(
             $name: String!
             $labels: [String!] = null
             $states: [PullRequestState!] = null
-            $last: Int = 100
+            $pageSize: Int = 50
             $after: String = null
         ) {
-            rateLimit {
-                cost
-                remaining
-                limit
-            }
             repository(owner: $owner, name: $name, followRenames: true) {
                 pullRequests(
-                    first: $last
+                    first: $pageSize
                     after: $after
                     labels: $labels
                     states: $states
@@ -176,6 +166,7 @@ def _build_pull_requests_query(
                                             login
                                         }
                                         state
+                                        createdAt
                                     }
                                 }
                             }
@@ -203,93 +194,60 @@ def _build_pull_requests_query(
         "name": name,
         "labels": list(labels) if labels else None,
         "states": list(states or ["MERGED"]),
-        "last": last,
+        "pageSize": page_size,
         "after": after,
     }
     return query, variables
 
 
 def _build_deployments_query(
-    repo_id: str, environments: Optional[Iterable[str]] = None, last: int = 50, after: Optional[str] = None
+    repo_id: str, environments: Optional[Iterable[str]] = None, page_size: int = 50, after: Optional[str] = None
 ) -> tuple[str, dict[str, str | None | int | list[str] | Any]]:
     query = """
-        ####################
-        # Common
-        ####################
-
-        # Rate limit
-        fragment rateLimit on RateLimit {
-            cost
-            remaining
-            limit
-        }
-
-        # Pagination
-        fragment pageInfo on PageInfo {
-            hasNextPage
-            endCursor
-        }
-
-        ####################
-        # Deployments
-        ####################
-
-        fragment deploymentStatus on DeploymentStatus {
-            state
-            createdAt
-            description
-        }
-
-        fragment deployment on Deployment {
-            databaseId
-            description
-            state               # Ongoing, finished, canceled (state of the deployment)
-            createdAt
-            updatedAt
-            commit {
-                oid # The source commit hash
-                committedDate
-            }
-            environment
-            creator {
-                login
-            }
-            statuses(last: 1) {
-                nodes {
-                    ...deploymentStatus # This captures the last deployment status (success/failure)
-                }
-            }
-            task
-            ref {
-                name
-            }
-        }
-
         query GetDeployments(
             $owner: String!
             $name: String!
             $environments: [String!] = null
-            $last: Int = 100
+            $pageSize: Int = 50
             $after: String = null
         ) {
-            rateLimit {
-                ...rateLimit
-            }
-
             repository(owner: $owner, name: $name, followRenames: true) {
                 deployments(
                     environments: $environments
                     orderBy: { field: CREATED_AT, direction: ASC }
-                    last: $last
+                    last: $pageSize
                     after: $after
                 ) {
                     pageInfo {
-                        ...pageInfo
+                        hasNextPage
+                        endCursor
                     }
-
                     edges {
                         node {
-                            ...deployment
+                            databaseId
+                            description
+                            state
+                            createdAt
+                            updatedAt
+                            commit {
+                                oid
+                                committedDate
+                            }
+                            environment
+                            creator {
+                                login
+                            }
+                            statuses(last: 1) {
+                                nodes {
+                                    state
+                                    createdAt
+                                    description
+                                }
+                            }
+                            task
+                            ref {
+                                name
+                            }
                         }
                     }
                 }
@@ -303,7 +261,7 @@ def _build_deployments_query(
         "owner": owner,
         "name": name,
         "environments": list(environments) if environments else None,
-        "last": last,
+        "pageSize": page_size,
         "after": after,
     }
     return query, variables
@@ -311,24 +269,7 @@ def _build_deployments_query(
 
 def _build_repository_query(repo_id: str) -> tuple[str, dict[str, Any]]:
     query = """
-        ####################
-        # Common
-        ####################
-
-        # Rate limit
-        fragment rateLimit on RateLimit {
-            cost
-            remaining
-            limit
-        }
-        query GetRepo(
-            $owner: String!
-            $name: String!
-        ) {
-            rateLimit {
-                ...rateLimit
-            }
-
+        query GetRepo($owner: String!, $name: String!) {
             repository(owner: $owner, name: $name, followRenames: true) {
                 name
                 url
@@ -406,47 +347,111 @@ def _build_repository_query(repo_id: str) -> tuple[str, dict[str, Any]]:
     return query, variables
 
 
-def _build_teams_query(owner: str, after: Optional[str] = None) -> tuple[str, dict[str, str]]:
+def _build_teams_query(owner: str, after: Optional[str] = None, page_size: int = 50) -> tuple[str, dict[str, str]]:
     query = """
-        query OrganizationInfo($owner: String!) {
-          organization(login: $owner) {
-            teams(first: 100) {
-              nodes {
-                databaseId
-                name
-                description
-                url
-                repositories {
-                  nodes {
-                    databaseId
-                    name
-                  }
+        query OrganizationInfo(
+            $owner: String!
+            $after: String = null
+            $pageSize: Int = 50
+        ) {
+            organization(login: $owner) {
+                teams(first: $pageSize, after: $after) {
+                    pageInfo {
+                        endCursor
+                        hasNextPage
+                    }
+                    nodes {
+                        databaseId
+                        name
+                        description
+                        url
+                    }
                 }
-                members(first: 100) {
-                  nodes {
-                    databaseId
-                    login
-                    createdAt
-                    updatedAt
-                    url
-                    email
-                  }
-                }
-              }
             }
-          }
         }
     """
 
-    variables = {"owner": owner}
+    variables = {"owner": owner, "after": after, "pageSize": page_size}
     return query, variables
 
 
-def _build_members_query(owner: str, after: Optional[str] = None) -> tuple[str, dict[str, str | None]]:
+def _build_team_members(
+    owner: str, team: str, after: Optional[str] = None, page_size: int = 50
+) -> tuple[str, dict[str, str]]:
     query = """
-        query OrganizationMembers($owner: String!) {
+        query GetTeamMembers(
+            $owner: String!
+            $team: String!
+            $pageSize: Int = 50
+            $after: String = null
+        ) {
+            organization(login: $owner) {
+                team(slug: $team) {
+                    members(first: $pageSize, after: $after) {
+                        nodes {
+                            databaseId
+                            login
+                            createdAt
+                            updatedAt
+                            url
+                            email
+                        }
+                        pageInfo {
+                            endCursor
+                            hasNextPage
+                        }
+                    }
+                }
+            }
+        }
+    """
+
+    variables = {"owner": owner, "team": team, "after": after, "pageSize": page_size}
+    return query, variables
+
+
+def _build_team_repos(
+    owner: str, team: str, after: Optional[str] = None, page_size: int = 50
+) -> tuple[str, dict[str, str]]:
+    query = """
+        query GetTeamRepos(
+            $owner: String!
+            $team: String!
+            $pageSize: Int = 50
+            $after: String = null
+        ) {
+            organization(login: $owner) {
+                team(slug: $team) {
+                    repositories(first: $pageSize, after: $after) {
+                        nodes {
+                            databaseId
+                            name
+                        }
+                        pageInfo {
+                            endCursor
+                            hasNextPage
+                        }
+                    }
+                }
+            }
+        }
+    """
+
+    variables = {"owner": owner, "team": team, "after": after, "pageSize": page_size}
+    return query, variables
+
+
+def _build_members_query(
+    owner: str, after: Optional[str] = None, page_size: int = 50
+) -> tuple[str, dict[str, str | None]]:
+    query = """
+        query OrganizationMembers($owner: String!, $after: String, $pageSize: Int) {
           organization(login: $owner) {
-            membersWithRole(first: 100) {
+            membersWithRole(first: $pageSize, after: $after) {
+              pageInfo {
+                endCursor
+                hasNextPage
+              }
               edges {
                 node {
                   databaseId
@@ -462,5 +467,5 @@ def _build_members_query(owner: str, after: Optional[str] = None) -> tuple[str, 
         }
     """
 
-    variables = {"owner": owner, "after": after}
+    variables = {"owner": owner, "after": after, "pageSize": page_size}
     return query, variables

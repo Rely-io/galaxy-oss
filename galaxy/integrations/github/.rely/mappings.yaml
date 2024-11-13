@@ -65,6 +65,19 @@ resources:
       mergedAt: .mergedAt
       status: .state
       owner: .context.owner.username
+      firstReviewAt: |
+        .author.login as $pr_author
+        | [
+          .reviews.edges[]
+          | select(
+              (.node.state != "COMMENTED") or
+              (.node.state == "COMMENTED" and .node.author.login != $pr_author)
+            )
+          | .node.createdAt
+        ]
+        | sort
+        | first
+        // null
     relations:
       repository:
         value: .context.repositoryId | tostring

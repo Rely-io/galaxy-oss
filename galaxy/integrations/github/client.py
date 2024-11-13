@@ -8,6 +8,7 @@ from typing import Any
 from github import Auth, Github
 
 from galaxy.integrations.github.queries import QueryType, build_graphql_query
+from galaxy.utils.parsers import to_bool
 from galaxy.utils.requests import ClientSession, RequestError, RetryPolicy, create_session, make_request
 
 __all__ = ["GithubClient"]
@@ -53,7 +54,7 @@ class GithubClient:
         self._retry_policy = RetryPolicy(logger=self.logger)
 
     async def __aenter__(self) -> "GithubClient":
-        self._session = create_session(headers=self._headers)
+        self._session = create_session(timeout=self.timeout, headers=self._headers)
         return self
 
     async def __aexit__(self, exc_type: type, exc: Exception, tb: TracebackType) -> None:
@@ -65,11 +66,42 @@ class GithubClient:
 
     @property
     def days_of_history(self) -> int:
-        return int(self.config.integration.properties["daysOfHistory"])
+        days = int(self.config.integration.properties["daysOfHistory"])
+        if days < 1:
+            self.logger.warning("Invalid days of history, using default value 30")
+            return 30
+
+        return days
 
     @property
     def base_url(self) -> str:
         return self.config.integration.properties["url"]
+
+    @property
+    def timeout(self) -> int:
+        timeout = int(self.config.integration.properties["timeout"])
+        if timeout < 1:
+            self.logger.warning("Invalid timeout, using default value 60")
+            return 60
+
+        return timeout
+
+    @property
+    def ignore_archived_repos(self) -> bool:
+        return to_bool(self.config.integration.properties.get("ignoreArchived", True))
+
+    @property
+    def page_size(self) -> int:
+        page_size = int(self.config.integration.properties.get("pageSize", 50))
+        if page_size < 1 or page_size > 100:
+            self.logger.warning("Invalid page size, using default value 50")
+            return 50
+
+        return page_size
+
+    @property
+    def ignore_old_repos(self) -> bool:
+        return to_bool(self.config.integration.properties.get("ignoreOld", True))
 
     def build_repo_id(self, organization: str, repo: str) -> str:
         return f"{organization}/{repo}"
@@ -111,13 +143,13 @@ class GithubClient:
         return datetime.strptime(datetime_str, "%Y-%m-%dT%H:%M:%SZ")
 
     async def get_repos(
-        self, *, limit: int | None = None, include_archived: bool = False, include_old: bool = False
+        self, *, limit: int | None = None, ignore_archived: bool = True, ignore_old: bool = True, page_size: int = 50
     ) -> list:
         repos_list = []
 
         url = f"{self.base_url}/installation/repositories"
         for page_num in count(start=1):
-            response = await self._make_request("GET", url, params={"page": page_num, "per_page": 100})
+            response = await self._make_request("GET", url, params={"page": page_num, "per_page": page_size})
             if response is None:
                 break
 
@@ -126,9 +158,9 @@ class GithubClient:
                 break
 
             for repo in repos:
-                if not include_archived and repo["archived"]:
+                if ignore_archived and repo["archived"]:
                     continue
-                if not include_old and self._parse_datetime(repo["pushed_at"]) < self.repo_activity_limit_timestamp:
+                if ignore_old and self._parse_datetime(repo["pushed_at"]) < self.repo_activity_limit_timestamp:
                     continue
 
                 repos_list.append(repo)
@@ -152,6 +184,7 @@ class GithubClient:
                 repo_id=self.build_repo_id(organization, repo),
                 states=states,
                 after=cursor,
+                page_size=self.page_size,
             )
             response = await self._make_graphql_request(query)
 
@@ -177,7 +210,11 @@ class GithubClient:
         cursor = None
         while True:
             query = build_graphql_query(
-                query_type=QueryType.ISSUES, repo_id=self.build_repo_id(organization, repo), after=cursor, state=state
+                query_type=QueryType.ISSUES,
+                repo_id=self.build_repo_id(organization, repo),
+                after=cursor,
+                state=state,
+                page_size=self.page_size,
             )
             response = await self._make_graphql_request(query)
 
@@ -201,7 +238,7 @@ class GithubClient:
 
         url = f"{self.base_url}/repos/{organization}/{repo}/actions/workflows"
         for page_num in count(start=1):
-            response = await self._make_request("GET", url, params={"page": page_num, "per_page": 100})
+            response = await self._make_request("GET", url, params={"page": page_num, "per_page": self.page_size})
             if response is None:
                 break
 
@@ -220,7 +257,11 @@ class GithubClient:
             response = await self._make_request(
                 "GET",
                 url,
-                params={"page": page_num, "per_page": 100, "created": f">{self.history_limit_timestamp.isoformat()}"},
+                params={
+                    "page": page_num,
+                    "per_page": self.page_size,
+                    "created": f">{self.history_limit_timestamp.isoformat()}",
+                },
             )
             if response is None:
                 break
@@ -237,7 +278,7 @@ class GithubClient:
 
         url = f"{self.base_url}/repos/{organization}/{repo}/actions/runs/{run_id}/jobs"
         for page_num in count(start=1):
-            response = await self._make_request("GET", url, params={"page": page_num, "per_page": 100})
+            response = await self._make_request("GET", url, params={"page": page_num, "per_page": self.page_size})
             if response is None:
                 break
 
@@ -248,32 +289,113 @@ class GithubClient:
 
         return all_jobs
 
-    # TODO: No support for pagination
     async def get_members(self, organization: str) -> list[dict[str, str | int]]:
-        query = build_graphql_query(query_type=QueryType.MEMBERS, owner=organization)
-        response = await self._make_graphql_request(query)
-        try:
-            return response["data"]["organization"]["membersWithRole"]["edges"]
-        except TypeError:
-            self.logger.warning(f"Error: {response}")
-            return []
+        all_members = []
+        cursor = None
+        while True:
+            query = build_graphql_query(
+                query_type=QueryType.MEMBERS, owner=organization, after=cursor, page_size=self.page_size
+            )
+            response = await self._make_graphql_request(query)
 
-    # TODO: No support for pagination
+            edges = response["data"]["organization"]["membersWithRole"]["edges"]
+            if not edges:
+                break
+            all_members.extend(edges)
+
+            page_info = response["data"]["organization"]["membersWithRole"]["pageInfo"]
+            if not page_info["hasNextPage"]:
+                break
+            cursor = page_info["endCursor"]
+
+        return all_members
+
     async def get_teams(self, organization: str) -> list[dict]:
-        query = build_graphql_query(query_type=QueryType.TEAMS, owner=organization)
-        response = await self._make_graphql_request(query)
-        try:
-            return response["data"]["organization"]["teams"]["nodes"]
-        except TypeError:
-            self.logger.warning(f"Error: {response}")
-            return []
+        all_teams = []
+        cursor = None
+        while True:
+            query = build_graphql_query(
+                query_type=QueryType.TEAMS, owner=organization, after=cursor, page_size=self.page_size
+            )
+            response = await self._make_graphql_request(query)
+            teams = response.get("data", {}).get("organization", {}).get("teams", {}).get("nodes", [])
+            if not teams:
+                break
+
+            for team in teams:
+                name = team["name"]
+                team["members"] = {"nodes": []}
+                team["members"]["nodes"] = await self.get_team_members(organization, name)
+                team["repositories"] = {"nodes": []}
+                team["repositories"]["nodes"] = await self.get_team_repositories(organization, name)
+
+            all_teams.extend(teams)
+
+            page_info = response["data"]["organization"]["teams"]["pageInfo"]
+            if not page_info["hasNextPage"]:
+                break
+            cursor = page_info["endCursor"]
+
+        return all_teams
+
+    async def get_team_members(self, organization: str, team_id: str) -> list[dict]:
+        all_members = []
+        cursor = None
+        while True:
+            query = build_graphql_query(
+                query_type=QueryType.TEAM_MEMBERS,
+                owner=organization,
+                team=team_id,
+                after=cursor,
+                page_size=self.page_size,
+            )
+            response = await self._make_graphql_request(query)
+
+            team = response["data"]["organization"]["team"]
+            if not team:
+                break
+
+            all_members.extend(team.get("members", {}).get("nodes", []))
+
+            page_info = team["members"]["pageInfo"]
+            if not page_info["hasNextPage"]:
+                break
+            cursor = page_info["endCursor"]
+
+        return all_members
+
+    async def get_team_repositories(self, organization: str, team_id: str) -> list[dict]:
+        all_repositories = []
+        cursor = None
+        while True:
+            query = build_graphql_query(
+                query_type=QueryType.TEAM_REPOS,
+                owner=organization,
+                team=team_id,
+                after=cursor,
+                page_size=self.page_size,
+            )
+            response = await self._make_graphql_request(query)
+
+            team = response["data"]["organization"]["team"]
+            if not team:
+                break
+
+            all_repositories.extend(team.get("repositories", {}).get("nodes", []))
+
+            page_info = team["repositories"]["pageInfo"]
+            if not page_info["hasNextPage"]:
+                break
+            cursor = page_info["endCursor"]
+
+        return all_repositories
 
     async def get_environments(self, organization: str, repo: str) -> list[dict[str, str | int]]:
         all_environments = []
 
         url = f"{self.config.integration.properties['url']}/repos/{organization}/{repo}/environments"
         for page_num in count(start=1):
-            response = await self._make_request("GET", url, params={"page": page_num, "per_page": 100})
+            response = await self._make_request("GET", url, params={"page": page_num, "per_page": self.page_size})
             if response is None:
                 break
 
@@ -287,10 +409,26 @@ class GithubClient:
     async def get_deployments(
         self, organization: str, repo: str, environments: Iterable[str] | None = None
     ) -> list[dict[str, str | int]]:
-        query = build_graphql_query(
-            query_type=QueryType.DEPLOYMENTS, repo_id=f"{organization}/{repo}", environments=environments
-        )
-        response = await self._make_graphql_request(query)
+        all_deployments = []
+        cursor = None
+        while True:
+            query = build_graphql_query(
+                query_type=QueryType.DEPLOYMENTS,
+                repo_id=self.build_repo_id(organization, repo),
+                environments=environments,
+                after=cursor,
+                page_size=self.page_size,
+            )
+            response = await self._make_graphql_request(query)
 
-        edges = response["data"]["repository"]["deployments"]["edges"]
-        return [edge["node"] for edge in edges]
+            edges = response["data"]["repository"]["deployments"]["edges"]
+            if not edges:
+                break
+            all_deployments.extend(edge["node"] for edge in edges)
+
+            page_info = response["data"]["repository"]["deployments"]["pageInfo"]
+            if not page_info["hasNextPage"]:
+                break
+            cursor = page_info["endCursor"]
+
+        return all_deployments

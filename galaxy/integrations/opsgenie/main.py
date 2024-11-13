@@ -40,12 +40,11 @@ class Opsgenie(Integration):
 
         #  Fetch extra team details (e.g. members information)
         for team in teams_metadata:
-            team_data = await self.client.get_team(team["id"])
-            teams[team["id"]] = team_data
+            teams[team["id"]] = await self.client.get_team(team["id"])
 
             # Initialize other custom team information
-            team_data["schedules"] = []
-            team_data["timeline"] = []
+            teams[team["id"]]["schedules"] = []
+            teams[team["id"]]["timeline"] = []
 
         # Link on-call schedules to teams (teams may have multiple or none)
         schedules = await self.client.get_schedules()
@@ -56,7 +55,7 @@ class Opsgenie(Integration):
             teams[schedule["ownerTeam"]["id"]]["schedules"].append(schedule)
 
         for team in teams.values():
-            team_data["timeline"] = flatten_team_timeline(team["schedules"])
+            team["timeline"] = flatten_team_timeline(team["schedules"])
 
         self.teams = list(teams.values())
         teams_mapped = await self.mapper.process("team", self.teams, context={})
@@ -79,7 +78,7 @@ class Opsgenie(Integration):
         for user in self.users:
             user["teams"] = teams_per_user.get(user["id"]) or []
             user["teamsOnCall"] = get_user_on_call_teams(user)
-            user["nextOnCallShift"] = get_user_next_on_call_shift(user)
+            user["nextOnCallShift"] = get_user_next_on_call_shift(user, self.logger)
 
         users_mapped = await self.mapper.process(
             "user", self.users, context={"baseUrl": self.config.integration.properties["appBaseUrl"]}

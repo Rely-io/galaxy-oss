@@ -1,4 +1,5 @@
 import logging
+from datetime import datetime, timedelta
 from types import TracebackType
 from typing import Any
 
@@ -71,6 +72,12 @@ class OpsgenieClient:
 
     async def get_schedule_timeline(self, schedule_id: str) -> dict[str, Any]:
         response = await self._make_request(
-            "GET", f"{self.url}/v2/schedules/{schedule_id}/timeline", params={"interval": 3, "intervalUnit": "weeks"}
+            "GET",
+            f"{self.url}/v2/schedules/{schedule_id}/timeline",
+            params={
+                "interval": 3,
+                "intervalUnit": "weeks",
+                "date": (datetime.utcnow() - timedelta(days=1)).strftime("%Y-%m-%dT%H:%M:%SZ"),
+            },
         )
         return response.get("data") or {}

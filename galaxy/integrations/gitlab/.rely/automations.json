@@ -449,7 +449,8 @@
               "sourceCommit": "{{ (data.properties.commitSHA  | string) if data.properties.commitSHA else none }}",
               "createdBy": "{{ actions.fetch_author.output.title if actions.fetch_author else none }}",
               "reviewers": "{{ (actions.fetch_reviewers.output.title | tojson) if actions.fetch_reviewers else none }}",
-              "assignees": "{{ (actions.fetch_assignees.output.title | tojson) if actions.fetch_assignees else none }}"
+              "assignees": "{{ (actions.fetch_assignees.output.title | tojson) if actions.fetch_assignees else none }}",
+              "firstReviewActivityAt": "{{ [data.properties.firstApprovalAt, data.properties.firstNonAuthorCommentAt, data.properties.closedAt] | select() | min | default(none) }}"
             },
             "relations": {
               "service": {

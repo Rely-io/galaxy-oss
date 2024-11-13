@@ -1,3 +1,4 @@
+from types import TracebackType
 from galaxy.core.galaxy import Integration, register
 from galaxy.core.models import Config
 from galaxy.integrations.gitlab.client import GitlabClient
@@ -45,6 +46,13 @@ class Gitlab(Integration):
         self.repository_to_deployments = {}
 
         self.jobs = []
+
+    async def __aenter__(self) -> "GitlabClient":
+        await self.client.__aenter__()
+        return self
+
+    async def __aexit__(self, exc_type: type, exc: Exception, tb: TracebackType) -> None:
+        await self.client.__aexit__(exc_type, exc, tb)
 
     @register(_methods, group=1)
     async def groups(self) -> list[dict]:
@@ -102,7 +110,7 @@ class Gitlab(Integration):
         for group_id, repositories in self.group_to_repos.items():
             for repository in repositories:
                 self.repository_to_issues[repository["id"]] = await self.client.get_issues(
-                    repository, history_days=int(self.config.integration.properties["daysOfHistory"])
+                    repository, history_days=self.client.days_of_history
                 )
 
                 inactive_usernames.update(
@@ -123,10 +131,7 @@ class Gitlab(Integration):
 
         new_entities = await self.register_inactive_users(inactive_usernames)
 
-        self.logger.info(
-            f"Found {len(issues_mapped)} issues from the last "
-            f"{self.config.integration.properties['daysOfHistory']} days"
-        )
+        self.logger.info(f"Found {len(issues_mapped)} issues from the last " f"{self.client.days_of_history} days")
         if new_entities:
             self.logger.info(f"Found {len(new_entities) - 1} inactive members associated to issues")
 
@@ -140,7 +145,7 @@ class Gitlab(Integration):
         for group_id, repositories in self.group_to_repos.items():
             for repository in repositories:
                 self.repository_to_merge_requests[repository["id"]] = await self.client.get_merge_requests(
-                    repository, history_days=int(self.config.integration.properties["daysOfHistory"])
+                    repository, history_days=self.client.days_of_history
                 )
 
                 inactive_usernames.update(
@@ -161,10 +166,7 @@ class Gitlab(Integration):
 
         new_entities = await self.register_inactive_users(inactive_usernames)
 
-        self.logger.info(
-            f"Found {len(mrs_mapped)} merge requests from the last "
-            f"{self.config.integration.properties['daysOfHistory']} days"
-        )
+        self.logger.info(f"Found {len(mrs_mapped)} merge requests from the last " f"{self.client.days_of_history} days")
         if new_entities:
             self.logger.info(f"Found {len(new_entities) - 1} inactive members associated to merge requests")
 
@@ -178,7 +180,7 @@ class Gitlab(Integration):
         for group_id, repositories in self.group_to_repos.items():
             for repository in repositories:
                 self.repository_to_pipelines[repository["id"]] = await self.client.get_pipelines(
-                    repository, history_days=int(self.config.integration.properties["daysOfHistory"])
+                    repository, history_days=self.client.days_of_history
                 )
 
                 inactive_usernames.update(
@@ -200,8 +202,7 @@ class Gitlab(Integration):
         new_entities = await self.register_inactive_users(inactive_usernames)
 
         self.logger.info(
-            f"Found {len(pipelines_mapped)} pipelines from the last "
-            f"{self.config.integration.properties['daysOfHistory']} days"
+            f"Found {len(pipelines_mapped)} pipelines from the last " f"{self.client.days_of_history} days"
         )
         if new_entities:
             self.logger.info(f"Found {len(new_entities) - 1} inactive members associated to pipelines")
@@ -238,7 +239,7 @@ class Gitlab(Integration):
                 self.repository_to_deployments[repository_id] = await self.client.get_deployments(
                     self.repositories[repository_id],
                     environment["node"]["name"],
-                    history_days=int(self.config.integration.properties["daysOfHistory"]),
+                    history_days=self.client.days_of_history,
                 )
 
                 inactive_usernames.update(
@@ -259,8 +260,7 @@ class Gitlab(Integration):
         new_entities = await self.register_inactive_users(inactive_usernames)
 
         self.logger.info(
-            f"Found {len(deployments_mapped)} deployments from the last "
-            f"{self.config.integration.properties['daysOfHistory']} days"
+            f"Found {len(deployments_mapped)} deployments from the last " f"{self.client.days_of_history} days"
         )
         if new_entities:
             self.logger.info(f"Found {len(new_entities) - 1} inactive members associated to deployments")

@@ -1,12 +1,13 @@
 import logging
 from datetime import datetime, timedelta
+from types import TracebackType
 
-import aiohttp
-from aiohttp import ClientResponseError
+from aiohttp import ClientResponseError, ClientSession
 
 from galaxy.core.models import Config
-from galaxy.core.utils import make_request
 from galaxy.integrations.gitlab.queries import Queries
+from galaxy.utils.parsers import to_bool
+from galaxy.utils.requests import RetryPolicy, create_session, make_request
 
 __all__ = ["GitlabClient"]
 
@@ -22,16 +23,52 @@ class GitlabClient:
             "Content-Type": "application/json",
         }
 
+        self.page_size = int(config.integration.properties.get("pageSize", 50))
+        if self.page_size < 1 or self.page_size > 100:
+            self.logger.warning("Invalid page size, using default value 50")
+            self.page_size = 50
+
+        self.days_of_history = int(config.integration.properties.get("daysOfHistory", 30))
+        if self.days_of_history < 1:
+            self.logger.warning("Invalid days of history, using default value 30")
+            self.days_of_history = 30
+
+        self.timeout = int(config.integration.properties.get("timeout", 60))
+        if self.timeout < 1:
+            self.logger.warning("Invalid timeout, using default value 60")
+            self.timeout = 60
+
+        self.ignore_archived_repos = to_bool(config.integration.properties.get("ignoreArchived", True))
+
+        self.session: ClientSession | None = None
+        self.retry_policy = RetryPolicy(logger=self.logger, wait_multiplier=2, wait_min=60, wait_max=120)
+
+    async def __aenter__(self) -> "GitlabClient":
+        self.session = create_session(timeout=self.timeout, headers=self.headers)
+        return self
+
+    async def __aexit__(self, exc_type: type, exc: Exception, tb: TracebackType) -> None:
+        await self.close()
+
+    async def close(self) -> None:
+        if self.session is not None:
+            await self.session.close()
+
     async def get_repos(self) -> list[dict]:
         all_repos = []
         cursor = None
-        time_delta = datetime.now() - timedelta(days=int(self.config.integration.properties["daysOfHistory"]))
+        time_delta = datetime.now() - timedelta(days=self.days_of_history)
         while True:
-            query = self.queries.get_repos(after=cursor)
-            async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=30)) as session:
-                data = await make_request(session, "POST", self.url_graphql, headers=self.headers, json=query)
+            query = self.queries.get_repos(after=cursor, page_size=self.page_size)
+
+            data = await make_request(
+                self.session, "POST", self.url_graphql, json=query, retry_policy=self.retry_policy
+            )
+
             for repo in data["data"]["projects"]["nodes"]:
-                if repo["archived"] is True or datetime.strptime(repo["updatedAt"], "%Y-%m-%dT%H:%M:%SZ") < time_delta:
+                if (repo["archived"] is True and self.ignore_archived_repos) or datetime.strptime(
+                    repo["updatedAt"], "%Y-%m-%dT%H:%M:%SZ"
+                ) < time_delta:
                     try:
                         data["data"]["projects"]["nodes"].remove(repo)
                     except ValueError:
@@ -46,13 +83,18 @@ class GitlabClient:
     async def get_group_repos(self, group: dict) -> list[dict]:
         all_repos = []
         cursor = None
-        time_delta = datetime.now() - timedelta(days=int(self.config.integration.properties["daysOfHistory"]))
+        time_delta = datetime.now() - timedelta(days=self.days_of_history)
         while True:
-            query = self.queries.get_group_repos(group, after=cursor)
-            async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=30)) as session:
-                data = await make_request(session, "POST", self.url_graphql, headers=self.headers, json=query)
+            query = self.queries.get_group_repos(group, after=cursor, page_size=self.page_size)
+
+            data = await make_request(
+                self.session, "POST", self.url_graphql, json=query, retry_policy=self.retry_policy
+            )
+
             for repo in data["data"]["group"]["projects"]["nodes"]:
-                if repo["archived"] is True or datetime.strptime(repo["updatedAt"], "%Y-%m-%dT%H:%M:%SZ") < time_delta:
+                if (repo["archived"] is True and self.ignore_archived_repos) or datetime.strptime(
+                    repo["updatedAt"], "%Y-%m-%dT%H:%M:%SZ"
+                ) < time_delta:
                     try:
                         data["data"]["group"]["projects"]["nodes"].remove(repo)
                     except ValueError:
@@ -68,9 +110,13 @@ class GitlabClient:
         all_issues = []
         cursor = None
         while True:
-            query = self.queries.get_issues(repository, after=cursor, history_days=history_days)
-            async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=30)) as session:
-                data = await make_request(session, "POST", self.url_graphql, headers=self.headers, json=query)
+            query = self.queries.get_issues(
+                repository, after=cursor, history_days=history_days, page_size=self.page_size
+            )
+
+            data = await make_request(
+                self.session, "POST", self.url_graphql, json=query, retry_policy=self.retry_policy
+            )
 
             raw_issues = data.get("data", {}).get("project", {}).get("issues", [])
             all_issues.extend(raw_issues.get("edges", []))
@@ -86,8 +132,11 @@ class GitlabClient:
         cursor = None
         while True:
             query = self.queries.get_merge_requests(repository, after=cursor, history_days=history_days)
-            async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=30)) as session:
-                data = await make_request(session, "POST", self.url_graphql, headers=self.headers, json=query)
+
+            data = await make_request(
+                self.session, "POST", self.url_graphql, json=query, retry_policy=self.retry_policy
+            )
+
             all_merge_requests.extend(data["data"]["project"]["mergeRequests"]["edges"])
             page_info = data["data"]["project"]["mergeRequests"]["pageInfo"]
             if not page_info["hasNextPage"]:
@@ -99,9 +148,14 @@ class GitlabClient:
         all_pipelines = []
         cursor = None
         while True:
-            query = self.queries.get_pipelines(repository, after=cursor, history_days=history_days)
-            async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=30)) as session:
-                data = await make_request(session, "POST", self.url_graphql, headers=self.headers, json=query)
+            query = self.queries.get_pipelines(
+                repository, after=cursor, history_days=history_days, page_size=self.page_size
+            )
+
+            data = await make_request(
+                self.session, "POST", self.url_graphql, json=query, retry_policy=self.retry_policy
+            )
+
             edges = data["data"]["project"]["pipelines"]["edges"]
             page_info = data["data"]["project"]["pipelines"]["pageInfo"]
             all_pipelines.extend(edges)
@@ -114,9 +168,11 @@ class GitlabClient:
         all_environments = []
         cursor = None
         while True:
-            query = self.queries.get_environments(repository, after=cursor)
-            async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=30)) as session:
-                data = await make_request(session, "POST", self.url_graphql, headers=self.headers, json=query)
+            query = self.queries.get_environments(repository, after=cursor, page_size=self.page_size)
+
+            data = await make_request(
+                self.session, "POST", self.url_graphql, json=query, retry_policy=self.retry_policy
+            )
 
             environments = data["data"]["project"]["environments"]
             if not environments:
@@ -131,15 +187,16 @@ class GitlabClient:
         return all_environments
 
     async def get_deployments(self, repository: dict, environment: str, history_days: int) -> list[dict]:
-        # TODO: We should stop pagination once we hit deployments older than:
-        # history_days_timestamp = (datetime.now() - timedelta(days=history_days))
+        history_days_timestamp = datetime.now() - timedelta(days=history_days)
 
         all_deployments = []
         cursor = None
         while True:
-            query = self.queries.get_deployments(repository, environment, after=cursor)
-            async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=30)) as session:
-                data = await make_request(session, "POST", self.url_graphql, headers=self.headers, json=query)
+            query = self.queries.get_deployments(repository, environment, after=cursor, page_size=self.page_size)
+
+            data = await make_request(
+                self.session, "POST", self.url_graphql, json=query, retry_policy=self.retry_policy
+            )
 
             if "errors" in data:
                 raise Exception(f"Failed to fetch deployments: {data['errors']}")
@@ -149,8 +206,16 @@ class GitlabClient:
                 return all_deployments
 
             edges = deployments["edges"]
+
+            # Filter deployments that are older than history_days
+            recent_deployments = [
+                edge
+                for edge in edges
+                if datetime.strptime(edge["node"]["createdAt"], "%Y-%m-%dT%H:%M:%SZ") >= history_days_timestamp
+            ]
+
             page_info = deployments["pageInfo"]
-            all_deployments.extend(edges)
+            all_deployments.extend(recent_deployments)
             if not page_info["hasNextPage"]:
                 break
             cursor = page_info["endCursor"]
@@ -158,9 +223,10 @@ class GitlabClient:
 
     async def get_group(self, group) -> dict:
         cursor = None
-        query = self.queries.get_group(group, after=cursor)
-        async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=30)) as session:
-            data = await make_request(session, "POST", self.url_graphql, headers=self.headers, json=query)
+        query = self.queries.get_group(group, after=cursor, page_size=self.page_size)
+
+        data = await make_request(self.session, "POST", self.url_graphql, json=query, retry_policy=self.retry_policy)
+
         return data
 
     async def get_users(self, group_id):
@@ -168,11 +234,23 @@ class GitlabClient:
         cursor = None
         group_id = f"gid://gitlab/Group/{group_id}"
         while True:
-            query = self.queries.get_users(group_id, after=cursor)
-            async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=30)) as session:
-                data = await make_request(session, "POST", self.url_graphql, headers=self.headers, json=query)
-                all_users.extend(data["data"]["users"]["nodes"])
-            page_info = data["data"]["users"]["pageInfo"]
+            query = self.queries.get_users(group_id, after=cursor, page_size=self.page_size)
+
+            data = await make_request(
+                self.session, "POST", self.url_graphql, json=query, retry_policy=self.retry_policy
+            )
+
+            if "errors" in data:
+                raise Exception(f"Failed to fetch users: {data['errors']}")
+
+            users = data.get("data", {}).get("users", {})
+            if not users.get("nodes"):
+                return all_users
+
+            nodes = users["nodes"]
+            all_users.extend(nodes)
+
+            page_info = users["pageInfo"]
             if not page_info["hasNextPage"]:
                 break
             cursor = page_info["endCursor"]
@@ -182,18 +260,17 @@ class GitlabClient:
         all_groups = []
         page = 1
         while True:
-            async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=30)) as session:
-                try:
-                    async with session.request(
-                        "GET",
-                        f"{self.config.integration.properties['url']}/v4/groups?page={page}&per_page=100",
-                        headers=self.headers,
-                    ) as response:
-                        if response.status // 100 == 2:
-                            data = await response.json()
-                        response.raise_for_status()
-                except ClientResponseError as e:
-                    raise Exception(f"Client server integration API error: {e.status} {e.message}")
+            try:
+                async with self.session.request(
+                    "GET",
+                    f"{self.config.integration.properties['url']}/v4/groups?page={page}&per_page={self.page_size}",
+                ) as response:
+                    if response.status // 100 == 2:
+                        data = await response.json()
+                    response.raise_for_status()
+            except ClientResponseError as e:
+                raise Exception(f"Client server integration API error: {e.status} {e.message}")
+
             all_groups.extend(data)
             page = response.headers.get("x-next-page", "")
             if page == "":
@@ -203,14 +280,14 @@ class GitlabClient:
 
     async def get_user(self) -> dict:
         query = self.queries.get_user()
-        async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=30)) as session:
-            data = await make_request(session, "POST", self.url_graphql, headers=self.headers, json=query)
+
+        data = await make_request(self.session, "POST", self.url_graphql, json=query, retry_policy=self.retry_policy)
 
         return data["data"]["currentUser"]
 
     async def get_user_by_username(self, username: str) -> dict:
         query = self.queries.get_user_by_username(username)
-        async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=30)) as session:
-            data = await make_request(session, "POST", self.url_graphql, headers=self.headers, json=query)
+
+        data = await make_request(self.session, "POST", self.url_graphql, json=query, retry_policy=self.retry_policy)
 
         return data["data"]["user"]

@@ -294,7 +294,13 @@
           "type": "string",
           "format": "date-time",
           "title": "Updated At",
-          "description": "The last update date of the pull request."
+          "description": "The last update date of the merge request."
+        },
+        "closedAt": {
+          "type": "string",
+          "format": "date-time",
+          "title": "Closed At",
+          "description": "The date time when the merge request was closed."
         },
         "state": {
           "type": "string",
@@ -355,6 +361,18 @@
               "description": "The number of files in the merge request"
             }
           }
+        },
+        "firstApprovalAt": {
+          "type": "string",
+          "format": "date-time",
+          "title": "First Approval At",
+          "description": "The date time of the first approval of the merge request."
+        },
+        "firstNonAuthorCommentAt": {
+          "type": "string",
+          "format": "date-time",
+          "title": "First Comment At (Non Author)",
+          "description": "The date time of the first non author comment of the merge request."
         }
       }
     },

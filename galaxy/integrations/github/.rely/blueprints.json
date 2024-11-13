@@ -216,6 +216,12 @@
           "type": "string",
           "title": "Status",
           "description": "The current status of the pull request."
+        },
+        "firstReviewAt": {
+          "type": "string",
+          "format": "date-time",
+          "title": "First Review At",
+          "description": "The date of the first review activity on the pull request."
         }
       }
     },

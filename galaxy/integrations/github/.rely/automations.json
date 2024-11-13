@@ -250,7 +250,8 @@
               "updatedAt": "{{ data.properties.updatedAt if data.properties.updatedAt else none }}",
               "closedAt": "{{ data.properties.closedAt if data.properties.closedAt else data.properties.mergedAt }}",
               "createdBy": "{{ data.relations.creator.value }}",
-              "reviewers": "{{ data.relations.reviewers.value if data.relations.reviewers else [] }}"
+              "reviewers": "{{ data.relations.reviewers.value if data.relations.reviewers else [] }}",
+              "firstReviewActivityAt": "{{ [data.properties.firstReviewAt, data.properties.closedAt] | select() | min | default(none) }}"
             }
           },
           "resourceType": "entity",

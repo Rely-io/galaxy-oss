@@ -68,7 +68,7 @@ class Github(Integration):
 
     @register(_methods, group=1)
     async def organization(self) -> None:
-        repo = await self.client.get_repos(limit=1, include_archived=True, include_old=True)
+        repo = await self.client.get_repos(limit=1, ignore_archived=False, ignore_old=False)
         if len(repo) > 0:
             self.organization = repo[0]["owner"]["login"].lower()
             self.logger.info(f"Found organization: {self.organization!r}")
@@ -77,7 +77,11 @@ class Github(Integration):
 
     @register(_methods, group=1)
     async def repository(self) -> None:
-        repositories_metadata = await self.client.get_repos()
+        repositories_metadata = await self.client.get_repos(
+            ignore_archived=self.client.ignore_archived_repos,
+            ignore_old=self.client.ignore_old_repos,
+            page_size=self.client.page_size,
+        )
 
         for metadata in repositories_metadata:
             self.repositories[metadata["id"]] = {
@@ -148,10 +152,7 @@ class Github(Integration):
                 get_inactive_usernames_from_pull_requests(self.repository_to_pull_requests[repo_id], self.users)
             )
 
-        self.logger.info(
-            f"Found {len(prs_mapped)} pull requests from the last "
-            f"{self.config.integration.properties['daysOfHistory']} days"
-        )
+        self.logger.info(f"Found {len(prs_mapped)} pull requests from the last {self.client.days_of_history} days")
         new_entities = await self.register_inactive_users(inactive_usernames)
         if new_entities:
             self.logger.info(f"Found {len(new_entities) - 1} inactive members associated to deployments")
@@ -178,10 +179,7 @@ class Github(Integration):
                 )
             )
 
-        self.logger.info(
-            f"Found {len(issues_mapped)} issues from the last "
-            f"{self.config.integration.properties['daysOfHistory']} days"
-        )
+        self.logger.info(f"Found {len(issues_mapped)} issues from the last {self.client.days_of_history} days")
         return issues_mapped
 
     @register(_methods, group=4)
@@ -198,10 +196,7 @@ class Github(Integration):
                 )
             )
 
-        self.logger.info(
-            f"Found {len(workflows_mapped)} workflows from the last "
-            f"{self.config.integration.properties['daysOfHistory']} days"
-        )
+        self.logger.info(f"Found {len(workflows_mapped)} workflows from the last {self.client.days_of_history} days")
         return workflows_mapped
 
     @register(_methods, group=5)
@@ -227,8 +222,7 @@ class Github(Integration):
                     get_inactive_usernames_from_workflow_runs(self.repository_to_pull_requests[repo_id], self.users)
                 )
         self.logger.info(
-            f"Found {len(workflows_runs_mapped)} workflow runs from the last "
-            f"{self.config.integration.properties['daysOfHistory']} days"
+            f"Found {len(workflows_runs_mapped)} workflow runs from the last {self.client.days_of_history} days"
         )
         new_entities = await self.register_inactive_users(inactive_usernames)
         if new_entities:

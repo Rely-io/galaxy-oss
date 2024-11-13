@@ -27,12 +27,14 @@ def flatten_team_timeline(schedules):
 
         # Flatten all ongoing and future time-periods across all rotations into a single list
         schedule_rotations = schedule.get("timeline", {}).get("finalTimeline", {}).get("rotations", [])
-        team_timeline = [
-            period
-            for rotation in schedule_rotations
-            for period in rotation.get("periods", [])
-            if period.get("type") and (period.get("type") != "historical")
-        ]
+        team_timeline.extend(
+            [
+                period
+                for rotation in schedule_rotations
+                for period in rotation.get("periods", [])
+                if period.get("type") and (period.get("type") != "historical")
+            ]
+        )
     return team_timeline
 
 
@@ -44,14 +46,16 @@ def get_user_on_call_teams(user):
         ongoing_periods = [
             period for period in team["timeline"] if isoparse(period["startDate"]) <= now <= isoparse(period["endDate"])
         ]
-        user_on_call = user["id"] in [period["recipient"]["id"] for period in ongoing_periods]
+        user_on_call = user["id"] in [
+            period["recipient"]["id"] for period in ongoing_periods if period["recipient"].get("id")
+        ]
         if user_on_call:
             teams_on_call.append(team["id"])
 
     return teams_on_call
 
 
-def get_user_next_on_call_shift(user):
+def get_user_next_on_call_shift(user, logger):
     # Initialize the variable to hold the next shift (start with None)
     next_shift = {"startDate": None, "endDate": None, "teamId": None}
 
@@ -66,10 +70,20 @@ def get_user_next_on_call_shift(user):
             start_date = isoparse(period["startDate"])
 
             # Check if the user's ID is in the list of recipients and the period is in the future
-            if user["id"] == period["recipient"]["id"] and start_date > now:
-                # If next_shift is not set or the start_date is earlier than the current next_shift, update next_shift
-                if next_shift["startDate"] is None or start_date < isoparse(next_shift["startDate"]):
-                    next_shift = {"startDate": period["startDate"], "endDate": period["endDate"], "teamId": team["id"]}
+            recipient_id = period["recipient"].get("id")
+            if recipient_id is not None:
+                if user["id"] == recipient_id and start_date > now:
+                    # If next_shift is not set or the start_date is earlier than the current next_shift, update next_shift
+                    if next_shift["startDate"] is None or start_date < isoparse(next_shift["startDate"]):
+                        next_shift = {
+                            "startDate": period["startDate"],
+                            "endDate": period["endDate"],
+                            "teamId": team["id"],
+                        }
+            else:
+                logger.debug(
+                    "Unable to interpret future on-call period; recipient not specified. Period details: %s", period
+                )
 
     # Return the next shift if found, otherwise return an empty dictionary
     return next_shift

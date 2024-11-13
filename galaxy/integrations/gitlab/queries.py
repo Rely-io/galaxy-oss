@@ -6,10 +6,10 @@ __all__ = ["Queries"]
 
 class Queries:
     @staticmethod
-    def get_repos(after: Optional[str] = None) -> dict:
+    def get_repos(after: Optional[str] = None, page_size: int = 50) -> dict:
         query = """
-            query Projects($after: String) {
-                projects(membership: true, after: $after) {
+            query Repositories($pageSize: Int, $after: String) {
+                projects(membership: true, first: $pageSize, after: $after, sort: "createdAt_desc") {
                     nodes {
                         id
                         createdAt
@@ -63,17 +63,17 @@ class Queries:
             }
         """
 
-        variables = {"after": after}
+        variables = {"after": after, "pageSize": page_size}
 
         return {"query": query, "variables": variables}
 
     @staticmethod
-    def get_group_repos(group: dict, after: Optional[str] = None) -> dict:
+    def get_group_repos(group: dict, after: Optional[str] = None, page_size: int = 50) -> dict:
         query = """
-            query Group($fullPath: ID!, $after: String) {
+            query GroupRepos($fullPath: ID!, $after: String, $pageSize: Int) {
                 group(fullPath: $fullPath) {
                     name
-                    projects(after: $after) {
+                    projects(first: $pageSize, after: $after, sort: ACTIVITY_DESC) {
                         nodes {
                             id
                             createdAt
@@ -128,20 +128,20 @@ class Queries:
             }
         """
 
-        variables = {"fullPath": group["full_path"], "after": after}
+        variables = {"fullPath": group["full_path"], "after": after, "pageSize": page_size}
 
         return {"query": query, "variables": variables}
 
     @staticmethod
-    def get_issues(repository: dict, after: Optional[str] = None, history_days: Optional[int] = 30) -> dict:
+    def get_issues(repository: dict, after: Optional[str] = None, history_days: int = 30, page_size: int = 50) -> dict:
         # Calculate the timestamp for filtering issues
         history_days_timestamp = (datetime.now() - timedelta(days=history_days)).isoformat()
 
         query = """
-            query Project($fullPath: ID!, $after: String, $updatedAfter: Time) {
+            query Issues($fullPath: ID!, $after: String, $updatedAfter: Time, $pageSize: Int) {
                 project(fullPath: $fullPath) {
                     name
-                    issues(after: $after, last: 100, updatedAfter: $updatedAfter) {
+                    issues(first: $pageSize, updatedAfter: $updatedAfter, after: $after, sort: CREATED_DESC) {
                         pageInfo {
                             hasNextPage
                             endCursor
@@ -184,21 +184,26 @@ class Queries:
         """
 
         # Add the updatedAfter variable to filter issues by the updated timestamp
-        variables = {"fullPath": repository["fullPath"], "after": after, "updatedAfter": history_days_timestamp}
+        variables = {
+            "fullPath": repository["fullPath"],
+            "after": after,
+            "updatedAfter": history_days_timestamp,
+            "pageSize": page_size,
+        }
 
         return {"query": query, "variables": variables}
 
     @staticmethod
     def get_merge_requests(
-        repository: dict, after: Optional[str] = None, last: int = 100, history_days: Optional[int] = 30
+        repository: dict, after: Optional[str] = None, page_size: int = 50, history_days: Optional[int] = 30
     ) -> dict:
         # Calculate the timestamp for filtering merge requests
         history_days_timestamp = (datetime.now() - timedelta(days=history_days)).isoformat()
 
         query = """
-            query Project($fullPath: ID!, $after: String, $updatedAfter: Time) {
+            query MergeRequests($fullPath: ID!, $after: String, $updatedAfter: Time, $pageSize: Int) {
                 project(fullPath: $fullPath) {
-                    mergeRequests(after: $after, last: 100, updatedAfter: $updatedAfter) {
+                    mergeRequests(after: $after, first: $pageSize, updatedAfter: $updatedAfter, sort: CREATED_DESC) {
                         pageInfo {
                             hasNextPage
                             endCursor
@@ -279,18 +284,32 @@ class Queries:
                                         }
                                     }
                                 }
+                                activity: notes(filter:ONLY_ACTIVITY) {
+                                    nodes {
+                                        createdAt
+                                        systemNoteMetadata {
+                                            action
+                                        }
+                                    }
+                                }
+                                comments: notes(filter:ONLY_COMMENTS) {
+                                    nodes {
+                                        createdAt
+                                        author {
+                                            id
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
                 }
             }
-
         """
 
-        # Add the updatedAfter variable to filter merge requests by the updated timestamp
         variables = {
             "fullPath": repository["fullPath"],
-            "last": last,
+            "pageSize": page_size,
             "after": after,
             "updatedAfter": history_days_timestamp,
         }
@@ -298,109 +317,116 @@ class Queries:
         return {"query": query, "variables": variables}
 
     @staticmethod
-    def get_pipelines(repository: dict, after: Optional[str] = None, history_days: Optional[int] = 30) -> dict:
+    def get_pipelines(
+        repository: dict, after: Optional[str] = None, history_days: int = 30, page_size: int = 50
+    ) -> dict:
         history_days_timestamp = (datetime.now() - timedelta(days=history_days)).isoformat()
         query = """
-           query Project($fullPath: ID!, $after: String, $updatedAfter: Time) {
-            project(fullPath: $fullPath) {
-                pipelines(last: 100, after: $after, updatedAfter: $updatedAfter) {
-                    pageInfo {
-                        hasNextPage
-                        endCursor
-                    }
-                    edges {
-                        node {
-                            id
-                            status
-                            createdAt
-                            updatedAt
-                            startedAt
-                            finishedAt
-                            sha
-                            jobs {
-                                edges {
-                                    node {
-                                        id
-                                        name
-                                        status
-                                        createdAt
-                                        startedAt
-                                        finishedAt
-                                        duration
-                                        failureMessage
-                                        retried
-                                        triggered
-                                        allowFailure
-                                        stage {
-                                            name
-                                        }
-                                        project {
-                                            name
-                                        }
-                                        pipeline {
+            query Pipelines($fullPath: ID!, $after: String, $updatedAfter: Time, $pageSize: Int) {
+                project(fullPath: $fullPath) {
+                    pipelines(first: $pageSize, after: $after, updatedAfter: $updatedAfter) {
+                        pageInfo {
+                            hasNextPage
+                            endCursor
+                        }
+                        edges {
+                            node {
+                                id
+                                status
+                                createdAt
+                                updatedAt
+                                startedAt
+                                finishedAt
+                                sha
+                                jobs {
+                                    edges {
+                                        node {
                                             id
-                                            ref
+                                            name
+                                            status
+                                            createdAt
+                                            startedAt
+                                            finishedAt
+                                            duration
+                                            failureMessage
+                                            retried
+                                            triggered
+                                            allowFailure
+                                            stage {
+                                                name
+                                            }
+                                            project {
+                                                name
+                                            }
+                                            pipeline {
+                                                id
+                                                ref
+                                            }
                                         }
                                     }
                                 }
+                                duration
+                                failureReason
+                                ref
+                                triggeredByPath
+                                user {
+                                    id
+                                    username
+                                }
                             }
-                            duration
-                            failureReason
-                            ref
-                            triggeredByPath
-                            user {
+                        }
+                    }
+                }
+            }
+        """
+        variables = {
+            "fullPath": repository["fullPath"],
+            "after": after,
+            "updatedAfter": history_days_timestamp,
+            "pageSize": page_size,
+        }
+
+        return {"query": query, "variables": variables}
+
+    @staticmethod
+    def get_environments(repository: dict, after: Optional[str] = None, page_size: int = 50) -> dict:
+        query = """
+            query Environments($fullPath: ID!, $after: String, $pageSize: Int) {
+                project(fullPath: $fullPath) {
+                    environments(first: $pageSize, after: $after) {
+                        pageInfo {
+                            hasNextPage
+                            endCursor
+                        }
+                        edges {
+                            node {
                                 id
-                                username
+                                name
+                                externalUrl
+                                state
+                                createdAt
+                                updatedAt
                             }
                         }
                     }
                 }
             }
-        }
         """
-        variables = {"fullPath": repository["fullPath"], "after": after, "updatedAfter": history_days_timestamp}
+        variables = {"fullPath": repository["fullPath"], "after": after, "pageSize": page_size}
 
         return {"query": query, "variables": variables}
 
     @staticmethod
-    def get_environments(repository: dict, after: Optional[str] = None) -> dict:
+    def get_deployments(repository: dict, environment: dict, after: Optional[str] = None, page_size: int = 50) -> dict:
         query = """
-        query Project($fullPath: ID!, $after: String) {
-            project(fullPath: $fullPath) {
-                environments(last: 20, after: $after) {
-                    pageInfo {
-                        hasNextPage
-                        endCursor
-                    }
-                    edges {
-                        node {
-                            id
-                            name
-                            externalUrl
-                            state
-                            createdAt
-                            updatedAt
-                        }
-                    }
-                }
-            }
-        }
-        """
-        variables = {"fullPath": repository["fullPath"], "after": after}
-
-        return {"query": query, "variables": variables}
-
-    @staticmethod
-    def get_deployments(repository: dict, environment: dict, after: Optional[str] = None) -> dict:
-        query = """
-            query Project($fullPath: ID!, $environmentName: String!, $after: String) {
+            query Deployments($fullPath: ID!, $environmentName: String!, $after: String, $pageSize: Int) {
                 project(fullPath: $fullPath) {
                     environment(name: $environmentName) {
                         id
                         name
                         externalUrl
                         state
-                        deployments(last: 100, after: $after) {
+                        deployments(first: $pageSize, after: $after, orderBy: {createdAt: DESC}) {
                             pageInfo {
                                 hasNextPage
                                 endCursor
@@ -424,7 +450,7 @@ class Queries:
                                                 author {
                                                     name
                                                     username
-                                                    email
+                                                    email: publicEmail
                                                 }
                                             }
                                         }
@@ -446,74 +472,78 @@ class Queries:
                 }
             }
         """
-        variables = {"fullPath": repository["fullPath"], "environmentName": environment, "after": after}
+        variables = {
+            "fullPath": repository["fullPath"],
+            "environmentName": environment,
+            "after": after,
+            "pageSize": page_size,
+        }
         return {"query": query, "variables": variables}
 
     @staticmethod
-    def get_group(group: str, after: Optional[str] = None) -> dict:
+    def get_group(group: str, after: Optional[str] = None, page_size: int = 50) -> dict:
         query = """
-            query Groups($after: String, $search: String) {
-              groups(after: $after, search: $search) {
-                nodes {
-                  id
-                  name
-                  description
-                  webUrl
+            query Groups($after: String, $search: String, $pageSize: Int) {
+                groups(after: $after, search: $search, first: $pageSize, sort: "createdAt_desc") {
+                    nodes {
+                        id
+                        name
+                        description
+                        webUrl
+                    }
+                    pageInfo {
+                        hasNextPage
+                        endCursor
+                    }
                 }
-                pageInfo {
-                  hasNextPage
-                  endCursor
-                }
-              }
             }
-
         """
 
-        variables = {"search": group, "after": after}
+        variables = {"search": group, "after": after, "pageSize": page_size}
 
         return {"query": query, "variables": variables}
 
-    def get_users(self, group_id: str, after: Optional[str] = None) -> dict:
+    def get_users(self, group_id: str, after: Optional[str] = None, page_size: int = 50) -> dict:
         query = """
-            query Users($after: String, $group_id: GroupID!) {
-              users(after: $after, groupId: $group_id) {
-                nodes {
-                  id
-                  name
-                  username
-                  groupMemberships {
-                    edges {
-                      node {
+            query Users($after: String, $group_id: GroupID!, $pageSize: Int) {
+                users(after: $after, groupId: $group_id, first: $pageSize, sort: CREATED_DESC) {
+                    nodes {
                         id
-                        expiresAt
-                        accessLevel {
-                          integerValue
-                          stringValue
+                        name
+                        username
+                        groupMemberships {
+                            edges {
+                                node {
+                                    id
+                                    expiresAt
+                                    accessLevel {
+                                        integerValue
+                                        stringValue
+                                    }
+                                    group {
+                                        id
+                                        name
+                                    }
+                                }
+                            }
                         }
-                        group {
-                          id
-                          name
-                        }
-                      }
+                        state
+                        organization
+                        commitEmail
+                        groupCount
+                        createdAt
+                        publicEmail
+                        webUrl
                     }
-                  }
-                  state
-                  organization
-                  commitEmail
-                  groupCount
-                  createdAt
-                  publicEmail
-                  webUrl
+                    pageInfo {
+                        hasNextPage
+                        endCursor
+                    }
                 }
-                pageInfo {
-                  hasNextPage
-                  endCursor
-                }
-              }
             }
         """
 
-        variables = {"group_id": group_id, "after": after}
+        variables = {"group_id": group_id, "after": after, "pageSize": page_size}
 
         return {"query": query, "variables": variables}
 
@@ -537,32 +567,32 @@ class Queries:
     def get_user_by_username(username: str) -> dict:
         query = """
             query User($username: String!) {
-              user(username: $username) {
-                id
-                username
-                name
-                email
-                organization
-                webUrl
-                createdAt
-                state
-                publicEmail
-                groupMemberships {
-                  edges {
-                    node {
-                      group {
-                        id
-                        name
-                      }
-                      accessLevel {
-                        integerValue
-                        stringValue
-                      }
-                      expiresAt
+                user(username: $username) {
+                    id
+                    username
+                    name
+                    email
+                    organization
+                    webUrl
+                    createdAt
+                    state
+                    publicEmail
+                    groupMemberships {
+                        edges {
+                            node {
+                                group {
+                                    id
+                                    name
+                                }
+                                accessLevel {
+                                    integerValue
+                                    stringValue
+                                }
+                                expiresAt
+                            }
+                        }
                     }
-                  }
                 }
-              }
             }
         """
         variables = {"username": username}
