@@ -18,10 +18,12 @@ class GitlabClient:
         self.queries = Queries()
         self.config = config
         self.url_graphql = f"{config.integration.properties['url']}/graphql"
-        self.headers = {
-            "Authorization": f"Bearer {config.integration.properties['secretToken']}",
-            "Content-Type": "application/json",
-        }
+
+        token = config.integration.properties.get("secretToken")
+        if not token:
+            raise ValueError("No secret token provided")
+
+        self.headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
 
         self.page_size = int(config.integration.properties.get("pageSize", 50))
         if self.page_size < 1 or self.page_size > 100:

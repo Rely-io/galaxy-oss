@@ -105,7 +105,11 @@ class RetryPolicy:
 
 
 def create_session(*, timeout: int = 30, headers: dict[str, str] | None = None, **kwargs: Any) -> ClientSession:
+    base_url = kwargs.pop("base_url", None)
+    if base_url is not None and not base_url.endswith("/"):
+        base_url += "/"
     return ClientSession(
+        base_url=base_url,
         timeout=ClientTimeout(total=timeout),
         # aiohttp expects json_serialize to return string
         json_serialize=kwargs.pop("json_serialize", lambda obj: json_serialize(obj).decode()),

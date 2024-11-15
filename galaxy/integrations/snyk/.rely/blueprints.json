@@ -240,6 +240,31 @@
           "type": "string",
           "format": "date-time",
           "title": "Updated At"
+        },
+        "packageName": {
+          "type": "string",
+          "title": "Package Name"
+        },
+        "packageVersion": {
+          "type": "string",
+          "title": "Package Version"
+        },
+        "isPatchable": {
+          "type": "boolean",
+          "title": "Is Patchable?"
+        },
+        "isUpgradeable": {
+          "type": "boolean",
+          "title": "Is Upgradeable?"
+        },
+        "isIgnored": {
+          "type": "boolean",
+          "title": "Is Ignored?"
+        },
+        "link": {
+          "type": "string",
+          "format": "url",
+          "title": "Link"
         }
       }
     },

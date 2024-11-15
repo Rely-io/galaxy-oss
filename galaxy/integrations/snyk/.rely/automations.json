@@ -165,9 +165,15 @@
             "description": "{{ data.description }}",
             "blueprintId": "{{ arguments.targetBlueprintId }}",
             "properties": {
+              "link": "{{ data.properties.link }}",
               "source": "Snyk",
               "status": "{{ data.properties.status }}",
-              "severity": "{{ data.properties.severity }}"
+              "severity": "{{ data.properties.severity }}",
+              "packageName": "{{ data.properties.packageName }}",
+              "packageVersion": "{{ data.properties.packageVersion }}",
+              "isPatchable": "{{ data.properties.isPatchable }}",
+              "isUpgradeable": "{{ data.properties.isUpgradeable }}",
+              "isIgnored": "{{ data.properties.isIgnored }}"
             },
             "relations": {
               "service": {

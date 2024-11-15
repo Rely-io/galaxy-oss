@@ -25,7 +25,7 @@ python = ">=3.11,<4.0"
 
 magneto_api_client = { git = "https://gitlab.com/relyio/backend/magneto-sdk.git", rev = "master" }
 
-aiohttp            = { extras = ["speedups"], version = "^3.10.8" }
+aiohttp            = { extras = ["speedups"], version = "^3.11.0" }
 anyio              = "^4.6.0"
 apscheduler        = "^3.10.4"
 asyncio            = "^3.4.3"

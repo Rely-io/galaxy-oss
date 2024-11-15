@@ -54,13 +54,19 @@ resources:
       title: .attributes.title
       description: '""'
       properties:
+        link: '"https://app.snyk.io/org/" + .context.organization_slug + "/project/" + ( .relationships.scan_item.data.id | tostring) + "#issue-" + .attributes.key'
         type: .attributes.type
         severity: .attributes.effective_severity_level
         status: .attributes.status
         createdAt: .attributes.created_at
         updatedAt: .attributes.updated_at
+        packageName: '((.attributes.coordinates | select(length > 0) | .[0].representations | select(length > 0) | .[0].dependency.package_name) // null)'
+        packageVersion: '((.attributes.coordinates | select(length > 0) | .[0].representations | select(length > 0) | .[0].dependency.package_version) // null)'
+        isIgnored: .attributes.ignored
+        isPatchable: '(if .attributes.coordinates[0]? then .attributes.coordinates[0].is_patchable else null end)'
+        isUpgradeable: '(if .attributes.coordinates[0]? then .attributes.coordinates[0].is_upgradeable else null end)'
       relations:
         project:
           value: .relationships.scan_item.data.id
         target:
-          value: .__target
+          value: .context.target_id

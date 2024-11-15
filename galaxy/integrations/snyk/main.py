@@ -26,7 +26,7 @@ class Snyk(Integration):
     @register(_methods, group=1)
     async def organizations(self) -> tuple[Any]:
         raw_organizations = await self.client.get_orgs()
-        self._organizations = [(item["id"], item["attributes"]["slug"]) for item in raw_organizations]
+        self._organizations = {item["id"]: item["attributes"]["slug"] for item in raw_organizations}
 
         mapped_organizations = await self.mapper.process("organization", raw_organizations)
         self.logger.debug("Found %d organizations", len(mapped_organizations))
@@ -37,7 +37,7 @@ class Snyk(Integration):
     async def targets(self) -> tuple[Any]:
         all_targets = []
 
-        for org_id, org_slug in self._organizations:
+        for org_id, org_slug in self._organizations.items():
             raw_targets = await self.client.get_targets(org_id)
 
             targets = {item["id"]: item for item in raw_targets}
@@ -75,15 +75,14 @@ class Snyk(Integration):
             for item in self._all_projects
         ]
 
-        all_issues = []
+        mapped_issues = []
         for org_id, target_id, project_id in organization_target_project_triples:
             raw_issues = await self.client.get_issues(org_id, project_id)
-            for raw_issue in raw_issues:
-                raw_issue["__target"] = target_id
+            project_issues = await self.mapper.process(
+                "issue", raw_issues, context={"target_id": target_id, "organization_slug": self._organizations[org_id]}
+            )
+            mapped_issues.extend(project_issues)
 
-            all_issues.extend(raw_issues)
-
-        mapped_issues = await self.mapper.process("issue", all_issues)
         self.logger.debug("Found %d issues", len(mapped_issues))
 
         return mapped_issues
