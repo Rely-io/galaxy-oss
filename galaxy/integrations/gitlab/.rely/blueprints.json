@@ -129,6 +129,13 @@
           "type": "integer",
           "title": "Default Branch Required Reviews",
           "description": "The number of reviews required for default branch MR rules for the project"
+        },
+        "repoFilesChecks": {
+          "type": "object",
+          "title": "Repo Files Checks",
+          "additionalProperties": {
+            "type": "boolean"
+          }
         }
       }
     },
@@ -750,6 +757,53 @@
         "value": "gitlab.v1.group",
         "title": "Job Owner",
         "description": "The job owner group"
+      }
+    }
+  },
+  {
+    "id": "gitlab.v1.repository_metrics",
+    "title": "Gitlab Repository Metrics",
+    "description": "Blueprint defining Gitlab Repository Metrics",
+    "icon": "gitlab",
+    "schemaProperties": {
+      "title": "Blueprint properties",
+      "type": "object",
+      "properties": {
+        "metrics": {
+          "type": "object",
+          "title": "Metrics",
+          "description": "Repository metrics data",
+          "properties": {
+            "dailyCommits": {
+              "type": "array",
+              "title": "Daily Commit Metrics",
+              "description": "Daily commit counts for the repository",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "date": {
+                    "type": "string",
+                    "title": "Date",
+                    "description": "The date of the metric"
+                  },
+                  "count": {
+                    "type": "number",
+                    "title": "Count",
+                    "description": "Number of commits for this date"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "relations": {
+      "repository": {
+        "value": "gitlab.v1.repository",
+        "title": "Repository",
+        "description": "The project this metric belongs to",
+        "array": false
       }
     }
   }

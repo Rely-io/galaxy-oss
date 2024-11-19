@@ -78,6 +78,8 @@ resources:
         | sort
         | first
         // null
+    additions: .additions
+    deletions: .deletions
     relations:
       repository:
         value: .context.repositoryId | tostring
@@ -221,3 +223,20 @@ resources:
         value: .context.environmentId | tostring
       triggeredBy:
         value: .creator.login
+
+- kind: repository_metrics
+  mappings:
+    id: '.context.repositoryId | tostring + "-metrics"'
+    title: '.context.repositoryName + " (Metrics)"'
+    blueprintId: '"github.v1.repository_metrics"'
+    properties:
+      metrics:
+        dailyCommits: |
+          with_entries(select(.key == "commits"))
+          | .commits
+          | map(. + {date: .committedDate | fromdate | strftime("%Y-%m-%d")})
+          | group_by(.date)
+          | map({date: .[0].date, count: length})
+    relations:
+      repository:
+        value: .context.repositoryId | tostring

@@ -2,6 +2,7 @@ import functools
 import importlib
 import json
 import logging
+import time
 import traceback
 from collections import OrderedDict
 from collections.abc import AsyncGenerator, Callable
@@ -146,7 +147,13 @@ async def run_integration_methods(
     async def _run_integration_method_and_push_to_magneto(method: Callable) -> None:
         logger.info("%-*s | Executing method", method_logger_width, method.__name__)
 
+        start_time = time.time()
         method_entities = [e async for e in _run_integration_method_to_entities(instance=instance, method=method)]
+        end_time = time.time()
+        logger.debug(
+            "%-*s | Execution: %d ms", method_logger_width, method.__name__, int((end_time - start_time) * 1000)
+        )
+
         logger.info("%-*s | Entities found: %d", method_logger_width, method.__name__, len(method_entities))
         logger.debug("%-*s | Results: %r", method_logger_width, method.__name__, method_entities)
 

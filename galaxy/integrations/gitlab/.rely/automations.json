@@ -450,7 +450,9 @@
               "createdBy": "{{ actions.fetch_author.output.title if actions.fetch_author else none }}",
               "reviewers": "{{ (actions.fetch_reviewers.output.title | tojson) if actions.fetch_reviewers else none }}",
               "assignees": "{{ (actions.fetch_assignees.output.title | tojson) if actions.fetch_assignees else none }}",
-              "firstReviewActivityAt": "{{ [data.properties.firstApprovalAt, data.properties.firstNonAuthorCommentAt, data.properties.closedAt] | select() | min | default(none) }}"
+              "firstReviewActivityAt": "{{ [data.properties.firstApprovalAt, data.properties.firstNonAuthorCommentAt, data.properties.closedAt] | select() | min | default(none) }}",
+              "additions": "{{ data.properties.diffStats.additions if data.properties.diffStats.additions else none }}",
+              "deletions": "{{ data.properties.diffStats.deletions if data.properties.diffStats.deletions else none }}"
             },
             "relations": {
               "service": {

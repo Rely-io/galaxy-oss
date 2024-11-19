@@ -1,15 +1,18 @@
+import re
 from types import TracebackType
+
 from galaxy.core.galaxy import Integration, register
 from galaxy.core.models import Config
+from galaxy.core.utils import files_to_check
 from galaxy.integrations.gitlab.client import GitlabClient
 from galaxy.integrations.gitlab.utils import (
-    map_users_to_groups,
-    get_inactive_usernames_from_issues,
     add_user_to_inactive_group,
+    get_inactive_usernames_from_deployments,
+    get_inactive_usernames_from_issues,
     get_inactive_usernames_from_merge_requests,
     get_inactive_usernames_from_pipelines,
-    get_inactive_usernames_from_deployments,
     get_required_reviews,
+    map_users_to_groups,
 )
 
 __all__ = ["Gitlab"]
@@ -54,6 +57,10 @@ class Gitlab(Integration):
     async def __aexit__(self, exc_type: type, exc: Exception, tb: TracebackType) -> None:
         await self.client.__aexit__(exc_type, exc, tb)
 
+    @property
+    def repo_files_to_check(self) -> list[dict]:
+        return files_to_check(self.config, self.logger)
+
     @register(_methods, group=1)
     async def groups(self) -> list[dict]:
         groups_mapped = []
@@ -87,12 +94,27 @@ class Gitlab(Integration):
             self.repositories.update({repo["id"]: repo for repo in repositories})
             for repo in repositories:
                 repo["requiredReviews"] = get_required_reviews(repo.get("branchRules", []))
+                if self.repo_files_to_check:
+                    repo["repoFilesChecks"] = await self.get_repo_files(repo["fullPath"])
 
             repos_mapped.extend(
                 (await self.mapper.process("repository", repositories, context={"ownerGroup": group_id}))
             )
         self.logger.info(f"Found {len(repos_mapped)} repositories")
         return repos_mapped
+
+    async def get_repo_files(self, repo_full_path: str) -> dict:
+        repo_file_checks = {}
+        for file_check in self.repo_files_to_check:
+            file = await self.client.get_file(repo_full_path, file_check["path"])
+            if file:
+                repo_file_checks[file_check["destination"]] = not file_check["regex"] or bool(
+                    re.search(file_check["regex"], file["content"])
+                )
+            else:
+                repo_file_checks[file_check["destination"]] = False
+
+        return repo_file_checks
 
     @register(_methods, group=3)
     async def users(self) -> list[dict]:
@@ -266,6 +288,22 @@ class Gitlab(Integration):
             self.logger.info(f"Found {len(new_entities) - 1} inactive members associated to deployments")
 
         return new_entities + deployments_mapped
+
+    @register(_methods, group=5)
+    async def repository_metrics(self) -> list[dict]:
+        all_metrics = []
+        for repo in self.repositories.values():
+            project_id = repo["id"].split("/")[-1]
+            commits = await self.client.get_commits(project_id, branch=repo["repository"]["rootRef"])
+            repository_metrics = await self.mapper.process(
+                "repository_metrics", [{"commits": commits}], context={"repository": repo}
+            )
+            all_metrics.extend(repository_metrics)
+
+        self.logger.info(
+            f"Calculated {len(all_metrics)} repository metrics from the last {self.client.days_of_history} days"
+        )
+        return all_metrics
 
     async def jobs(self) -> list[dict]:
         self.logger.info(f"Found {len(self.jobs)} jobs")

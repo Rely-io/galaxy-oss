@@ -598,3 +598,26 @@ class Queries:
         variables = {"username": username}
 
         return {"query": query, "variables": variables}
+
+    @staticmethod
+    def get_file(project_path: dict, file_path: str) -> dict:
+        query = """
+            query GetFile($projectPath: ID!, $filePath: String!) {
+                project(fullPath: $projectPath) {
+                    repository {
+                        blobs(first: 1, paths: [$filePath]) {
+                            nodes {
+                                id: oid
+                                name
+                                path
+                                size
+                                content: rawBlob
+                            }
+                        }
+                    }
+                }
+            }
+        """
+        variables = {"projectPath": project_path, "filePath": file_path}
+
+        return {"query": query, "variables": variables}

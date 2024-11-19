@@ -25,3 +25,4 @@ integration:
     pageSize: "{{ env('RELY_INTEGRATION_GITLAB_API_PAGE_SIZE') | default(50, true) | int }}"
     timeout: "{{ env('RELY_INTEGRATION_GITLAB_API_TIMEOUT') | default(60, true) | int }}"
     ignoreArchived: "{{ env('RELY_INTEGRATION_GITLAB_IGNORE_ARCHIVED') | default('true', true) }}"
+    filesToCheck: '{{ env("RELY_INTEGRATION_GITLAB_FILES_TO_CHECK") | default("", true) }}'

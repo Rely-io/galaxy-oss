@@ -26,5 +26,12 @@ Besides the common configuration, the following environment variables are used t
 - `RELY_INTEGRATION_GITLAB_API_PAGE_SIZE`: The page size for the Gitlab API requests (**optional**, default: 50, min: 1, max: 100)
 - `RELY_INTEGRATION_GITLAB_API_TIMEOUT`: The timeout in seconds for the Gitlab API requests (**optional**, default: 60, min: 5)
 - `RELY_INTEGRATION_GITLAB_IGNORE_ARCHIVED`: If the integration should ignore archived repositories (**optional**, default: true)
+- `RELY_INTEGRATION_GITLAB_FILES_TO_CHECK`: The configuration for the files to check for in the repositories (**optional**, default: ''). Can be a string with the format `file::destination::regex`, where:
+  - `file`: The file name to check
+  - `destination`: The destination to save the file
+  - `regex`: The regex to check the file content (**optional**)
+
+    Additional files to check can be added by separating them with `||`, as example: `file1::destination1::||file2::destination2::regex2`. Also, the regex is optional, if not provided, the integration will check if the file exists. Alternatively, you can provide a json array minified with the files to check, as example: `[{"file": "file1", "destination": "destination1", "regex": "regex1"}, {"file": "file2", "destination": "destination2", "regex": "regex2"}]`.
+
 
 Although some of the previous environment variables are optional, you might need to configure them depending on the Gitlab API usage, as example, if you have a lot of data to retrieve, you might need to decrease the page size and increase the timeout.

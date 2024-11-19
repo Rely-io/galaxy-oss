@@ -1,7 +1,7 @@
-from typing import Any, Literal
+from typing import Any, List, Literal
 
 import yaml
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, RootModel
 
 __all__ = ["Config", "ExecutionType", "RelyConfig", "IntegrationConfig", "SchedulerJobStates"]
 
@@ -51,3 +51,19 @@ class Config(BaseModel):
 
     rely: RelyConfig
     integration: IntegrationConfig
+
+
+class FileCheck(BaseModel):
+    path: str
+    destination: str
+    regex: str = Field(..., alias="regex")
+
+
+class FileCheckList(RootModel):
+    root: List[FileCheck]
+
+    def __iter__(self):
+        return iter(self.root)
+
+    def __getitem__(self, item):
+        return self.root[item]

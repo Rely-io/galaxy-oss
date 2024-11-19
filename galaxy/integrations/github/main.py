@@ -84,13 +84,15 @@ class Github(Integration):
         )
 
         for metadata in repositories_metadata:
+            content = await self.client.get_repo(metadata["owner"]["login"], metadata["name"])
             self.repositories[metadata["id"]] = {
                 "id": metadata["id"],
                 "slug": metadata["name"],
                 "owner": metadata["owner"]["login"],
                 "link": metadata["html_url"],
                 "metadata": metadata,
-                "content": await self.client.get_repo(metadata["owner"]["login"], metadata["name"]),
+                "default_branch": content.get("defaultBranchRef", {}).get("name"),
+                "content": content,
             }
 
         self.logger.info(f"Found {len(self.repositories)} repositories")
@@ -283,6 +285,23 @@ class Github(Integration):
             self.logger.info(f"Found {len(new_entities) - 1} inactive members associated to deployments")
 
         return new_entities + deployments_mapped
+
+    @register(_methods, group=6)
+    async def repository_metrics(self) -> list[dict]:
+        all_metrics = []
+        for repo in self.repositories.values():
+            commits = await self.client.get_commits(repo["owner"], repo["slug"], branch=repo["default_branch"])
+            repository_metrics = await self.mapper.process(
+                "repository_metrics",
+                [{"commits": commits}],
+                context={"repositoryId": repo["id"], "repositoryName": repo["slug"]},
+            )
+            all_metrics.extend(repository_metrics)
+
+        self.logger.info(
+            f"Calculated {len(all_metrics)} repository metrics from the last {self.client.days_of_history} days"
+        )
+        return all_metrics
 
     async def register_inactive_users(self, inactive_usernames):
         if not inactive_usernames:

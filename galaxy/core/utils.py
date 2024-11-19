@@ -9,9 +9,11 @@ import aiohttp
 from aiohttp import ClientResponseError
 from fastapi import HTTPException, Request, Security
 from fastapi.security.api_key import APIKeyHeader
+from pydantic import ValidationError
 
 from galaxy.core.magneto import Magneto
 from galaxy.core.mapper import Mapper
+from galaxy.core.models import Config, FileCheckList
 
 
 def from_env(variable, raise_exception=False) -> str | int:
@@ -94,3 +96,37 @@ async def get_api_key(api_key_header: str = Security(APIKeyHeader(name="authoriz
         return True
     else:
         raise HTTPException(status_code=403, detail="Could not validate credentials")
+
+
+def files_to_check(config: Config, logger: logging.Logger) -> list[dict]:
+    files_to_check: list | str | FileCheckList = config.integration.properties.get("filesToCheck", "")
+
+    if isinstance(files_to_check, str):
+        try:
+            files_check_list = FileCheckList.model_validate_json(files_to_check)
+        except ValidationError as e:
+            files_from_str = [
+                {"path": fc[0], "destination": fc[1], "regex": fc[2]}
+                for fc in (file_check.split("::") for file_check in files_to_check.split("||"))
+                if len(fc) == 3 and fc[0] and fc[1]
+            ]
+
+            try:
+                files_check_list = FileCheckList.model_validate(files_from_str)
+            except ValidationError:
+                logger.error(f"Invalid file check config: {files_to_check}: {e}")
+                return []
+
+        return list([fc.model_dump() for fc in files_check_list])
+
+    if isinstance(files_to_check, list):
+        try:
+            files_check_list = FileCheckList.model_validate(files_to_check)
+
+            return list([fc.model_dump() for fc in files_check_list])
+        except ValidationError:
+            logger.error(f"Invalid file check config: {files_to_check}")
+            return []
+
+    logger.warning(f"Invalid file check config: {files_to_check}")
+    return []

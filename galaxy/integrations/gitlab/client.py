@@ -1,5 +1,6 @@
 import logging
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
+from itertools import count
 from types import TracebackType
 
 from aiohttp import ClientResponseError, ClientSession
@@ -41,6 +42,7 @@ class GitlabClient:
             self.timeout = 60
 
         self.ignore_archived_repos = to_bool(config.integration.properties.get("ignoreArchived", True))
+        self.history_limit_timestamp = datetime.now(tz=UTC) - timedelta(days=self.days_of_history)
 
         self.session: ClientSession | None = None
         self.retry_policy = RetryPolicy(logger=self.logger, wait_multiplier=2, wait_min=60, wait_max=120)
@@ -293,3 +295,60 @@ class GitlabClient:
         data = await make_request(self.session, "POST", self.url_graphql, json=query, retry_policy=self.retry_policy)
 
         return data["data"]["user"]
+
+    async def get_file(self, repository_path: str, file_path: str) -> dict:
+        query = self.queries.get_file(repository_path, file_path)
+
+        data = await make_request(self.session, "POST", self.url_graphql, json=query, retry_policy=self.retry_policy)
+
+        if "errors" in data:
+            self.logger.warning(f"Failed to fetch file {file_path}: {data['errors']}")
+            return None
+
+        file_data = data.get("data", {}).get("project", {}).get("repository", {}).get("blobs", {}).get("nodes", [])
+        if not file_data:
+            self.logger.debug(f"File {file_path} not found")
+            return None
+
+        return file_data[0]
+
+    async def get_commits(
+        self, project_id: str | int, branch: str, *, exclude_merge_commits: bool = True
+    ) -> list[dict[str, str | int]]:
+        all_commits = []
+
+        url = f"{self.config.integration.properties['url']}/v4/projects/{project_id}/repository/commits"
+        for page_num in count(start=1):
+            # TODO: add reusable "make_request" logic like it is done in the github client
+            try:
+                async with self.session.request(
+                    "GET",
+                    url,
+                    params={
+                        "page": page_num,
+                        "per_page": self.page_size,
+                        "pagination": "keyset",
+                        "ref_name": branch,
+                        "since": self.history_limit_timestamp.isoformat(),
+                    },
+                ) as response:
+                    if response.status // 100 == 2:
+                        data = await response.json()
+                    response.raise_for_status()
+            except ClientResponseError as e:
+                if e.status == 404:
+                    self.logger.warning("Unable to fetch commits for project %s: project not found", project_id)
+                    break
+                raise Exception(f"Client server integration API error: {e.status} {e.message}")
+
+            if not data:
+                break
+
+            all_commits.extend(
+                [commit for commit in data if not exclude_merge_commits or not self._is_merge_commit(commit)]
+            )
+
+        return all_commits
+
+    def _is_merge_commit(self, commit: dict) -> bool:
+        return len(commit.get("parent_ids") or []) > 1

@@ -222,6 +222,16 @@
           "format": "date-time",
           "title": "First Review At",
           "description": "The date of the first review activity on the pull request."
+        },
+        "additions": {
+          "type": "integer",
+          "title": "Number of Additions",
+          "description": "The number of lines added in the pull request."
+        },
+        "deletions": {
+          "type": "integer",
+          "title": "Number of Deletions",
+          "description": "The number of lines deleted in the pull request."
         }
       }
     },
@@ -727,6 +737,53 @@
         "value": "github.v1.environment",
         "title": "Environment",
         "description": "The environment this deployment updated",
+        "array": false
+      }
+    }
+  },
+  {
+    "id": "github.v1.repository_metrics",
+    "title": "GitHub Repository Metrics",
+    "description": "Blueprint defining GitHub Repository Metrics",
+    "icon": "github",
+    "schemaProperties": {
+      "title": "Blueprint properties",
+      "type": "object",
+      "properties": {
+        "metrics": {
+          "type": "object",
+          "title": "Metrics",
+          "description": "Repository metrics data",
+          "properties": {
+            "dailyCommits": {
+              "type": "array",
+              "title": "Daily Commit Metrics",
+              "description": "Daily commit counts for the repository",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "date": {
+                    "type": "string",
+                    "title": "Date",
+                    "description": "The date of the metric"
+                  },
+                  "count": {
+                    "type": "number",
+                    "title": "Count",
+                    "description": "Number of commits for this date"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "relations": {
+      "repository": {
+        "value": "github.v1.repository",
+        "title": "Repository",
+        "description": "The project this metric belongs to",
         "array": false
       }
     }

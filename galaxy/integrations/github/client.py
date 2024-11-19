@@ -1,6 +1,7 @@
 import base64
 from collections.abc import Iterable
 from datetime import datetime, timedelta
+from functools import partial
 from itertools import count
 from types import TracebackType
 from typing import Any
@@ -432,3 +433,42 @@ class GithubClient:
             cursor = page_info["endCursor"]
 
         return all_deployments
+
+    async def get_commits(
+        self, organization: str, repo: str, branch: str, *, exclude_merge_commits: bool = True
+    ) -> list[dict[str, str | int]]:
+        all_commits = []
+
+        query_builder = partial(
+            build_graphql_query,
+            query_type=QueryType.COMMITS,
+            repo_id=self.build_repo_id(organization, repo),
+            branch=branch,
+            page_size=self.page_size,
+            since=self.history_limit_timestamp,
+        )
+
+        cursor = None
+        while True:
+            query = query_builder(after=cursor)
+            response = await self._make_graphql_request(query)
+
+            try:
+                data = response["data"]["repository"]["commits"]["history"] or {}
+                commits = data["nodes"] or []
+                all_commits.extend(
+                    [commit for commit in commits if not exclude_merge_commits or not self._is_merge_commit(commit)]
+                )
+                page_info = data["pageInfo"] or {}
+                has_next_page = page_info.get("hasNextPage") or False
+                cursor = page_info.get("endCursor")
+            except (KeyError, TypeError):
+                break
+
+            if not has_next_page:
+                break
+
+        return all_commits
+
+    def _is_merge_commit(self, commit: dict) -> bool:
+        return ((commit.get("parents") or {}).get("totalCount") or 0) > 1

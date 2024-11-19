@@ -1,4 +1,5 @@
 from collections.abc import Iterable
+from datetime import datetime
 from enum import Enum
 from typing import Any, Optional
 
@@ -15,6 +16,7 @@ class QueryType(str, Enum):
     TEAMS = "teams"
     TEAM_MEMBERS = "team_members"
     TEAM_REPOS = "team_repos"
+    COMMITS = "commits"
 
 
 def build_graphql_query(query_type: QueryType, **params: Any) -> dict:
@@ -27,6 +29,7 @@ def build_graphql_query(query_type: QueryType, **params: Any) -> dict:
         QueryType.TEAMS: _build_teams_query,
         QueryType.TEAM_MEMBERS: _build_team_members,
         QueryType.TEAM_REPOS: _build_team_repos,
+        QueryType.COMMITS: _build_commits_query,
     }
 
     query, variables = builders_by_query_type[query_type](**params)
@@ -176,6 +179,8 @@ def _build_pull_requests_query(
                                     login
                                 }
                             }
+                            additions
+                            deletions
                         }
                     }
                     pageInfo {
@@ -468,4 +473,54 @@ def _build_members_query(
     """
 
     variables = {"owner": owner, "after": after, "pageSize": page_size}
+    return query, variables
+
+
+def _build_commits_query(
+    repo_id: str, branch: str, *, after: str | None = None, since: datetime | None = None, page_size: int = 50
+) -> tuple[str, dict[str, str]]:
+    query = """
+        query GetCommits(
+            $owner: String!
+            $name: String!
+            $branch: String!
+            $since: GitTimestamp
+            $after: String = null
+            $pageSize: Int = 50
+        ) {
+            repository(owner: $owner, name: $name, followRenames: true) {
+                commits: object(expression: $branch) {
+                    ... on Commit {
+                        history(first: $pageSize, after: $after, since: $since) {
+                            pageInfo {
+                                endCursor
+                                hasNextPage
+                            }
+                            nodes {
+                                oid
+                                committedDate
+                                author {
+                                    user {
+                                        login
+                                    }
+                                }
+                                parents {
+                                    totalCount
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    """
+    owner, name = repo_id.split("/", maxsplit=1)
+    variables = {
+        "owner": owner,
+        "name": name,
+        "branch": branch,
+        "after": after,
+        "pageSize": page_size,
+        "since": since.isoformat() if since is not None else None,
+    }
     return query, variables
