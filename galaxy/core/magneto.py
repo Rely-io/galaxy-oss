@@ -19,7 +19,7 @@ from magneto_api_client import (
     TaskType,
 )
 from magneto_api_client import models as magneto_models
-from magneto_api_client.exceptions import BadRequestException, NotFoundException
+from magneto_api_client.exceptions import ApiException, BadRequestException, NotFoundException
 from pydantic import ValidationError
 
 from galaxy.utils.itertools import chunks
@@ -191,6 +191,16 @@ class Magneto:
         api_instance = magneto_api_client.TasksApi(self.session)
         try:
             api_response: ApiResponse[TaskRead] = await api_instance.create_task_api_v1_tasks_post_with_http_info(task)
+        except ApiException as e:
+            message = e.reason or e.body
+            if message is None:
+                try:
+                    message = str(e)
+                except Exception:
+                    self.logger.warning(
+                        "Unable to parse error message on TasksApi->create_task_api_v1_tasks_post: %s", e
+                    )
+            raise MagnetoApiError(status_code=int(e.status or 500), message=message) from e
         except Exception as e:
             raise Exception(f"Exception when calling TasksApi->create_task_api_v1_tasks_post: {e}")
 

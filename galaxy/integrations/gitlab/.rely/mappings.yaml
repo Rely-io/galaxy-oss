@@ -125,7 +125,7 @@ resources:
       assignees:
         value: '[.node.assignees.edges[].node.id | split("/") | last | "gitlab_user_" + .]'
       reviewers:
-        value: '[.node.reviewers.edges[].node.id | split("/") | last | "gitlab_user_" + .]'
+        value: '[.node.commenters.nodes[].id | split("/") | last | "gitlab_user_" + .] + [.node.approvedBy.nodes[].id | split("/") | last | "gitlab_user_" + .] | unique'
 
 
 - kind: pipeline

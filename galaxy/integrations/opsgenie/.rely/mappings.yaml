@@ -58,7 +58,7 @@ resources:
     description: .description
     properties:
       rules: .rules | tostring
-      repeat: .repeat
+      repeat: select(.repeat != null) | tostring // null
     relations:
       team:
         value: .ownerTeam.id

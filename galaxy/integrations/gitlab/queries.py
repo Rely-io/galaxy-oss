@@ -300,6 +300,18 @@ class Queries:
                                         }
                                     }
                                 }
+                                commenters {
+                                    nodes {
+                                        id
+                                        username
+                                    }
+                                }
+                                approvedBy {
+                                    nodes {
+                                        id
+                                        username
+                                    }
+                                }
                             }
                         }
                     }

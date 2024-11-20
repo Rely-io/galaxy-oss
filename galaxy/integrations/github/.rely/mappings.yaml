@@ -84,7 +84,7 @@ resources:
       repository:
         value: .context.repositoryId | tostring
       reviewers:
-        value: '[.reviews.edges[].node.author.login] // []'
+        value: '[.reviews.edges[].node.author.login] + [.comments.edges[].node.author.login] | unique // []'
       assignees:
         value: '[.assignees.nodes[].login] // []'
       creator:

@@ -151,6 +151,15 @@ def _build_pull_requests_query(
                             author {
                                 login
                             }
+                            comments(first: 25) {
+                                edges {
+                                    node {
+                                        author {
+                                            login
+                                        }
+                                    }
+                                }
+                            }
                             commits {
                                 totalCount
                             }
