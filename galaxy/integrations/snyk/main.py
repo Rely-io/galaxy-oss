@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 from types import TracebackType
 from typing import Any
 
@@ -75,14 +76,19 @@ class Snyk(Integration):
             for item in self._all_projects
         ]
 
+        history_start_date = datetime.now() - timedelta(days=int(self.config.integration.properties["daysOfHistory"]))
+
         mapped_issues = []
         for org_id, target_id, project_id in organization_target_project_triples:
-            raw_issues = await self.client.get_issues(org_id, project_id)
+            raw_issues = await self.client.get_issues(org_id, project_id, history_start_date)
             project_issues = await self.mapper.process(
                 "issue", raw_issues, context={"target_id": target_id, "organization_slug": self._organizations[org_id]}
             )
             mapped_issues.extend(project_issues)
 
-        self.logger.debug("Found %d issues", len(mapped_issues))
+        self.logger.debug(
+            "Found %d issues from the last %s days",
+            (len(mapped_issues), self.config.integration.properties["daysOfHistory"]),
+        )
 
         return mapped_issues

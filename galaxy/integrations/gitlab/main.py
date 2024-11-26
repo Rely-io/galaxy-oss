@@ -294,7 +294,7 @@ class Gitlab(Integration):
         all_metrics = []
         for repo in self.repositories.values():
             project_id = repo["id"].split("/")[-1]
-            commits = await self.client.get_commits(project_id, branch=repo["repository"]["rootRef"])
+            commits = await self.client.get_commits(project_id, branch=repo["repository"].get("rootRef", "main"))
             repository_metrics = await self.mapper.process(
                 "repository_metrics", [{"commits": commits}], context={"repository": repo}
             )

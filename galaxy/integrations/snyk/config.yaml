@@ -15,3 +15,4 @@ integration:
   properties:
     apiToken: "{{ env('RELY_INTEGRATION_SNYK_TOKEN') | default('', true) }}"
     region: "{{ env('RELY_INTEGRATION_SNYK_REGION') | default('', true) }}"
+    daysOfHistory: "{{ env('DAYS_OF_HISTORY') | default(30, true) | int }}"

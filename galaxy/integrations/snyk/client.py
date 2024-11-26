@@ -3,6 +3,7 @@ __all__ = ["SnykClient"]
 from logging import Logger
 from types import TracebackType
 from typing import Any
+from datetime import datetime
 
 from galaxy.core.models import Config
 from galaxy.utils.requests import ClientSession, create_session, make_request
@@ -78,7 +79,8 @@ class SnykClient:
             f"/rest/orgs/{org_id}/projects", params={"target_id": [target_id], "meta.latest_issue_counts": "true"}
         )
 
-    async def get_issues(self, org_id: str, project_id: str) -> list[dict]:
-        return await self._fetch_list_data(
-            f"/rest/orgs/{org_id}/issues", params={"scan_item.type": "project", "scan_item.id": project_id}
-        )
+    async def get_issues(self, org_id: str, project_id: str, history_start_date: datetime = None) -> list[dict]:
+        params = {"scan_item.type": "project", "scan_item.id": project_id}
+        if history_start_date is not None:
+            params["created_after"] = history_start_date.strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"
+        return await self._fetch_list_data(f"/rest/orgs/{org_id}/issues", params=params)

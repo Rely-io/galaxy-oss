@@ -26,9 +26,9 @@ resources:
       openMergeRequestsCount: .openMergeRequestsCount
       languages: '[.languages[].name]'
       starCount: .starCount
-      defaultBranch: .repository.rootRef
+      defaultBranch: '.repository.rootRef // "main"'
       updatedAt: .updatedAt
-      readmeUrl: 'if .repository.blobs.nodes | length > 0 then .webUrl + "/-/blob/" + .repository.rootRef + "/" + .repository.blobs.nodes[0].path else "" end'
+      readmeUrl: 'if .repository.blobs.nodes | length > 0 then .webUrl + "/-/blob/" + (.repository.rootRef // "main") + "/" + .repository.blobs.nodes[0].path else "" end'
       readme: 'if .repository.blobs.nodes | length > 0 then .repository.blobs.nodes[0].rawBlob else "" end'
       defaultBranchRequiredReviews: .requiredReviews["default"]
       allBranchesRequiredReviews: .requiredReviews["All branches"]
