@@ -248,10 +248,9 @@
           "title": "Incident Status",
           "description": "The status of the PagerDuty incident",
           "enum": [
-            "Active",
-            "Acknowledged",
-            "Resolved",
-            "Open"
+            "triggered",
+            "acknowledged",
+            "resolved"
           ]
         },
         "assignedVia": {

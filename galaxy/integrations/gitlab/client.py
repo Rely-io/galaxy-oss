@@ -315,6 +315,9 @@ class GitlabClient:
     async def get_commits(
         self, project_id: str | int, branch: str, *, exclude_merge_commits: bool = True
     ) -> list[dict[str, str | int]]:
+        if not branch:
+            return []
+
         all_commits = []
 
         url = f"{self.config.integration.properties['url']}/v4/projects/{project_id}/repository/commits"

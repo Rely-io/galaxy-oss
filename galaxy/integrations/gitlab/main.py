@@ -17,6 +17,8 @@ from galaxy.integrations.gitlab.utils import (
 
 __all__ = ["Gitlab"]
 
+DEFAULT_BRANCH_NAME: str = "main"
+
 
 class Gitlab(Integration):
     _methods = []
@@ -91,8 +93,15 @@ class Gitlab(Integration):
     async def repositories(self) -> list[dict]:
         repos_mapped = []
         for group_id, repositories in self.group_to_repos.items():
-            self.repositories.update({repo["id"]: repo for repo in repositories})
             for repo in repositories:
+                self.repositories[repo["id"]] = repo
+
+                if repo.get("repository") is None:
+                    repo["repository"] = {}
+
+                if repo["repository"].get("rootRef") is None:
+                    repo["repository"]["rootRef"] = DEFAULT_BRANCH_NAME
+
                 repo["requiredReviews"] = get_required_reviews(repo.get("branchRules", []))
                 if self.repo_files_to_check:
                     repo["repoFilesChecks"] = await self.get_repo_files(repo["fullPath"])
@@ -294,7 +303,7 @@ class Gitlab(Integration):
         all_metrics = []
         for repo in self.repositories.values():
             project_id = repo["id"].split("/")[-1]
-            commits = await self.client.get_commits(project_id, branch=repo["repository"].get("rootRef", "main"))
+            commits = await self.client.get_commits(project_id, branch=repo["repository"]["rootRef"])
             repository_metrics = await self.mapper.process(
                 "repository_metrics", [{"commits": commits}], context={"repository": repo}
             )
