@@ -15,6 +15,9 @@ from galaxy.integrations.github.utils import (
 __all__ = ["Github"]
 
 
+DEFAULT_BRANCH_NAME: str = "main"
+
+
 class Github(Integration):
     _methods = []
 
@@ -91,7 +94,7 @@ class Github(Integration):
                 "owner": metadata["owner"]["login"],
                 "link": metadata["html_url"],
                 "metadata": metadata,
-                "default_branch": content.get("defaultBranchRef", {}).get("name"),
+                "default_branch": (content.get("defaultBranchRef") or {}).get("name") or DEFAULT_BRANCH_NAME,
                 "content": content,
             }
 
@@ -140,6 +143,7 @@ class Github(Integration):
             self.repository_to_pull_requests[repo_id] = await self.client.get_pull_requests(
                 repo["owner"], repo["slug"], self.PULL_REQUEST_STATUS_TO_FETCH
             )
+
             prs_mapped.extend(
                 (
                     await self.mapper.process(
@@ -157,7 +161,7 @@ class Github(Integration):
         self.logger.info(f"Found {len(prs_mapped)} pull requests from the last {self.client.days_of_history} days")
         new_entities = await self.register_inactive_users(inactive_usernames)
         if new_entities:
-            self.logger.info(f"Found {len(new_entities) - 1} inactive members associated to deployments")
+            self.logger.info(f"Found {len(new_entities) - 1} inactive members associated to pull requests")
 
         return new_entities + prs_mapped
 
@@ -206,7 +210,7 @@ class Github(Integration):
         workflows_runs_mapped = []
         inactive_usernames = set()
         for repo_id, repo in self.repositories.items():
-            for workflow in self.repository_to_workflows[repo_id]:
+            for workflow in self.repository_to_workflows.get(repo_id) or []:
                 self.workflows_to_runs[repo_id] = await self.client.get_workflow_runs(
                     repo["owner"], repo["slug"], workflow["id"]
                 )
@@ -221,14 +225,14 @@ class Github(Integration):
                 )
 
                 inactive_usernames.update(
-                    get_inactive_usernames_from_workflow_runs(self.repository_to_pull_requests[repo_id], self.users)
+                    get_inactive_usernames_from_workflow_runs(self.workflows_to_runs[repo_id], self.users)
                 )
         self.logger.info(
-            f"Found {len(workflows_runs_mapped)} workflow runs from the last {self.client.days_of_history} days"
+            "Found %d workflow runs from the last %d days", len(workflows_runs_mapped), self.client.days_of_history
         )
         new_entities = await self.register_inactive_users(inactive_usernames)
         if new_entities:
-            self.logger.info(f"Found {len(new_entities) - 1} inactive members associated to deployments")
+            self.logger.info(f"Found {len(new_entities) - 1} inactive members associated to workflow runs")
 
         return workflows_runs_mapped
 
@@ -255,7 +259,7 @@ class Github(Integration):
         inactive_usernames = set()
         for repo_id, repo in self.repositories.items():
             self.repository_to_deployments[repo_id] = []
-            for environment in self.repository_to_environments[repo_id]:
+            for environment in self.repository_to_environments.get(repo_id) or []:
                 repo_env_deployments = await self.client.get_deployments(
                     repo["owner"], repo["slug"], [environment["name"]]
                 )

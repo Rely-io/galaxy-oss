@@ -57,18 +57,23 @@ class Mapper:
 
     def _sanitize(self, entity: dict) -> dict:
         if entity.get("id"):
-            entity["id"] = str(entity["id"]).lower()
-            entity["id"] = self._replace_non_matching_characters(entity["id"], self.id_allowed_chars).lower()
+            entity["id"] = self._replace_non_matching_characters(str(entity["id"]).lower(), self.id_allowed_chars)
+
         for relation in entity.get("relations", {}).values():
+            if not relation.get("value"):
+                continue
+
             if isinstance(relation["value"], list):
                 relation["value"] = [
-                    self._replace_non_matching_characters(value, self.id_allowed_chars).lower()
+                    value
+                    if not value
+                    else self._replace_non_matching_characters(str(value).lower(), self.id_allowed_chars)
                     for value in relation["value"]
                 ]
             else:
-                if relation["value"]:
-                    relation["value"] = relation["value"].lower()
-                    relation["value"] = self._replace_non_matching_characters(relation["value"], self.id_allowed_chars)
+                relation["value"] = self._replace_non_matching_characters(
+                    str(relation["value"]).lower(), self.id_allowed_chars
+                )
 
         return entity
 

@@ -65,6 +65,8 @@ resources:
         isIgnored: .attributes.ignored
         isPatchable: '(if .attributes.coordinates[0]? then .attributes.coordinates[0].is_patchable else null end)'
         isUpgradeable: '(if .attributes.coordinates[0]? then .attributes.coordinates[0].is_upgradeable else null end)'
+        resolvedAt: '(.attributes.resolution?.resolved_at // null)'
+        resolutionType: '(.attributes.resolution?.type // null)'
       relations:
         project:
           value: .relationships.scan_item.data.id

@@ -265,6 +265,19 @@
           "type": "string",
           "format": "url",
           "title": "Link"
+        },
+        "resolvedAt": {
+          "type": "string",
+          "format": "date-time",
+          "title": "Resolved At"
+        },
+        "resolutionType": {
+          "type": "string",
+          "title": "Resolution Type",
+          "enum": [
+            "disappeared",
+            "fixed"
+          ]
         }
       }
     },

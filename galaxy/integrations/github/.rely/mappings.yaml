@@ -78,8 +78,8 @@ resources:
         | sort
         | first
         // null
-    additions: .additions
-    deletions: .deletions
+      additions: .additions
+      deletions: .deletions
     relations:
       repository:
         value: .context.repositoryId | tostring

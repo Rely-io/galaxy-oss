@@ -16,6 +16,8 @@ __all__ = ["GithubClient"]
 
 
 class GithubClient:
+    DEFAULT_DAYS_OF_HISTORY: int = 30
+
     @staticmethod
     def get_access_token(
         app_id: str, app_private_key: str, app_installation_id: str = "", app_auth: bool = False
@@ -43,8 +45,6 @@ class GithubClient:
     def __init__(self, config, logger, token):
         self.config = config
         self.logger = logger
-        self.history_limit_timestamp = datetime.now() - timedelta(days=self.days_of_history)
-        self.repo_activity_limit_timestamp = datetime.now() - timedelta(days=self.days_of_history * 3)
 
         self._headers = {
             "Authorization": f"Bearer {token}",
@@ -53,6 +53,11 @@ class GithubClient:
         }
         self._session: ClientSession | None = None
         self._retry_policy = RetryPolicy(logger=self.logger)
+
+        self._days_of_history: int | None = None
+
+        self.history_limit_timestamp = datetime.now() - timedelta(days=self.days_of_history)
+        self.repo_activity_limit_timestamp = datetime.now() - timedelta(days=self.days_of_history * 3)
 
     async def __aenter__(self) -> "GithubClient":
         self._session = create_session(timeout=self.timeout, headers=self._headers)
@@ -67,12 +72,19 @@ class GithubClient:
 
     @property
     def days_of_history(self) -> int:
-        days = int(self.config.integration.properties["daysOfHistory"])
-        if days < 1:
-            self.logger.warning("Invalid days of history, using default value 30")
-            return 30
+        if self._days_of_history is None:
+            try:
+                days = int(self.config.integration.properties["daysOfHistory"])
+                if days < 1:
+                    self.logger.warning("Invalid days of history, using default value %d", self.DEFAULT_DAYS_OF_HISTORY)
+                    days = self.DEFAULT_DAYS_OF_HISTORY
+            except (ValueError, TypeError):
+                self.logger.warning("Missing days of history, using default value %d", self.DEFAULT_DAYS_OF_HISTORY)
+                days = self.DEFAULT_DAYS_OF_HISTORY
 
-        return days
+            self._days_of_history = days
+
+        return self._days_of_history
 
     @property
     def base_url(self) -> str:
@@ -134,10 +146,16 @@ class GithubClient:
             self.logger.error(f"Error while making request, defaulting to empty response. ({e})")
             return None
 
-    async def _make_graphql_request(self, query: dict[str, Any]) -> Any:
+    async def _make_graphql_request(self, query: dict[str, Any], *, ignore_file_not_found_errors: bool = True) -> Any:
         response = await self._make_request("POST", f"{self.base_url}/graphql", json=query, raise_on_error=True)
         if response.get("errors"):
-            self.logger.warning("GraphQL error: %r", response["errors"])
+            if not ignore_file_not_found_errors:
+                errors = response["errors"]
+            else:
+                errors = [e for e in response["errors"] if isinstance(e, dict) and e.get("type") != "NOT_FOUND"]
+
+            if errors:
+                self.logger.warning("GraphQL error: %r", errors)
         return response
 
     def _parse_datetime(self, datetime_str: str) -> datetime:
@@ -170,12 +188,12 @@ class GithubClient:
 
         return repos_list
 
-    async def get_repo(self, organization: str, repo: str) -> dict[str, str | int]:
+    async def get_repo(self, organization: str, repo: str) -> dict[str, Any]:
         query = build_graphql_query(query_type=QueryType.REPOSITORY, repo_id=self.build_repo_id(organization, repo))
         response = await self._make_graphql_request(query)
         return response["data"]["repository"]
 
-    async def get_pull_requests(self, organization: str, repo: str, states: list[str]) -> list[dict[str, str | int]]:
+    async def get_pull_requests(self, organization: str, repo: str, states: list[str]) -> list[dict[str, Any]]:
         all_pull_requests = []
 
         cursor = None
@@ -205,7 +223,7 @@ class GithubClient:
 
         return all_pull_requests
 
-    async def get_issues(self, organization: str, repo: str, state: str) -> list[dict[str, str | int]]:
+    async def get_issues(self, organization: str, repo: str, state: str) -> list[dict[str, Any]]:
         all_issues = []
 
         cursor = None
@@ -234,7 +252,7 @@ class GithubClient:
 
         return all_issues
 
-    async def get_workflows(self, organization: str, repo: str) -> list[dict[str, str | int]]:
+    async def get_workflows(self, organization: str, repo: str) -> list[dict[str, Any]]:
         all_workflows = []
 
         url = f"{self.base_url}/repos/{organization}/{repo}/actions/workflows"
@@ -250,7 +268,7 @@ class GithubClient:
 
         return all_workflows
 
-    async def get_workflow_runs(self, organization: str, repo: str, workflow_id: str) -> list[dict[str, str | int]]:
+    async def get_workflow_runs(self, organization: str, repo: str, workflow_id: str) -> list[dict[str, Any]]:
         all_workflow_runs = []
 
         url = f"{self.base_url}/repos/{organization}/{repo}/actions/workflows/{workflow_id}/runs"
@@ -290,7 +308,7 @@ class GithubClient:
 
         return all_jobs
 
-    async def get_members(self, organization: str) -> list[dict[str, str | int]]:
+    async def get_members(self, organization: str) -> list[dict[str, Any]]:
         all_members = []
         cursor = None
         while True:
@@ -391,7 +409,7 @@ class GithubClient:
 
         return all_repositories
 
-    async def get_environments(self, organization: str, repo: str) -> list[dict[str, str | int]]:
+    async def get_environments(self, organization: str, repo: str) -> list[dict[str, Any]]:
         all_environments = []
 
         url = f"{self.config.integration.properties['url']}/repos/{organization}/{repo}/environments"
@@ -409,7 +427,7 @@ class GithubClient:
 
     async def get_deployments(
         self, organization: str, repo: str, environments: Iterable[str] | None = None
-    ) -> list[dict[str, str | int]]:
+    ) -> list[dict[str, Any]]:
         all_deployments = []
         cursor = None
         while True:
@@ -435,8 +453,12 @@ class GithubClient:
         return all_deployments
 
     async def get_commits(
-        self, organization: str, repo: str, branch: str, *, exclude_merge_commits: bool = True
-    ) -> list[dict[str, str | int]]:
+        self, organization: str, repo: str, branch: str | None, *, exclude_merge_commits: bool = True
+    ) -> list[dict[str, Any]]:
+        if branch is None or not branch:
+            self.logger.warning("Unable to fetch commits: branch not specified")
+            return []
+
         all_commits = []
 
         query_builder = partial(

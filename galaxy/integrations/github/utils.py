@@ -27,7 +27,7 @@ def get_inactive_usernames_from_pull_requests(prs: list[dict], users: list):
 
     for pr in prs:
         mentioned_users = set()
-        author = pr.get("author").get("login")
+        author = (pr.get("author") or {}).get("login")
         if author:
             mentioned_users.add(author)
         mentioned_users.update(u["login"] for u in pr.get("assignees", {}).get("nodes", []))
@@ -40,7 +40,7 @@ def get_inactive_usernames_from_pull_requests(prs: list[dict], users: list):
 def get_inactive_usernames_from_deployments(deployments: list[dict], users: dict):
     inactive_usernames = set()
     for dp in deployments:
-        author = dp.get("creator", {}).get("login")
+        author = (dp.get("creator") or {}).get("login")
         if author and author not in users:
             inactive_usernames.add(author)
     return inactive_usernames
@@ -50,7 +50,7 @@ def get_inactive_usernames_from_workflow_runs(runs: list[dict], users: list):
     inactive_usernames = set()
 
     for run in runs:
-        author = run.get("triggering_actor", {}).get("login")
+        author = (run.get("triggering_actor") or {}).get("login")
         if author and author not in users:
             inactive_usernames.add(author)
 
