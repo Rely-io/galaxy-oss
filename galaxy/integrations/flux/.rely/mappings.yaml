@@ -1,0 +1,82 @@
+resources:
+  - kind: kubernetes_cluster
+    mappings:
+      id: .metadata.uid
+      title: '"Kubernetes cluster " + .metadata.uid'
+      blueprintId: '"flux.v1.kubernetes_cluster"'
+      description: '""'
+      properties:
+        createdAt: .metadata.creation_timestamp
+
+  - kind: kubernetes_namespace
+    mappings:
+      id: .metadata.uid
+      title: .metadata.name
+      blueprintId: '"flux.v1.kubernetes_namespace"'
+      description: '""'
+      properties:
+        createdAt: .metadata.creation_timestamp
+        labels: .metadata.labels
+      relations:
+        cluster:
+          value: .context.cluster_id
+
+  - kind: source
+    mappings:
+      id: .metadata.uid
+      title: .metadata.name
+      blueprintId: '"flux.v1.source"'
+      description: '""'
+      properties:
+        sourceType: .kind
+        sourceUrl: .spec.url
+        interval: .spec.interval
+        createdAt: .metadata.creationTimestamp
+        branch: .spec.ref.branch
+        tag: .spec.ref.tag
+      relations:
+        namespace:
+          value: .context.namespaces[.metadata.namespace]
+
+  - kind: application
+    mappings:
+      id: .metadata.uid
+      title: .metadata.name
+      blueprintId: '"flux.v1.application"'
+      description: '""'
+      properties:
+        applicationType: .kind
+        createdAt: .metadata.creationTimestamp
+        lastTransitionTime: '(.status.conditions[] | select(.type == "Ready")) // {} | .lastTransitionTime'
+        ready: '(.status.conditions[] | select(.type == "Ready")) // {} | .status'
+        healthy: '(.status.conditions[] | select(.type == "Healthy"))  // {} | .status'
+        lastAppliedRevision: .status.lastAppliedRevision
+        interval: .spec.interval
+      relations:
+        namespace:
+          value: .context.namespaces[.metadata.namespace]
+        targetNamespace:
+          value: .context.namespaces[(.spec.targetNamespace // .metadata.namespace)]
+        source:
+          value: |
+            if .kind == "HelmRelease" then
+              try .context.sources[(.spec.chart.spec.sourceRef.namespace // .metadata.namespace) + "-" + .spec.chart.spec.sourceRef.kind + "-" + .spec.chart.spec.sourceRef.name] catch null
+            else
+              try .context.sources[(.spec.sourceRef.namespace // .metadata.namespace) + "-" + .spec.sourceRef.kind + "-" + .spec.sourceRef.name] catch null
+            end
+
+  - kind: pipeline
+    mappings:
+      id: '.involved_object.uid + "-" + .metadata.revision'
+      title: '.involved_object.uid + "-" + .metadata.revision'
+      blueprintId: '"flux.v1.pipeline"'
+      description: '""'
+      properties:
+        kind: .involved_object.kind
+        status: .context.status
+        timestamp: .timestamp
+        message: .message
+        revision: .metadata.revision
+      relations:
+        application:
+          value: .involved_object.uid

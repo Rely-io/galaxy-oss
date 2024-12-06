@@ -1,0 +1,221 @@
+[
+  {
+    "id": "flux.v1.kubernetes_cluster",
+    "title": "Kubernetes Cluster",
+    "description": "Blueprint defining a Kubernetes Cluster",
+    "icon": "kubernetes",
+    "schemaProperties": {
+      "title": "blueprint properties",
+      "type": "object",
+      "properties": {
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "title": "Created At"
+        }
+      }
+    },
+    "isHideable": false
+  },
+  {
+    "id": "flux.v1.kubernetes_namespace",
+    "title": "Kubernetes Namespace",
+    "description": "Blueprint defining a Kubernetes Namespace",
+    "icon": "kubernetes",
+    "schemaProperties": {
+      "title": "blueprint properties",
+      "type": "object",
+      "properties": {
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "title": "Created At"
+        },
+        "labels": {
+          "type": "object",
+          "title": "Labels",
+          "additionalProperties": true
+        }
+      }
+    },
+    "relations": {
+      "cluster": {
+        "value": "flux.v1.kubernetes_cluster",
+        "title": "Kubernetes cluster",
+        "description": "The cluster this namespace is associated to"
+      }
+    },
+    "isHideable": false
+  },
+  {
+    "id": "flux.v1.source",
+    "title": "Flux Source",
+    "description": "Blueprint defining a Flux Source",
+    "icon": "flux",
+    "schemaProperties": {
+      "title": "blueprint properties",
+      "type": "object",
+      "properties": {
+        "sourceType": {
+          "type": "string",
+          "title": "Source Type",
+          "enum": [
+            "Bucket",
+            "GitRepository",
+            "HelmChart",
+            "HelmRepository",
+            "OCIRepository"
+          ]
+        },
+        "sourceUrl": {
+          "type": "string",
+          "title": "Source URL"
+        },
+        "interval": {
+          "type": "string",
+          "title": "Interval"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "title": "Created At"
+        },
+        "branch": {
+          "type": "string",
+          "title": "Branch"
+        },
+        "tag": {
+          "type": "string",
+          "title": "Tag"
+        }
+      }
+    },
+    "relations": {
+      "namespace": {
+        "value": "flux.v1.kubernetes_namespace",
+        "title": "Kubernetes namespace",
+        "description": "The namespace this flux source is associated to"
+      }
+    },
+    "isHideable": false
+  },
+  {
+    "id": "flux.v1.application",
+    "title": "Flux Application",
+    "description": "Blueprint defining a Flux Application",
+    "icon": "flux",
+    "schemaProperties": {
+      "title": "blueprint properties",
+      "type": "object",
+      "properties": {
+        "applicationType": {
+          "type": "string",
+          "title": "Application type",
+          "enum": [
+            "Kustomization",
+            "HelmRelease"
+          ]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "title": "Created at"
+        },
+        "lastTransitionTime": {
+          "type": "string",
+          "format": "date-time",
+          "title": "Last transition time"
+        },
+        "ready": {
+          "type": "string",
+          "title": "Ready status",
+          "enum": [
+            "True",
+            "False",
+            "Unknown"
+          ]
+        },
+        "healthy": {
+          "type": "string",
+          "title": "Health status",
+          "enum": [
+            "True",
+            "False",
+            "Unknown"
+          ]
+        },
+        "interval": {
+          "type": "string",
+          "title": "Interval"
+        },
+        "lastAppliedRevision": {
+          "type": "string",
+          "title": "Last applied revision"
+        }
+      }
+    },
+    "relations": {
+      "namespace": {
+        "value": "flux.v1.kubernetes_namespace",
+        "title": "Namespace",
+        "description": "The namespace this flux application is associated to"
+      },
+      "targetNamespace": {
+        "value": "flux.v1.kubernetes_namespace",
+        "title": "Target Namespace",
+        "description": "The namespace this application is applied to"
+      },
+      "source": {
+        "value": "flux.v1.source",
+        "title": "Source",
+        "description": "The Flux Source this application refers to"
+      }
+    },
+    "isHideable": false
+  },
+  {
+    "id": "flux.v1.pipeline",
+    "title": "Flux Pipeline",
+    "description": "Blueprint defining a Flux Pipeline",
+    "icon": "flux",
+    "schemaProperties": {
+      "title": "blueprint properties",
+      "type": "object",
+      "properties": {
+        "kind": {
+          "type": "string",
+          "title": "Kind",
+          "enum": [
+            "Kustomization",
+            "HelmRelease"
+          ]
+        },
+        "status": {
+          "type": "string",
+          "title": "Status"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "title": "Timestamp"
+        },
+        "message": {
+          "type": "string",
+          "title": "Message"
+        },
+        "revision": {
+          "type": "string",
+          "title": "Revision"
+        }
+      }
+    },
+    "relations": {
+      "application": {
+        "value": "flux.v1.application",
+        "title": "Flux Application",
+        "description": "The application this flux pipeline is associated to"
+      }
+    },
+    "isHideable": false
+  }
+]

@@ -1,4 +1,3 @@
-import asyncio
 import re
 from typing import Any
 
@@ -6,50 +5,62 @@ import jq
 import yaml
 
 from galaxy.core.resources import load_integration_resource
+from galaxy.utils.concurrency import run_in_thread
 
-__all__ = ["Mapper"]
+__all__ = ["Mapper", "MapperError", "MapperNotFoundError", "MapperCompilationError"]
 
 
 class Mapper:
+    MAPPINGS_FILE_PATH: str = ".rely/mappings.yaml"
+
     def __init__(self, integration_name: str):
         self.integration_name = integration_name
         self.id_allowed_chars = "[^a-zA-Z0-9-]"
 
-    async def _load_mapping(self, mapping_kind: str) -> list[dict]:
-        mappings = yaml.safe_load(load_integration_resource(self.integration_name, ".rely/mappings.yaml"))
-        return [mapping for mapping in mappings.get("resources") if mapping["kind"] == mapping_kind]
+        self._mappings: dict[str, dict[str, Any]] | None = None
+        self._compiled_mappings: dict[str, dict[str, Any]] = {}
 
-    def _compile_mappings(self, mapping: dict) -> dict:
-        compiled_mapping = {}
-        for key, value in mapping.items():
-            if isinstance(value, dict):
-                compiled_mapping[key] = self._compile_mappings(value)
-            elif isinstance(value, list):
-                compiled_mapping[key] = [
-                    self._compile_mappings(item) if isinstance(item, dict) else item for item in value
-                ]
-            else:
-                try:
-                    compiled_mapping[key] = jq.compile(value) if isinstance(value, str) else value
-                except Exception as e:
-                    raise Exception(f"Error compiling maps for key {key} with expression {value}: {e}")
+    @property
+    def mappings(self) -> dict[str, dict[str, Any]]:
+        if self._mappings is None:
+            mappings = yaml.safe_load(load_integration_resource(self.integration_name, self.MAPPINGS_FILE_PATH))
+            self._mappings = {mapping["kind"]: mapping["mappings"] for mapping in mappings.get("resources") or []}
+        return self._mappings
+
+    def get_compiled_mappings(self, mapping_kind: str) -> list[Any]:
+        if mapping_kind not in self._compiled_mappings:
+            try:
+                self._compiled_mappings[mapping_kind] = self._compile_mappings(self.mappings.get(mapping_kind) or {})
+            except Exception as e:
+                raise MapperCompilationError(mapping_kind) from e
+        return self._compiled_mappings[mapping_kind]
+
+    def _compile_mappings(self, item: Any) -> Any:
+        if isinstance(item, dict):
+            return {key: self._compile_mappings(value) for key, value in item.items()}
+        if isinstance(item, list | tuple | set):
+            return [self._compile_mappings(value) for value in item]
+        if isinstance(item, str):
+            try:
+                return jq.compile(item)
+            except Exception as e:
+                raise Exception(f"Error compiling maps with expression {item}: {e}") from e
+        return item
+
+    def _map_data(self, compiled_mapping: Any, context: dict[str, Any]) -> Any:
+        if isinstance(compiled_mapping, dict):
+            return {key: self._map_data(value, context) for key, value in compiled_mapping.items()}
+        if isinstance(compiled_mapping, list):
+            return [self._map_data(item, context) for item in compiled_mapping]
+        if isinstance(compiled_mapping, jq._Program):
+            try:
+                return compiled_mapping.input(context).first()
+            except Exception as e:
+                raise Exception(f"Error mapping with expression {compiled_mapping} and payload {compiled_mapping}: {e}")
         return compiled_mapping
 
-    def _map_entity(self, compiled_mapping: dict, json_data: dict) -> dict:
-        entity = {}
-
-        for key, value in compiled_mapping.items():
-            if isinstance(value, dict):
-                entity[key] = self._map_entity(value, json_data)
-            elif isinstance(value, list):
-                entity[key] = [self._map_entity(item, json_data) if isinstance(item, dict) else item for item in value]
-            else:
-                try:
-                    entity[key] = value.input(json_data).first() if isinstance(value, jq._Program) else value
-                except Exception as e:
-                    raise Exception(f"Error mapping key {key} with expression {value} and payload {json_data}: {e}")
-
-        return self._sanitize(entity)
+    def _map_entity(self, compiled_mapping: dict, json_data: dict[str, Any]) -> dict:
+        return self._sanitize(self._map_data(compiled_mapping, json_data))
 
     def _replace_non_matching_characters(self, input_string: str, regex_pattern: str) -> str:
         res = re.sub(regex_pattern, ".", input_string)
@@ -77,21 +88,31 @@ class Mapper:
 
         return entity
 
-    async def process(self, mapping_kind: str, json_data: list[dict], context=None) -> tuple[Any]:
-        try:
-            mappings = await self._load_mapping(mapping_kind)
-            if not mappings:
-                raise Exception(f"Unknown Mapper {mapping_kind}")
-            compiled_mappings = self._compile_mappings(mappings[0]["mappings"])
+    def process_sync(self, mapping_kind: str, json_data: list[dict], context: Any | None = None) -> list[Any]:
+        mappings = self.get_compiled_mappings(mapping_kind)
+        if not mappings:
+            raise MapperNotFoundError(mapping_kind)
+        return [self._map_entity(mappings, {**each, "context": context}) for each in json_data]
 
-            loop = asyncio.get_running_loop()
+    async def process(self, mapping_kind: str, json_data: list[dict], context: Any | None = None) -> tuple[Any]:
+        # There is no advantage in using async here as all the work is done in a thread.
+        # Keeping it as async for now to avoid breaking existing code that calls this as `await mapper.process(...)`.
+        return await run_in_thread(self.process_sync, mapping_kind, json_data, context)
 
-            entities = await asyncio.gather(
-                *[
-                    loop.run_in_executor(None, self._map_entity, compiled_mappings, {**each, "context": context})
-                    for each in json_data
-                ]
-            )
-            return entities
-        except Exception as e:
-            raise e
+
+class MapperError(Exception):
+    """Base class for Mapper errors."""
+
+
+class MapperNotFoundError(MapperError):
+    """Mapper not found error."""
+
+    def __init__(self, mapping_kind: str):
+        super().__init__(f"Unknown Mapper {mapping_kind}")
+
+
+class MapperCompilationError(MapperError):
+    """Mapper compilation error."""
+
+    def __init__(self, mapping_kind: str):
+        super().__init__(f"Error compiling mappings for kind {mapping_kind}")

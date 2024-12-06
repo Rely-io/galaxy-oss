@@ -117,9 +117,8 @@ class Gitlab(Integration):
         for file_check in self.repo_files_to_check:
             file = await self.client.get_file(repo_full_path, file_check["path"])
             if file:
-                repo_file_checks[file_check["destination"]] = not file_check["regex"] or bool(
-                    re.search(file_check["regex"], file["content"])
-                )
+                result = re.search(file_check["regex"], file["content"]) if file_check["regex"] else None
+                repo_file_checks[file_check["destination"]] = result
             else:
                 repo_file_checks[file_check["destination"]] = False
 

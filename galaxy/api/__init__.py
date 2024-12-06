@@ -1,3 +1,4 @@
+import copy
 import importlib
 import logging
 from datetime import datetime
@@ -12,7 +13,7 @@ from apscheduler.triggers.interval import IntervalTrigger
 from fastapi import Depends, FastAPI, HTTPException
 
 from galaxy.core.galaxy import Integration, run_integration
-from galaxy.core.logging import get_log_format
+from galaxy.core.logging import get_log_format, get_magneto_logs
 from galaxy.core.magneto import Magneto
 from galaxy.core.mapper import Mapper
 from galaxy.core.models import SchedulerJobStates
@@ -56,8 +57,12 @@ async def run_app(instance: Integration):
     scheduler.add_listener(job_listener, EVENT_JOB_EXECUTED | EVENT_JOB_ERROR | EVENT_JOB_SUBMITTED | EVENT_JOB_REMOVED)
 
     async def _run_integration():
+        if (log_handler := get_magneto_logs(logger)) is not None:
+            log_handler.logs.clear()
+
+        fresh_instance = copy.deepcopy(instance)
         async with Magneto(instance.config.rely.url, instance.config.rely.token, logger=logger) as magneto_client:
-            success = await run_integration(instance, magneto_client=magneto_client, logger=app.state.logger)
+            success = await run_integration(fresh_instance, magneto_client=magneto_client, logger=logger)
             if success:
                 logger.info("Integration %r run completed successfully: %r", instance.type_, instance.id_)
             else:

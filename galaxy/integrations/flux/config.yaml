@@ -1,0 +1,13 @@
+rely:
+  token: "{{ env('RELY_API_TOKEN') }}"
+  url: "{{ env('RELY_API_URL') }}"
+
+integration:
+  id: "{{ env('RELY_INTEGRATION_ID') }}"
+  type: "flux"
+  executionType: "{{ env('RELY_INTEGRATION_EXECUTION_TYPE') | default('cronjob', true) }}"
+
+  scheduledInterval: "{{  env('RELY_INTEGRATION_DAEMON_INTERVAL') | default(60, true) | int }}"
+  defaultModelMappings: {}
+  properties:
+    excludeSystemNamespaces: "{{ env('RELY_INTEGRATION_FLUX_EXCLUDE_SYSTEM_NAMESPACES') | default('true', true) }}"
