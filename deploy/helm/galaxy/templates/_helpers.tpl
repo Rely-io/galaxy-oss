@@ -62,6 +62,20 @@ Create the name of the service account to use
 {{- end }}
 
 {{/*
+Create the name of the cluster role to use
+*/}}
+{{- define "galaxy-helm.clusterRoleName" -}}
+{{- default (include "galaxy-helm.fullname" .) .Values.clusterRole.name }}
+{{- end }}
+
+{{/*
+Create the name of the cluster role binding to use
+*/}}
+{{- define "galaxy-helm.clusterRoleBindingName" -}}
+{{- default (include "galaxy-helm.fullname" .) .Values.clusterRoleBinding.name }}
+{{- end }}
+
+{{/*
 Create a validation for required values
 */}}
 {{- define "galaxy-helm.required.envs" -}}

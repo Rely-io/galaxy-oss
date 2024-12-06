@@ -9,6 +9,12 @@ Rely Galaxy Framework Helm chart for Kubernetes
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
 | affinity | object | `{}` | Affinity settings for pod assignment |
+| clusterRole.annotations | object | `{}` |  |
+| clusterRole.apiGroups[0] | string | `"'*'"` |  |
+| clusterRole.name | string | `""` |  |
+| clusterRole.resources[0] | string | `"'*'"` |  |
+| clusterRoleBinding.annotations | object | `{}` |  |
+| clusterRoleBinding.name | string | `""` |  |
 | env | object | `{"RELY_API_TOKEN":null,"RELY_INTEGRATION_ID":null}` | Environment variables to be set in the container if not using external secrets |
 | env.RELY_API_TOKEN | string | `nil` | The API token for the Rely API |
 | env.RELY_INTEGRATION_ID | string | `nil` | The identifier of this integration instance |
@@ -26,7 +32,7 @@ Rely Galaxy Framework Helm chart for Kubernetes
 | integration.apiUrl | string | `"https://magneto.rely.io/"` | The url for the Rely API |
 | integration.daemonInterval | int | `60` | The interval in minutes at which the integration should run only required if the execution type is daemon |
 | integration.executionType | string | `"cronjob"` | The execution type of the integration can be either cronjob or daemon |
-| integration.type | string | `nil` | The type of the integration can be any of the following: pagerduty, github, gitlab, bitbucket, sonarqube, aws, opsgenie, gcp |
+| integration.type | string | `nil` | The type of the integration can be any of the following: pagerduty, github, gitlab, bitbucket, sonarqube, aws, opsgenie, gcp, flux |
 | nameOverride | string | `""` | Override the name of the chart |
 | nodeSelector | object | `{}` | Node labels for pod assignment |
 | podAnnotations | object | `{}` | The annotations to add to the pod |
@@ -37,8 +43,7 @@ Rely Galaxy Framework Helm chart for Kubernetes
 | securityContext | object | `{}` | The security context for the container |
 | serviceAccount.annotations | object | `{}` | Annotations to add to the service account |
 | serviceAccount.automount | bool | `true` | Automatically mount a ServiceAccount's API credentials? |
-| serviceAccount.create | bool | `false` | Specifies whether a service account should be created |
-| serviceAccount.name | string | `""` | The name of the service account to use. -- If not set and create is true, a name is generated using the fullname template |
+| serviceAccount.create | bool | `true` | Specifies whether a service account should be created |
 | tolerations | list | `[]` | Toleration labels for pod assignment |
 | volumeMounts | list | `[]` | Additional volumeMounts on the output Deployment definition. |
 | volumes | list | `[]` | Additional volumes on the output Deployment definition. |

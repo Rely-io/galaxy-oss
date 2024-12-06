@@ -1,0 +1,18 @@
+{{- if eq .Values.integration.type "flux" }}
+{{- range .Values.flux.namespaces }}
+---
+apiVersion: notification.toolkit.fluxcd.io/v1beta3
+kind: Alert
+metadata:
+  name: {{ include "galaxy-helm.fullname" $ }}
+  namespace: {{ . }}
+spec:
+  providerRef:
+    name: {{ include "galaxy-helm.fullname" $ }}
+  eventSources:
+    - kind: Kustomization
+      name: '*'
+    - kind: HelmRelease
+      name: '*'
+{{- end }}
+{{- end }}

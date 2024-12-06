@@ -1,0 +1,17 @@
+{{- $exec_mode := default "cronjob" .Values.integration.executionType }}
+{{- if eq $exec_mode "daemon" }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "galaxy-helm.fullname" . }}
+  labels:
+    {{- include "galaxy-helm.labels" . | nindent 4 }}
+spec:
+  ports:
+  - port: 80
+    protocol: TCP
+    targetPort: 8000
+  selector:
+    {{- include "galaxy-helm.selectorLabels" . | nindent 4 }}
+  type: ClusterIP
+{{- end }}
