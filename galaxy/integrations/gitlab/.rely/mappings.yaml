@@ -218,7 +218,7 @@ resources:
       repository:
         value:  '"gitlab_repo_" + (.context.repository.id | split("/") | last)'
       triggeredBy:
-        value: '"gitlab_user_" + (.node.triggerer.id | split("/") | last)'
+        value: 'if .node.triggerer.id? then "gitlab_user_" + (.node.triggerer.id | split("/") | last) else null end'
       pipeline:
         value: '"gitlab_pipeline_" + (.node.job.pipeline.id | split("/") | last)'
       environment:

@@ -1,5 +1,6 @@
 import re
 from types import TracebackType
+from enum import Enum
 
 from galaxy.core.galaxy import Integration, register
 from galaxy.core.models import Config
@@ -18,6 +19,12 @@ from galaxy.integrations.gitlab.utils import (
 __all__ = ["Gitlab"]
 
 DEFAULT_BRANCH_NAME: str = "main"
+
+
+class FileCheckStatus(Enum):
+    FILE_FOUND = "FILE_FOUND"
+    FILE_NOT_FOUND = "FILE_NOT_FOUND"
+    FILE_FOUND_NO_MATCH = "FILE_FOUND_NO_MATCH"
 
 
 class Gitlab(Integration):
@@ -117,10 +124,15 @@ class Gitlab(Integration):
         for file_check in self.repo_files_to_check:
             file = await self.client.get_file(repo_full_path, file_check["path"])
             if file:
-                result = re.search(file_check["regex"], file["content"]) if file_check["regex"] else None
-                repo_file_checks[file_check["destination"]] = result
+                if file_check["regex"]:
+                    result = re.search(file_check["regex"], file["content"]) if file_check["regex"] else None
+                    repo_file_checks[file_check["destination"]] = (
+                        result.group(1) if result else FileCheckStatus.FILE_FOUND_NO_MATCH
+                    )
+                else:
+                    repo_file_checks[file_check["destination"]] = FileCheckStatus.FILE_FOUND
             else:
-                repo_file_checks[file_check["destination"]] = False
+                repo_file_checks[file_check["destination"]] = FileCheckStatus.FILE_NOT_FOUND
 
         return repo_file_checks
 
