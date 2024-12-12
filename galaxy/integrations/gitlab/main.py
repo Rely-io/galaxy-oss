@@ -1,6 +1,6 @@
 import re
+from enum import StrEnum
 from types import TracebackType
-from enum import Enum
 
 from galaxy.core.galaxy import Integration, register
 from galaxy.core.models import Config
@@ -21,7 +21,7 @@ __all__ = ["Gitlab"]
 DEFAULT_BRANCH_NAME: str = "main"
 
 
-class FileCheckStatus(Enum):
+class FileCheckStatus(StrEnum):
     FILE_FOUND = "FILE_FOUND"
     FILE_NOT_FOUND = "FILE_NOT_FOUND"
     FILE_FOUND_NO_MATCH = "FILE_FOUND_NO_MATCH"

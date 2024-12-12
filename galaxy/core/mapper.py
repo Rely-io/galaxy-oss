@@ -56,7 +56,7 @@ class Mapper:
             try:
                 return compiled_mapping.input(context).first()
             except Exception as e:
-                raise Exception(f"Error mapping with expression {compiled_mapping} and payload {compiled_mapping}: {e}")
+                raise Exception(f"Error mapping with expression {compiled_mapping} and payload {context}: {e}") from e
         return compiled_mapping
 
     def _map_entity(self, compiled_mapping: dict, json_data: dict[str, Any]) -> dict:
