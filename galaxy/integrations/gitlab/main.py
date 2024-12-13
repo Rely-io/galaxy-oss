@@ -127,12 +127,12 @@ class Gitlab(Integration):
                 if file_check["regex"]:
                     result = re.search(file_check["regex"], file["content"]) if file_check["regex"] else None
                     repo_file_checks[file_check["destination"]] = (
-                        result.group(1) if result else FileCheckStatus.FILE_FOUND_NO_MATCH
+                        result.group(1) if result else FileCheckStatus.FILE_FOUND_NO_MATCH.value
                     )
                 else:
-                    repo_file_checks[file_check["destination"]] = FileCheckStatus.FILE_FOUND
+                    repo_file_checks[file_check["destination"]] = FileCheckStatus.FILE_FOUND.value
             else:
-                repo_file_checks[file_check["destination"]] = FileCheckStatus.FILE_NOT_FOUND
+                repo_file_checks[file_check["destination"]] = FileCheckStatus.FILE_NOT_FOUND.value
 
         return repo_file_checks
 
