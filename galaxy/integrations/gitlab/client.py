@@ -178,16 +178,18 @@ class GitlabClient:
                 self.session, "POST", self.url_graphql, json=query, retry_policy=self.retry_policy
             )
 
-            environments = data["data"]["project"]["environments"]
+            environments = data.get("data", {}).get("project", {}).get("environments")
             if not environments:
                 return all_environments
 
-            edges = environments["edges"]
+            all_environments.extend(environments["edges"])
+
             page_info = environments["pageInfo"]
-            all_environments.extend(edges)
             if not page_info["hasNextPage"]:
                 break
+
             cursor = page_info["endCursor"]
+
         return all_environments
 
     async def get_deployments(self, repository: dict, environment: str, history_days: int) -> list[dict]:
@@ -294,7 +296,7 @@ class GitlabClient:
 
         data = await make_request(self.session, "POST", self.url_graphql, json=query, retry_policy=self.retry_policy)
 
-        return data["data"]["user"]
+        return data.get("data", {}).get("user", {})
 
     async def get_file(self, repository_path: str, file_path: str) -> dict:
         query = self.queries.get_file(repository_path, file_path)

@@ -45,6 +45,9 @@ async def main(
         if dry_run is False:
             integration_config = await magneto_client.get_plugin(str(config.integration.id))
 
+            # Get the properties from the integration config. Using `pop` to remove them from the original dict
+            integration_config_properties = integration_config.pop("properties", None)
+
             logger.debug("Config entity from magneto: %r", integration_config)
             if integration_config["dataSource"].lower() != integration_type:
                 logger.error(
@@ -54,9 +57,8 @@ async def main(
                 )
                 raise Exception("Integration type mismatch between the integration and magneto config")
 
-            config_entity_properties = integration_config.get("properties", None)
-            if config_entity_properties is not None:
-                for key, value in config_entity_properties.items():
+            if integration_config_properties is not None:
+                for key, value in integration_config_properties.items():
                     # Only set the property if it doesn't already exist or is empty
                     if not config.integration.properties.get(key) or (
                         # This OR is to handle the scenario of a nested dict with keys but no values
@@ -65,7 +67,6 @@ async def main(
                     ):
                         config.integration.properties[key] = value
 
-            logger.debug("Config entity properties: %r", config.integration.properties)
             if integration_config is None:
                 logger.error("Integration not found in magneto")
                 raise Exception("Integration not found in magneto")

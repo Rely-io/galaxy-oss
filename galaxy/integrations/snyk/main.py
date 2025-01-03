@@ -14,7 +14,7 @@ class Snyk(Integration):
         super().__init__(config)
         self.client = SnykClient(self.config, self.logger)
 
-        self._organizations = []
+        self._organizations = {}
         self._all_projects = []
 
     async def __aenter__(self) -> "Snyk":
@@ -66,7 +66,7 @@ class Snyk(Integration):
         return mapped_projects
 
     @register(_methods, group=3)
-    async def issues(self) -> tuple[Any]:
+    async def issues(self) -> list[Any]:
         organization_target_project_triples = [
             (
                 item["relationships"]["organization"]["data"]["id"],

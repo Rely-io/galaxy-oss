@@ -695,7 +695,8 @@
               "updatedAt": "{{ data.properties.updatedAt if data.properties.updatedAt else none }}",
               "closedAt": "{{ data.properties.finishedAt if data.properties.finishedAt else none }}",
               "sourceCommit": "{{ data.properties.commit if data.properties.commit else none }}",
-              "triggeredBy": "{{ actions.fetch_author.output.title if actions.fetch_author else none }}"
+              "triggeredBy": "{{ actions.fetch_author.output.title if actions.fetch_author else none }}",
+              "successful": "{{ true if data.properties.status == 'SUCCESS' else false }}"
             },
             "relations": {
               "service": {

@@ -38,7 +38,7 @@ class SnykClient:
             raise ValueError(f"Invalid Snyk hosting region: {region}")
 
     async def __aenter__(self) -> "SnykClient":
-        self._session = create_session(timeout=30, headers=self._headers, **self._session_kwargs)
+        self._session = create_session(timeout=60, headers=self._headers, **self._session_kwargs)
         return self
 
     async def __aexit__(self, exc_type: type, exc: Exception, tb: TracebackType) -> None:
@@ -79,7 +79,7 @@ class SnykClient:
             f"/rest/orgs/{org_id}/projects", params={"target_id": [target_id], "meta.latest_issue_counts": "true"}
         )
 
-    async def get_issues(self, org_id: str, project_id: str, history_start_date: datetime = None) -> list[dict]:
+    async def get_issues(self, org_id: str, project_id: str, history_start_date: datetime | None = None) -> list[dict]:
         params = {"scan_item.type": "project", "scan_item.id": project_id}
         if history_start_date is not None:
             params["created_after"] = history_start_date.strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"

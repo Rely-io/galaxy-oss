@@ -6,6 +6,10 @@ __all__ = ["GalaxyError", "IntegrationRunError", "IntegrationRunMethodError", "E
 class GalaxyError(Exception):
     """Base class for all Galaxy errors."""
 
+    @property
+    def error_type(self) -> str:
+        return self.__class__.__name__
+
 
 class GalaxyWarning(GalaxyError):
     """Base class for all Galaxy warnings."""

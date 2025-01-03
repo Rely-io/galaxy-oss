@@ -24,6 +24,9 @@ class RelyConfig(BaseModel):
     token: str = Field(..., alias="token")
     url: str = Field(..., alias="url")
 
+    def __repr__(self) -> str:
+        return f"RelyConfig(url={self.url!r})"
+
 
 class IntegrationConfig(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -39,6 +42,18 @@ class IntegrationConfig(BaseModel):
     wait_for_tasks_enabled: bool = Field(True, alias="waitForTasksEnabled")
     wait_for_tasks_timeout_seconds: int | None = Field(600, alias="waitForTasksTimeout")
 
+    def __repr__(self) -> str:
+        """Return a string representation of the IntegrationConfig.
+
+        Properties are not included as they may contain sensitive information.
+        """
+        return (
+            f"IntegrationConfig(id={self.id}, type={self.type}, execution_type={self.execution_type}, "
+            f"scheduled_interval={self.scheduled_interval}, default_model_mappings={self.default_model_mappings}, "
+            f"dry_run={self.dry_run}, wait_for_tasks_enabled={self.wait_for_tasks_enabled}, "
+            f"wait_for_tasks_timeout_seconds={self.wait_for_tasks_timeout_seconds})"
+        )
+
 
 class Config(BaseModel):
     @classmethod
@@ -51,6 +66,9 @@ class Config(BaseModel):
 
     rely: RelyConfig
     integration: IntegrationConfig
+
+    def __repr__(self) -> str:
+        return f"Config(rely={self.rely!r}, integration={self.integration!r})"
 
 
 class FileCheck(BaseModel):
