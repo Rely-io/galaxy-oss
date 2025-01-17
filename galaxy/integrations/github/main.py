@@ -45,7 +45,8 @@ class Github(Integration):
                 config.integration.properties["installationId"],
             ),
         )
-        self.organization = None
+        self._owner = None
+        self._owner_type: str | None = None
 
         self.users = {}
         self.teams = {}
@@ -69,17 +70,27 @@ class Github(Integration):
     async def __aexit__(self, exc_type: type, exc: Exception, tb: TracebackType) -> None:
         await self.client.__aexit__(exc_type, exc, tb)
 
-    @register(_methods, group=1)
-    async def organization(self) -> None:
+    @property
+    def is_organization_owner(self) -> bool:
+        return self._owner_type == "Organization"
+
+    @register(_methods, group=0)
+    async def owner(self) -> None:
         repo = await self.client.get_repos(limit=1, ignore_archived=False, ignore_old=False)
         if len(repo) > 0:
-            self.organization = repo[0]["owner"]["login"].lower()
-            self.logger.info(f"Found organization: {self.organization!r}")
+            self._owner = repo[0]["owner"]["login"].lower()
+            self._owner_type = repo[0]["owner"]["type"]
+
+            self.logger.info(f"Found owner of type {self._owner_type}: {self._owner!r}")
         else:
-            self.logger.info("Could not find organization")
+            self.logger.info("Could not find owner")
 
     @register(_methods, group=1)
-    async def repository(self) -> None:
+    async def repository(self) -> list[dict]:
+        if self._owner is None:
+            self.logger.warning("Cannot fetch repositories: owner not found")
+            return []
+
         repositories_metadata = await self.client.get_repos(
             ignore_archived=self.client.ignore_archived_repos,
             ignore_old=self.client.ignore_old_repos,
@@ -104,24 +115,38 @@ class Github(Integration):
 
     @register(_methods, group=2)
     async def team(self) -> list[dict]:
-        self.teams = {team["databaseId"]: team for team in (await self.client.get_teams(self.organization))}
+        if self._owner is None:
+            self.logger.warning("Cannot fetch teams: owner not found")
+            return []
+
+        if not self.is_organization_owner:
+            self.logger.warning("Cannot fetch teams: owner is not an organization")
+            return []
+
+        self.teams = {team["databaseId"]: team for team in (await self.client.get_teams(self._owner))}
         self.teams[self.template_inactive_members_team["databaseId"]] = self.template_inactive_members_team
 
         for team_id, team in self.teams.items():
             self.team_to_repos[team_id] = extract_repositories_from_team(team)
             self.team_to_users[team_id] = extract_team_members_from_team(team)
 
-        teams_mapped = await self.mapper.process(
-            "team", list(self.teams.values()), context={"organization": self.organization}
-        )
+        teams_mapped = await self.mapper.process("team", list(self.teams.values()), context={"owner": self._owner})
         self.logger.info(f"Found {len(self.teams)-1} teams")
         return teams_mapped
 
     @register(_methods, group=3)
     async def team_member(self) -> list[dict]:
+        if self._owner is None:
+            self.logger.warning("Cannot fetch team members: owner not found")
+            return []
+
+        if not self.is_organization_owner:
+            self.logger.warning("Cannot fetch team members: owner is not an organization")
+            return []
+
         self.users_to_teams = map_users_to_teams(self.team_to_users)
 
-        users_raw = await self.client.get_members(self.organization)
+        users_raw = await self.client.get_members(self._owner)
 
         self.users = {}
         for user in users_raw:
@@ -130,13 +155,17 @@ class Github(Integration):
             self.users[user_login]["teams"] = self.users_to_teams.get(user_login, [])
 
         members_mapped = await self.mapper.process(
-            "team_member", list(self.users.values()), context={"organization": self.organization}
+            "team_member", list(self.users.values()), context={"owner": self._owner}
         )
         self.logger.info(f"Found {len(self.teams)-1} team members")
         return members_mapped
 
     @register(_methods, group=4)
     async def pull_request(self) -> list[dict]:
+        if self._owner is None:
+            self.logger.warning("Cannot fetch pull requests: owner not found")
+            return []
+
         prs_mapped = []
         inactive_usernames = set()
         for repo_id, repo in self.repositories.items():
@@ -167,6 +196,10 @@ class Github(Integration):
 
     # Disabled
     async def issue(self) -> list[dict]:
+        if self._owner is None:
+            self.logger.warning("Cannot fetch issues: owner not found")
+            return []
+
         issues_mapped = []
 
         for repo_id, repo in self.repositories.items():
@@ -190,6 +223,10 @@ class Github(Integration):
 
     @register(_methods, group=4)
     async def workflow(self) -> list[dict]:
+        if self._owner is None:
+            self.logger.warning("Cannot fetch workflows: owner not found")
+            return []
+
         workflows_mapped = []
 
         for repo_id, repo in self.repositories.items():
@@ -207,6 +244,10 @@ class Github(Integration):
 
     @register(_methods, group=5)
     async def workflow_run(self) -> list[dict]:
+        if self._owner is None:
+            self.logger.warning("Cannot fetch workflow runs: owner not found")
+            return []
+
         workflows_runs_mapped = []
         inactive_usernames = set()
         for repo_id, repo in self.repositories.items():
@@ -238,6 +279,10 @@ class Github(Integration):
 
     @register(_methods, group=4)
     async def environment(self) -> list[dict]:
+        if self._owner is None:
+            self.logger.warning("Cannot fetch environments: owner not found")
+            return []
+
         environments_mapped = []
 
         for repo_id, repo in self.repositories.items():
@@ -255,6 +300,10 @@ class Github(Integration):
 
     @register(_methods, group=6)
     async def deployments(self) -> list[dict]:
+        if self._owner is None:
+            self.logger.warning("Cannot fetch deployments: owner not found")
+            return []
+
         deployments_mapped = []
         inactive_usernames = set()
         for repo_id, repo in self.repositories.items():
@@ -292,6 +341,10 @@ class Github(Integration):
 
     @register(_methods, group=6)
     async def repository_metrics(self) -> list[dict]:
+        if self._owner is None:
+            self.logger.warning("Cannot fetch repository metrics: owner not found")
+            return []
+
         all_metrics = []
         for repo in self.repositories.values():
             commits = await self.client.get_commits(repo["owner"], repo["slug"], branch=repo["default_branch"])
@@ -326,10 +379,8 @@ class Github(Integration):
             self.team_to_users[inactive_team_id].append(username)
 
         inactive_group_mapped = await self.mapper.process(
-            "team", [self.teams[inactive_team_id]], context={"organization": self.organization}
+            "team", [self.teams[inactive_team_id]], context={"owner": self._owner}
         )
-        new_users_mapped = await self.mapper.process(
-            "team_member", new_users, context={"organization": self.organization}
-        )
+        new_users_mapped = await self.mapper.process("team_member", new_users, context={"owner": self._owner})
 
         return inactive_group_mapped + new_users_mapped

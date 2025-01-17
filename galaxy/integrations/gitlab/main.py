@@ -2,6 +2,9 @@ import re
 from enum import StrEnum
 from types import TracebackType
 
+import anyio
+from anyio.abc import Semaphore
+
 from galaxy.core.galaxy import Integration, register
 from galaxy.core.models import Config
 from galaxy.core.utils import files_to_check
@@ -15,6 +18,7 @@ from galaxy.integrations.gitlab.utils import (
     get_required_reviews,
     map_users_to_groups,
 )
+from galaxy.utils.concurrency import task_group_run_with_semaphore
 
 __all__ = ["Gitlab"]
 
@@ -29,6 +33,9 @@ class FileCheckStatus(StrEnum):
 
 class Gitlab(Integration):
     _methods = []
+
+    DEFAULT_API_MAX_CONCURRENCY: int = 10
+
     # Default Group for previous members of the organization
     template_inactive_members_group = {
         "id": "former-gitlab-members",
@@ -67,32 +74,62 @@ class Gitlab(Integration):
         await self.client.__aexit__(exc_type, exc, tb)
 
     @property
+    def api_max_concurrency(self) -> int:
+        value = int(self.config.integration.properties.get("apiMaxConcurrency", self.DEFAULT_API_MAX_CONCURRENCY))
+        if value < 1:
+            self.logger.warning("Invalid apiMaxConcurrency: %d. Disabling concurrency", value)
+            return 1
+
+        return value
+
+    @property
     def repo_files_to_check(self) -> list[dict]:
         return files_to_check(self.config, self.logger)
 
     @register(_methods, group=1)
     async def groups(self) -> list[dict]:
-        groups_mapped = []
-        for group in await self.client.get_groups():
-            # Fetch group repositories and assign ownership to group
-            self.group_to_repos[group["id"]] = (await self.client.get_group_repos(group)) or []
-            for repo in self.group_to_repos[group["id"]]:
-                self.repo_to_groups[repo["id"]] = group
+        # Initialize the inactive members group
+        inactive_group_id = self.template_inactive_members_group["id"]
+        self.groups[inactive_group_id] = self.template_inactive_members_group
+        self.group_to_repos[inactive_group_id] = []
+        self.group_to_users[inactive_group_id] = []
 
-            # Fetch group users and assign team-membership
-            self.group_to_users[group["id"]] = (await self.client.get_users(group["id"])) or []
+        # Get all groups
+        groups = await self.client.get_groups()
 
-            group["projects_count"] = len(self.group_to_repos[group["id"]])
-            group["members_count"] = len(self.group_to_users[group["id"]])
+        # Fetch information from all groups
+        try:
+            async with anyio.create_task_group() as tg:
+                semaphore: anyio.Semaphore = Semaphore(self.api_max_concurrency)
 
-            self.groups[group["id"]] = group
+                self.logger.debug(
+                    "Fetching information from %d groups (max concurrency: %d)", len(groups), self.api_max_concurrency
+                )
 
-        # Initialize group for inactive users
-        self.groups[self.template_inactive_members_group["id"]] = self.template_inactive_members_group
-        self.group_to_repos[self.template_inactive_members_group["id"]] = []
-        self.group_to_users[self.template_inactive_members_group["id"]] = []
+                async def _get_group_repos(group: dict) -> None:
+                    self.logger.debug("Fetching repositories from group %r", group["name"])
+                    group_repos = await self.client.get_group_repos(group)
+                    self.group_to_repos[group["id"]] = group_repos
+                    for repo in group_repos:
+                        self.repo_to_groups[repo["id"]] = group
+                    group["projects_count"] = len(group_repos)
 
-        groups_mapped.extend((await self.mapper.process("group", list(self.groups.values()), context={})))
+                async def _get_group_users(group: dict) -> None:
+                    self.logger.debug("Fetching users from group %r", group["name"])
+                    group_users = await self.client.get_users(group["id"])
+                    self.group_to_users[group["id"]] = group_users
+                    group["members_count"] = len(group_users)
+
+                for group in groups:
+                    self.groups[group["id"]] = group
+                    await task_group_run_with_semaphore(tg, semaphore, _get_group_repos, group)
+                    await task_group_run_with_semaphore(tg, semaphore, _get_group_users, group)
+        except* Exception as excgroup:
+            for exc in excgroup.exceptions:
+                self.logger.exception(exc)
+            raise Exception("Failed to fetch groups") from excgroup
+
+        groups_mapped = list(await self.mapper.process("group", list(self.groups.values()), context={}))
         self.logger.info(f"Found {len(self.groups)} groups")
         return groups_mapped
 

@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 from functools import partial
 from itertools import count
 from types import TracebackType
-from typing import Any
+from typing import Any, TypeAlias
 
 from github import Auth, Github
 
@@ -13,6 +13,23 @@ from galaxy.utils.parsers import to_bool
 from galaxy.utils.requests import ClientSession, RequestError, RetryPolicy, create_session, make_request
 
 __all__ = ["GithubClient"]
+
+GraphQLQuery: TypeAlias = dict[str, Any]
+GraphQLError: TypeAlias = dict[str, Any]
+GraphQLResponseData: TypeAlias = dict[str, Any]
+GraphQLResponse: TypeAlias = tuple[GraphQLResponseData, list[GraphQLError]]
+
+
+class GithubClientError(Exception):
+    """An error occurred with the Github Client."""
+
+
+class GithubRequestError(GithubClientError):
+    """An error occurred while making a request with the Github Client."""
+
+
+class GithubGraphQLRequestError(GithubRequestError):
+    """An error occurred while making a GraphQL request with the Github Client."""
 
 
 class GithubClient:
@@ -71,6 +88,35 @@ class GithubClient:
             await self._session.close()
 
     @property
+    def session(self) -> ClientSession:
+        if self._session is None:
+            raise GithubClientError("Session not initialized")
+        return self._session
+
+    @staticmethod
+    def _parse_datetime(datetime_str: str) -> datetime:
+        return datetime.strptime(datetime_str, "%Y-%m-%dT%H:%M:%SZ")
+
+    @staticmethod
+    def safe_get(data: dict[str, Any], *path: str, default: Any = None, raise_on_missing: bool = False) -> Any:
+        current: Any = data
+        for key in path:
+            if not isinstance(current, dict) or current is None:
+                if raise_on_missing:
+                    raise KeyError(f"Key {'.'.join(path)} not found in data")
+                return default
+            current = current.get(key)
+        return current
+
+    @staticmethod
+    def build_repo_id(organization: str, repo: str) -> str:
+        return f"{organization}/{repo}"
+
+    @staticmethod
+    def is_error_not_found_organization(data: dict[str, Any]) -> bool:
+        return data.get("type") == "NOT_FOUND" and data.get("path") == ["organization"]
+
+    @property
     def days_of_history(self) -> int:
         if self._days_of_history is None:
             try:
@@ -116,9 +162,6 @@ class GithubClient:
     def ignore_old_repos(self) -> bool:
         return to_bool(self.config.integration.properties.get("ignoreOld", True))
 
-    def build_repo_id(self, organization: str, repo: str) -> str:
-        return f"{organization}/{repo}"
-
     async def _make_request(
         self,
         method: str,
@@ -131,7 +174,7 @@ class GithubClient:
     ) -> Any:
         try:
             return await make_request(
-                self._session,
+                self.session,
                 method,
                 url,
                 **kwargs,
@@ -142,24 +185,32 @@ class GithubClient:
             )
         except RequestError as e:
             if raise_on_error:
-                raise
+                raise GithubRequestError(str(e)) from e
             self.logger.error(f"Error while making request, defaulting to empty response. ({e})")
             return None
 
-    async def _make_graphql_request(self, query: dict[str, Any], *, ignore_file_not_found_errors: bool = True) -> Any:
+    async def _make_graphql_request(
+        self, query: GraphQLQuery, *, raise_on_organization_not_found: bool = True
+    ) -> GraphQLResponse:
         response = await self._make_request("POST", f"{self.base_url}/graphql", json=query, raise_on_error=True)
-        if response.get("errors"):
-            if not ignore_file_not_found_errors:
-                errors = response["errors"]
-            else:
-                errors = [e for e in response["errors"] if isinstance(e, dict) and e.get("type") != "NOT_FOUND"]
 
-            if errors:
-                self.logger.warning("GraphQL error: %r", errors)
-        return response
+        if response is None:
+            raise GithubGraphQLRequestError("Failed to make GraphQL request")
 
-    def _parse_datetime(self, datetime_str: str) -> datetime:
-        return datetime.strptime(datetime_str, "%Y-%m-%dT%H:%M:%SZ")
+        if not isinstance(response, dict):
+            raise GithubGraphQLRequestError("Failed to parse GraphQL response")
+
+        data = response.get("data")
+        if data is None:
+            raise GithubGraphQLRequestError("Failed to parse GraphQL data")
+
+        errors = response.get("errors") or []
+        if errors:
+            if raise_on_organization_not_found and any(self.is_error_not_found_organization(error) for error in errors):
+                raise GithubGraphQLRequestError("Organization not found")
+            self.logger.warning("GraphQL error: %r", errors)
+
+        return data, errors
 
     async def get_repos(
         self, *, limit: int | None = None, ignore_archived: bool = True, ignore_old: bool = True, page_size: int = 50
@@ -190,8 +241,11 @@ class GithubClient:
 
     async def get_repo(self, organization: str, repo: str) -> dict[str, Any]:
         query = build_graphql_query(query_type=QueryType.REPOSITORY, repo_id=self.build_repo_id(organization, repo))
-        response = await self._make_graphql_request(query)
-        return response["data"]["repository"]
+        data, errors = await self._make_graphql_request(query)
+        repository = self.safe_get(data, "repository")
+        if repository is None:
+            raise GithubClientError(f"Failed to get repository {organization}/{repo}: {errors}")
+        return repository
 
     async def get_pull_requests(self, organization: str, repo: str, states: list[str]) -> list[dict[str, Any]]:
         all_pull_requests = []
@@ -205,17 +259,17 @@ class GithubClient:
                 after=cursor,
                 page_size=self.page_size,
             )
-            response = await self._make_graphql_request(query)
+            data, _ = await self._make_graphql_request(query)
 
-            edges = response["data"]["repository"]["pullRequests"]["edges"]
+            edges = self.safe_get(data, "repository", "pullRequests", "edges")
             if not edges:
                 break
-            all_pull_requests.extend(edge["node"] for edge in edges)
 
-            page_info = response["data"]["repository"]["pullRequests"]["pageInfo"]
+            all_pull_requests.extend(edge["node"] for edge in edges)
+            page_info = self.safe_get(data, "repository", "pullRequests", "pageInfo")
             if (
                 not page_info["hasNextPage"]
-                or self._parse_datetime(edges[-1]["node"]["createdAt"]) < self.history_limit_timestamp
+                or self._parse_datetime(self.safe_get(edges[-1], "node", "createdAt")) < self.history_limit_timestamp
             ):
                 break
 
@@ -235,19 +289,20 @@ class GithubClient:
                 state=state,
                 page_size=self.page_size,
             )
-            response = await self._make_graphql_request(query)
+            data, _ = await self._make_graphql_request(query)
 
-            edges = response["data"]["search"]["edges"]
+            edges = self.safe_get(data, "search", "edges")
             if not edges:
                 break
-            all_issues.extend(edge["node"] for edge in edges)
 
-            page_info = response["data"]["search"]["pageInfo"]
+            all_issues.extend(edge["node"] for edge in edges)
+            page_info = self.safe_get(data, "search", "pageInfo")
             if (
                 not page_info["hasNextPage"]
-                or self._parse_datetime(edges[-1]["node"]["createdAt"]) < self.history_limit_timestamp
+                or self._parse_datetime(self.safe_get(edges[-1], "node", "createdAt")) < self.history_limit_timestamp
             ):
                 break
+
             cursor = page_info["endCursor"]
 
         return all_issues
@@ -315,14 +370,14 @@ class GithubClient:
             query = build_graphql_query(
                 query_type=QueryType.MEMBERS, owner=organization, after=cursor, page_size=self.page_size
             )
-            response = await self._make_graphql_request(query)
+            data, _ = await self._make_graphql_request(query)
 
-            edges = response["data"]["organization"]["membersWithRole"]["edges"]
+            edges = self.safe_get(data, "organization", "membersWithRole", "edges")
             if not edges:
                 break
             all_members.extend(edges)
 
-            page_info = response["data"]["organization"]["membersWithRole"]["pageInfo"]
+            page_info = self.safe_get(data, "organization", "membersWithRole", "pageInfo")
             if not page_info["hasNextPage"]:
                 break
             cursor = page_info["endCursor"]
@@ -336,8 +391,8 @@ class GithubClient:
             query = build_graphql_query(
                 query_type=QueryType.TEAMS, owner=organization, after=cursor, page_size=self.page_size
             )
-            response = await self._make_graphql_request(query)
-            teams = response.get("data", {}).get("organization", {}).get("teams", {}).get("nodes", [])
+            data, _ = await self._make_graphql_request(query)
+            teams = self.safe_get(data, "organization", "teams", "nodes")
             if not teams:
                 break
 
@@ -350,9 +405,10 @@ class GithubClient:
 
             all_teams.extend(teams)
 
-            page_info = response["data"]["organization"]["teams"]["pageInfo"]
+            page_info = self.safe_get(data, "organization", "teams", "pageInfo")
             if not page_info["hasNextPage"]:
                 break
+
             cursor = page_info["endCursor"]
 
         return all_teams
@@ -368,17 +424,17 @@ class GithubClient:
                 after=cursor,
                 page_size=self.page_size,
             )
-            response = await self._make_graphql_request(query)
+            data, _ = await self._make_graphql_request(query)
 
-            team = response["data"]["organization"]["team"]
+            team = self.safe_get(data, "organization", "team")
             if not team:
                 break
 
-            all_members.extend(team.get("members", {}).get("nodes", []))
-
-            page_info = team["members"]["pageInfo"]
+            all_members.extend(self.safe_get(team, "members", "nodes"))
+            page_info = self.safe_get(team, "members", "pageInfo")
             if not page_info["hasNextPage"]:
                 break
+
             cursor = page_info["endCursor"]
 
         return all_members
@@ -394,17 +450,17 @@ class GithubClient:
                 after=cursor,
                 page_size=self.page_size,
             )
-            response = await self._make_graphql_request(query)
+            data, _ = await self._make_graphql_request(query)
 
-            team = response["data"]["organization"]["team"]
+            team = self.safe_get(data, "organization", "team")
             if not team:
                 break
 
-            all_repositories.extend(team.get("repositories", {}).get("nodes", []))
-
-            page_info = team["repositories"]["pageInfo"]
+            all_repositories.extend(self.safe_get(team, "repositories", "nodes"))
+            page_info = self.safe_get(team, "repositories", "pageInfo")
             if not page_info["hasNextPage"]:
                 break
+
             cursor = page_info["endCursor"]
 
         return all_repositories
@@ -438,16 +494,17 @@ class GithubClient:
                 after=cursor,
                 page_size=self.page_size,
             )
-            response = await self._make_graphql_request(query)
+            data, _ = await self._make_graphql_request(query)
 
-            edges = response["data"]["repository"]["deployments"]["edges"]
+            edges = self.safe_get(data, "repository", "deployments", "edges")
             if not edges:
                 break
-            all_deployments.extend(edge["node"] for edge in edges)
 
-            page_info = response["data"]["repository"]["deployments"]["pageInfo"]
+            all_deployments.extend(edge["node"] for edge in edges)
+            page_info = self.safe_get(data, "repository", "deployments", "pageInfo")
             if not page_info["hasNextPage"]:
                 break
+
             cursor = page_info["endCursor"]
 
         return all_deployments
@@ -473,10 +530,13 @@ class GithubClient:
         cursor = None
         while True:
             query = query_builder(after=cursor)
-            response = await self._make_graphql_request(query)
+            data, _ = await self._make_graphql_request(query)
 
             try:
-                data = response["data"]["repository"]["commits"]["history"] or {}
+                data = self.safe_get(data, "repository", "commits", "history") or {}
+                if not data:
+                    break
+
                 commits = data["nodes"] or []
                 all_commits.extend(
                     [commit for commit in commits if not exclude_merge_commits or not self._is_merge_commit(commit)]
@@ -492,5 +552,6 @@ class GithubClient:
 
         return all_commits
 
-    def _is_merge_commit(self, commit: dict) -> bool:
-        return ((commit.get("parents") or {}).get("totalCount") or 0) > 1
+    @classmethod
+    def _is_merge_commit(cls, commit: dict) -> bool:
+        return (cls.safe_get(commit, "parents", "totalCount") or 0) > 1

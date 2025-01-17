@@ -1,13 +1,14 @@
 import asyncio
 import functools
-from collections.abc import Callable
+from collections.abc import Awaitable, Callable
 from typing import ParamSpec, TypeVar
 
 import anyio
 import uvloop
 from anyio import to_thread
+from anyio.abc import Semaphore, TaskGroup
 
-__all__ = ["set_thread_pool_limit", "run", "run_in_thread"]
+__all__ = ["loop_setup", "set_thread_pool_limit", "run", "run_in_thread", "task_group_run_with_semaphore"]
 
 P = ParamSpec("P")
 T = TypeVar("T")
@@ -35,3 +36,17 @@ async def run_in_thread(func: Callable[P, T], *args: P.args, **kwargs: P.kwargs)
     if kwargs:
         func = functools.partial(func, **kwargs)
     return await to_thread.run_sync(func, *args)
+
+
+async def task_group_run_with_semaphore(
+    task_group: TaskGroup, semaphore: Semaphore, func: Callable[P, Awaitable[T]], *args: P.args, **kwargs: P.kwargs
+) -> None:
+    await semaphore.acquire()
+
+    async def wrapper(*args: P.args, **kwargs: P.kwargs) -> None:
+        try:
+            await func(*args, **kwargs)
+        finally:
+            semaphore.release()
+
+    task_group.start_soon(wrapper, *args, **kwargs)
